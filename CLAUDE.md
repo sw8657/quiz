@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 개요
 
-아이용 수학 놀이 웹앱. 빌드 시스템·의존성·테스트 없음 — 정적 HTML 파일 3개가 전부다. 한국어 UI.
+아이용 수학 놀이 웹앱. 패키지 의존성 없음(Node 스크립트 3개는 stdlib만 사용). 한국어 UI. GitHub Pages로 정적 서빙.
 
-- `index.html` — 게임 선택 런처(직접 손으로 작성한 파일). 두 게임으로 링크.
-- `treasure-map-math.html` — "수학 보물 지도"(초등 1~2학년: 덧셈/뺄셈/구구단/시계).
-- `fairy-land-math.html` — "수학 요정나라"(7살 유아: 수세기/더하기/모양·색).
+- `index.html` — 게임 선택 런처(손으로 쓴 파일). 두 게임으로 링크.
+- `treasure-map-math.html` — "수학 보물 지도"(초등 1~2학년: 덧셈/뺄셈/구구단/세자리/시계/길이, 섬마다 Lv.1~5).
+- `fairy-land-math.html` — "수학 요정나라"(7살 유아: 수세기/더하기/빼기/비교/모양·색, Lv.1~3).
 
 ## 실행
 
@@ -26,14 +26,17 @@ node src/difficulty.test.mjs   # 난이도 로직 셀프체크
 # http://localhost:8000/preview/treasure.html
 ```
 
-## 아키텍처 — 게임 파일이 편집 불가능한 번들인 점이 핵심
+## 아키텍처 — 루트 배포본은 생성물이다
 
-`treasure-map-math.html`, `fairy-land-math.html`은 **손으로 작성한 소스가 아니라 Claude Artifact를 단일 파일로 export한 번들**이다(각 ~7MB). 구조:
+`treasure-map-math.html`, `fairy-land-math.html`은 **`src/*.dc.html`에서 생성**된다. `src/build-deploy.mjs`가 React 18 UMD(unpkg CDN) `<script>` 두 줄을 주입하고 `src/support.js`를 루트로 복사할 뿐, 나머지는 소스 그대로다.
 
-- 상단 `<script>`가 로더. 페이지 로드 시 `<script type="__bundler/manifest">`(리소스 UUID→base64, gzip)와 `<script type="__bundler/template">`(실제 HTML을 JSON 문자열로 인코딩, 파일 끝 근처 한 줄)를 파싱해 Blob으로 재구성한다.
-- template 안의 실제 앱은 **React 18 + Babel(JSX) 앱**으로, `<x-dc>` 래퍼에 폰트/스크립트가 UUID 참조로 인라인되어 있다.
+```
+node src/build-deploy.mjs   # src/*.dc.html → 루트 *.html + support.js
+```
 
-따라서 repo 루트의 두 `.html` 배포본은 **손으로 수정하지 말 것.** 편집은 `src/*.dc.html`(Claude Design 소스)에서 하고, 배포본을 갱신하려면 그 `.dc.html`을 Claude Design에 다시 import → 재export해 루트 파일을 교체한다. `index.html`(런처)은 일반 HTML이라 자유롭게 편집 가능.
+따라서 루트의 두 `.html`과 `support.js`는 **손으로 수정하지 말 것** — 다음 빌드에서 덮어써진다. 편집은 `src/*.dc.html`에서 하고, 커밋 전에 위 빌드를 돌려 루트 배포본을 갱신한다. `index.html`(런처)은 생성물이 아니라 손으로 쓴 파일이라 자유롭게 편집 가능.
+
+`.dc.html`은 Claude Design 소스 포맷이다: `<sc-if>`/`<sc-for>` 템플릿 + `<script data-dc-script>` 안의 `class Component`. `window.React`가 있어야 렌더되므로 로컬 프리뷰는 `make-preview.mjs`를 쓴다(위 "실행" 참고).
 
 ### 게임 로직 위치 (treasure-map)
 
