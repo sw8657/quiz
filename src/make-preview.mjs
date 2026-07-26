@@ -8,7 +8,7 @@ const REACT = `<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react
 `;
 
 mkdirSync('preview', { recursive: true });
-for (const [src, out] of [['src/treasure-map-math.dc.html', 'preview/treasure.html'], ['src/fairy-land-math.dc.html', 'preview/fairy.html']]) {
+for (const [src, out] of [['src/treasure-map-math.dc.html', 'preview/treasure.html'], ['src/fairy-land-math.dc.html', 'preview/fairy.html'], ['src/hangul-fairy-land.dc.html', 'preview/hangul.html']]) {
   let html = readFileSync(src, 'utf8');
   // support.js는 preview/ 기준 상대경로가 되도록 ../src/ 로, React는 그 앞에 삽입.
   html = html.replace('<script src="./support.js"></script>', REACT + '<script src="../src/support.js"></script>');

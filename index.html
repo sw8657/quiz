@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>수학 놀이터</title>
+<title>우리 아이 놀이터</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Gamja+Flower&display=swap" rel="stylesheet">
@@ -18,8 +18,8 @@ a{text-decoration:none;color:inherit;}
 .title{font-family:'Gamja Flower',cursive;font-size:26px;letter-spacing:5px;color:#a06a24;}
 .big{font-size:clamp(40px,9vw,68px);line-height:1.05;text-shadow:3px 4px 0 #e7c88a;margin:2px 0 6px;}
 .sub{font-family:'Gaegu',cursive;font-weight:700;font-size:clamp(17px,4vw,22px);color:#6b4a28;margin-bottom:30px;}
-.cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;width:min(860px,96vw);}
-.card{flex:1 1 320px;max-width:400px;border-radius:26px;padding:30px 24px;text-align:center;cursor:pointer;transition:transform .12s,box-shadow .12s;display:block;}
+.cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;width:min(1180px,96vw);}
+.card{flex:1 1 300px;max-width:360px;border-radius:26px;padding:30px 24px;text-align:center;cursor:pointer;transition:transform .12s,box-shadow .12s;display:block;}
 .card:active{transform:translateY(5px);}
 .card .emo{font-size:96px;line-height:1;display:block;animation:bob 2.8s ease-in-out infinite;filter:drop-shadow(0 10px 8px rgba(0,0,0,.15));}
 .card .name{font-size:clamp(26px,5vw,34px);margin-top:10px;}
@@ -31,12 +31,15 @@ a{text-decoration:none;color:inherit;}
 .c2{background:#fffafd;border:6px solid #d1568f;box-shadow:0 9px 0 #f2c0dc;}
 .c2 .name,.c2 .desc{color:#6b3a54;}
 .c2 .go{background:#ff8ec0;box-shadow:0 5px 0 #d1568f;}
+.c3{background:#fdf7ff;border:6px solid #8b5cc7;box-shadow:0 9px 0 #d9c2f0;}
+.c3 .name,.c3 .desc{color:#4a2f6b;}
+.c3 .go{background:#a978d8;box-shadow:0 5px 0 #7c48b0;}
 .foot{font-family:'Gaegu',cursive;font-weight:700;font-size:15px;color:#8a5a2b;margin-top:34px;text-align:center;}
 </style>
 </head>
 <body>
-  <div class="title">— 우리 아이 수학 놀이터 —</div>
-  <div class="big">🎓 수학 놀이터 🌈</div>
+  <div class="title">— 우리 아이 놀이터 —</div>
+  <div class="big">🎓 놀이터 🌈</div>
   <div class="sub">하고 싶은 게임을 골라요!</div>
   <div class="cards">
     <a class="card c1" href="treasure-map-math.html">
@@ -50,6 +53,12 @@ a{text-decoration:none;color:inherit;}
       <div class="name">수학 요정나라</div>
       <div class="desc">7살 유아 · 수세기/더하기/모양·색</div>
       <span class="go">놀러 가기 🌸</span>
+    </a>
+    <a class="card c3" href="hangul-fairy-land.html">
+      <span class="emo">🦄</span>
+      <div class="name">한글 요정나라</div>
+      <div class="desc">7살 유아 · 자음모음/받침/낱말/말놀이</div>
+      <span class="go">글자 놀이 ✨</span>
     </a>
   </div>
   <div class="foot">📱 아이패드는 가로로, 아이폰도 잘 돼요 · 기록은 이름별로 저장돼요</div>

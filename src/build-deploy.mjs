@@ -9,6 +9,7 @@ const REACT = `<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react
 for (const [src, out] of [
   ['src/treasure-map-math.dc.html', 'treasure-map-math.html'],
   ['src/fairy-land-math.dc.html', 'fairy-land-math.html'],
+  ['src/hangul-fairy-land.dc.html', 'hangul-fairy-land.html'],
 ]) {
   let html = readFileSync(src, 'utf8');
   html = html.replace('<script src="./support.js"></script>', REACT + '<script src="./support.js"></script>');

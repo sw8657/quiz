@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Gamja+Flower&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+a{color:#c85d95;text-decoration:none;} a:hover{color:#a33f76;}
+button{font-family:inherit;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes jump{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-26px) scale(1.06)}55%{transform:translateY(0) scale(1)}}
+@keyframes shakex{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+@keyframes pulsering{0%,100%{box-shadow:0 8px 0 rgba(0,0,0,.14),0 0 0 0 rgba(255,142,192,.65)}70%{box-shadow:0 8px 0 rgba(0,0,0,.14),0 0 0 20px rgba(255,142,192,0)}}
+@keyframes popin{0%{transform:scale(.3);opacity:0}65%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes starpop{0%{transform:scale(0) rotate(-45deg);opacity:0}70%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes fall{0%{transform:translateY(-30px) rotate(0);opacity:1}100%{transform:translateY(360px) rotate(540deg);opacity:0}}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-9px) rotate(3deg)}}
+@keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes twinkle{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+/* 좁은 화면에선 장식 이모지가 제목·설명과 겹쳐서 숨긴다. */
+@media (max-width:700px){ .deco{display:none;} }
+</style>
+</helmet>
+
+<div style="font-family:'Jua',sans-serif;color:#6b3a54;">
+
+<!-- ================= NAME ENTRY ================= -->
+<sc-if value="{{ isName }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px;background:radial-gradient(circle at 32% 22%,#ffeaf5,#ffc9e4 62%,#f4a9d3);">
+  <div style="width:min(560px,94vw);text-align:center;background:#fffafd;border:7px solid #d1568f;border-radius:30px;box-shadow:0 12px 0 #f2c0dc,0 20px 36px rgba(0,0,0,.18);padding:34px 28px;">
+    <div style="font-size:92px;line-height:1;animation:bob 2.8s ease-in-out infinite;">🦄</div>
+    <div style="font-family:'Jua';font-size:34px;color:#6b3a54;margin-top:6px;">이름을 알려줘!</div>
+    <div style="font-family:'Gaegu';font-weight:700;font-size:20px;color:#8a4a6f;margin-bottom:18px;">이름으로 나만의 기록이 저장돼요 💾</div>
+    <input value="{{ nameInput }}" onInput="{{ onNameInput }}" placeholder="이름 입력" maxLength="10" style="font-family:'Jua';font-size:28px;color:#6b3a54;text-align:center;width:100%;padding:14px 16px;border:4px solid #d1568f;border-radius:18px;background:#ffe6f3;outline:none;">
+    <button onClick="{{ confirmName }}" style-active="transform:translateY(4px);box-shadow:0 2px 0 #d1568f" style="font-family:'Jua';font-size:28px;color:#fff;background:#ff8ec0;border:5px solid #d1568f;padding:14px 44px;border-radius:24px;box-shadow:0 7px 0 #d1568f;cursor:pointer;margin-top:18px;transition:.06s;">시작하기 💕</button>
+    <sc-if value="{{ hasUsers }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:22px;">
+        <div style="font-family:'Gaegu';font-weight:700;font-size:17px;color:#a33f76;margin-bottom:8px;">이전에 놀던 친구</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+          <sc-for list="{{ userList }}" as="u" hint-placeholder-count="2">
+            <button onClick="{{ u.onClick }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:18px;color:#a33f76;background:#ffe0ef;border:3px solid #d1568f;border-radius:14px;padding:8px 16px;box-shadow:0 4px 0 #d1568f;cursor:pointer;">{{ u.name }}</button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= RECORDS ================= -->
+<sc-if value="{{ isRecords }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;background:radial-gradient(circle at 50% 8%,#ffeaf5,#ffc9e4 70%,#f4a9d3);">
+  <div style="width:min(640px,96vw);display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <button onClick="{{ closeRecords }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:clamp(15px,4vw,20px);color:#8a4a6f;background:#fff0f8;border:4px solid #d1568f;padding:10px clamp(11px,3.4vw,20px);border-radius:18px;box-shadow:0 5px 0 #d1568f;cursor:pointer;white-space:nowrap;flex:none;">← 집으로</button>
+    <div style="font-family:'Jua';font-size:clamp(18px,5vw,30px);color:#6b3a54;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📒 {{ userName }} 의 기록</div>
+    <div style="width:clamp(0px,9vw,96px);flex:none;"></div>
+  </div>
+  <sc-if value="{{ hasRecords }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(640px,96vw);display:flex;flex-direction:column;gap:10px;">
+      <sc-for list="{{ records }}" as="r" hint-placeholder-count="4">
+        <div style="{{ r.style }}">
+          <div style="font-size:clamp(28px,7vw,38px);line-height:1;flex:none;">{{ r.icon }}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Jua';font-size:clamp(15px,4vw,19px);color:#6b3a54;">{{ r.title }}</div>
+            <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(12px,3.3vw,15px);color:#a33f76;">{{ r.date }}</div>
+          </div>
+          <div style="text-align:right;flex:none;">
+            <div style="font-size:clamp(14px,3.8vw,18px);letter-spacing:1px;">{{ r.stars }}</div>
+            <div style="font-family:'Jua';font-size:clamp(12px,3.4vw,16px);color:#c85d95;">{{ r.score }} · {{ r.badge }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noRecords }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:40px;text-align:center;">
+      <div style="font-size:72px;">🌱</div>
+      <div style="font-family:'Gaegu';font-weight:700;font-size:22px;color:#8a4a6f;margin-top:8px;">아직 기록이 없어요. 문제를 풀면 여기에 쌓여요!</div>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ================= HOME ================= -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px;background:radial-gradient(circle at 32% 22%,#ffeaf5,#ffc9e4 62%,#f4a9d3);">
+  <div style="width:min(940px,94vw);text-align:center;position:relative;">
+    <div class="deco" style="position:absolute;left:-4px;top:-16px;font-size:52px;animation:sway 4s ease-in-out infinite;">🌸</div>
+    <div class="deco" style="position:absolute;right:0;top:36px;font-size:44px;animation:floaty 5s ease-in-out infinite;">🦋</div>
+    <div style="font-family:'Gamja Flower',cursive;font-size:clamp(17px,4.6vw,24px);letter-spacing:clamp(2px,1.2vw,5px);color:#c85d95;">— 반짝반짝 글자 나라 —</div>
+    <div style="font-size:clamp(38px,11vw,64px);line-height:1.05;margin:4px 0 4px;text-shadow:3px 4px 0 #ffd0e8;">한글 요정나라</div>
+    <div style="font-family:'Gaegu',cursive;font-weight:700;font-size:clamp(17px,4.6vw,24px);color:#8a4a6f;">{{ greeting }}</div>
+    <div style="font-size:clamp(72px,24vw,126px);margin:12px 0 6px;animation:bob 2.8s ease-in-out infinite;filter:drop-shadow(0 12px 10px rgba(0,0,0,.14));">🦄</div>
+    <button onClick="{{ startGame }}" style-active="transform:translateY(6px);box-shadow:0 0 0 #c85d95" style="font-family:'Jua';font-size:clamp(24px,6.4vw,34px);color:#fff;background:#ff8ec0;border:5px solid #d1568f;padding:clamp(14px,4vw,20px) clamp(28px,10vw,54px);border-radius:30px;box-shadow:0 8px 0 #d1568f;cursor:pointer;transition:.06s;">놀러 가기!  🌈</button>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
+      <button onClick="{{ openRecords }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#a33f76;background:#fff0f8;border:4px solid #d1568f;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #d1568f;cursor:pointer;">📒 내 기록</button>
+      <button onClick="{{ changeUser }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#54306b;background:#efe3ff;border:4px solid #a978d8;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #9a53c0;cursor:pointer;">🙋 이름 바꾸기</button>
+      <button onClick="{{ newAdventure }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#a33f76;background:#ffd9ec;border:4px solid #d1568f;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #b83a75;cursor:pointer;">🔄 새 모험</button>
+    </div>
+    <div style="margin-top:36px;">
+      <div style="font-family:'Gaegu';font-weight:700;font-size:22px;color:#a33f76;">🏵️ 완성한 마을  {{ medalCount }} / 5</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
+        <sc-for list="{{ stageBadges }}" as="bg" hint-placeholder-count="5">
+          <div style="{{ bg.style }}">
+            <div style="font-size:32px;line-height:1;">{{ bg.face }}</div>
+            <div style="font-family:'Gaegu';font-weight:700;font-size:13px;margin-top:4px;">{{ bg.name }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= MAP ================= -->
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px 16px 26px;background:radial-gradient(circle at 50% 0%,#e7d6ff,#c9b3f4 55%,#a98fe0);">
+  <div style="width:min(1080px,97vw);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <button onClick="{{ goHome }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:clamp(15px,4vw,20px);color:#8a4a6f;background:#fff0f8;border:4px solid #d1568f;padding:10px clamp(11px,3.4vw,20px);border-radius:18px;box-shadow:0 5px 0 #d1568f;cursor:pointer;white-space:nowrap;">← 집으로</button>
+    <div style="font-family:'Jua';font-size:clamp(21px,5.6vw,34px);color:#54306b;text-shadow:1px 2px 0 #ffffffaa;white-space:nowrap;">🗺️ 글자 지도</div>
+    <div style="font-family:'Jua';font-size:clamp(16px,4.2vw,22px);color:#54306b;background:#fff0f8;border:4px solid #d1568f;padding:8px clamp(10px,3vw,18px);border-radius:18px;white-space:nowrap;">🏵️ {{ medalCount }}</div>
+  </div>
+
+  <div style="{{ mapStyle }}">
+    <div style="position:absolute;inset:10px;border:3px dashed #b78ad6;border-radius:16px;pointer-events:none;"></div>
+    <div class="deco" style="position:absolute;right:20px;top:14px;font-size:40px;opacity:.9;">🌈</div>
+    <div class="deco" style="position:absolute;left:6%;top:15%;font-size:34px;opacity:.8;animation:floaty 6s ease-in-out infinite;">☁️</div>
+    <div style="position:absolute;right:9%;bottom:11%;font-size:34px;opacity:.8;">🌷</div>
+    <div style="position:absolute;left:3%;bottom:7%;font-size:30px;opacity:.8;">🍄</div>
+    <div style="position:absolute;left:48%;top:7%;font-size:26px;opacity:.75;animation:twinkle 2.4s ease-in-out infinite;">✨</div>
+
+    <sc-for list="{{ trailDots }}" as="d" hint-placeholder-count="20">
+      <div style="{{ d.style }}"></div>
+    </sc-for>
+
+    <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="5">
+      <div style="{{ n.wrapStyle }}">
+        <button onClick="{{ n.onClick }}" style-active="transform:translateY(3px)" style="{{ n.circleStyle }}">
+          <span style="{{ n.iconStyle }}">{{ n.face }}</span>
+        </button>
+        <div style="{{ n.pillStyle }}">{{ n.label }}</div>
+        <div style="{{ n.progStyle }}">{{ n.prog }}</div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="font-family:'Gaegu';font-weight:700;font-size:20px;color:#3f265a;margin-top:14px;">👆 마을을 골라 Lv.1 부터 놀아요! 단계를 깨면 다음 단계가 열려요.</div>
+</div>
+</sc-if>
+
+<!-- ================= ISLAND (stage select) ================= -->
+<sc-if value="{{ isIsland }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;background:radial-gradient(circle at 50% 8%,#ffeaf5,#ffc9e4 70%,#f4a9d3);">
+  <div style="width:min(900px,96vw);display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <button onClick="{{ backToMap }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:clamp(15px,4vw,20px);color:#8a4a6f;background:#fff0f8;border:4px solid #d1568f;padding:10px clamp(11px,3.4vw,20px);border-radius:18px;box-shadow:0 5px 0 #d1568f;cursor:pointer;white-space:nowrap;flex:none;">← 지도</button>
+    <div style="font-family:'Jua';font-size:clamp(20px,5.4vw,32px);color:#6b3a54;white-space:nowrap;">{{ islandIcon }} {{ islandName }}</div>
+    <div style="width:clamp(0px,9vw,96px);flex:none;"></div>
+  </div>
+  <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,20px);color:#8a4a6f;margin-bottom:22px;">{{ islandDesc }}</div>
+  <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;width:min(900px,96vw);">
+    <sc-for list="{{ stageCards }}" as="sc" hint-placeholder-count="3">
+      <button onClick="{{ sc.onClick }}" style-active="transform:translateY(4px)" style="{{ sc.style }}">
+        <div style="font-size:44px;line-height:1;">{{ sc.top }}</div>
+        <div style="font-family:'Jua';font-size:30px;margin-top:8px;">{{ sc.title }}</div>
+        <div style="font-family:'Gaegu';font-weight:700;font-size:17px;margin-top:4px;">{{ sc.desc }}</div>
+        <div style="font-size:24px;margin-top:8px;letter-spacing:2px;">{{ sc.stars }}</div>
+      </button>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= QUIZ ================= -->
+<sc-if value="{{ isQuiz }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:14px 14px 22px;background:radial-gradient(circle at 50% 8%,#ffeaf5,#ffc9e4 70%,#f4a9d3);position:relative;">
+  <div style="width:min(760px,96vw);display:flex;align-items:center;gap:clamp(6px,2vw,12px);margin-bottom:10px;">
+    <button onClick="{{ backToIsland }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#8a4a6f;background:#fff0f8;border:3px solid #d1568f;padding:8px clamp(9px,2.8vw,14px);border-radius:15px;box-shadow:0 4px 0 #d1568f;cursor:pointer;white-space:nowrap;flex:none;">← 단계</button>
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;justify-content:space-between;gap:6px;font-family:'Jua';font-size:clamp(12px,3.2vw,16px);color:#8a4a6f;margin-bottom:4px;">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ islandIcon }} {{ islandName }} · {{ levelLabel }}</span><span style="white-space:nowrap;">{{ qNumber }} / {{ total }}</span>
+      </div>
+      <div style="height:16px;background:#ffd9ec;border:3px solid #d1568f;border-radius:12px;overflow:hidden;">
+        <div style="height:100%;width:{{ progressPct }}%;background:linear-gradient(90deg,#ff8ec0,#ffc0e0);border-radius:9px;transition:width .3s;"></div>
+      </div>
+    </div>
+    <div style="font-size:17px;white-space:nowrap;letter-spacing:2px;background:#fff0f8;border:3px solid #d1568f;border-radius:12px;padding:6px 10px;text-align:center;">{{ hearts }}</div>
+  </div>
+
+  <div style="width:min(760px,96vw);background:#fffafd;border:6px solid #d1568f;border-radius:24px;box-shadow:0 10px 0 #f2c0dc,0 16px 30px rgba(0,0,0,.12);padding:24px 20px;text-align:center;">
+    <sc-if value="{{ q.hasPrompt }}" hint-placeholder-val="{{ true }}">
+      <div style="font-family:'Jua';font-size:clamp(20px,5.4vw,28px);color:#6b3a54;margin-bottom:12px;text-wrap:pretty;">{{ q.prompt }}</div>
+    </sc-if>
+
+    <sc-if value="{{ q.hasEmoji }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:clamp(66px,21vw,112px);line-height:1;margin:2px 0 8px;animation:popin .3s ease-out;">{{ q.emoji }}</div>
+    </sc-if>
+
+    <sc-if value="{{ q.hasBig }}" hint-placeholder-val="{{ false }}">
+      <div style="font-family:'Jua';font-size:clamp(46px,13vw,80px);line-height:1.15;letter-spacing:4px;color:#6b3a54;margin:2px 0 10px;">{{ q.bigText }}</div>
+    </sc-if>
+
+    <sc-if value="{{ q.hasCombine }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:center;gap:clamp(8px,3vw,16px);flex-wrap:wrap;font-family:'Jua';font-size:clamp(40px,12vw,68px);color:#6b3a54;margin:8px 0 12px;">
+        <span>{{ q.cA }}</span><span style="color:#ff6fa5;">+</span><span>{{ q.cB }}</span><span style="color:#ff6fa5;">=</span>
+        <span style="min-width:clamp(76px,22vw,120px);height:clamp(60px,17vw,90px);display:inline-flex;align-items:center;justify-content:center;background:#ffe6f3;border:5px dashed #d1568f;border-radius:18px;color:#c85d95;">?</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ q.hasSentence }}" hint-placeholder-val="{{ false }}">
+      <div style="font-family:'Jua';font-size:clamp(24px,6.6vw,40px);line-height:1.5;color:#6b3a54;background:#ffe6f3;border:4px dashed #d1568f;border-radius:18px;padding:16px 14px;margin:4px 0 10px;text-wrap:pretty;">{{ q.sentence }}</div>
+    </sc-if>
+
+    <sc-if value="{{ q.hasHint }}" hint-placeholder-val="{{ false }}">
+      <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,21px);color:#a33f76;margin-bottom:6px;">💡 {{ q.hint }}</div>
+    </sc-if>
+
+    <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:14px;">
+      <sc-for list="{{ q.options }}" as="opt" hint-placeholder-count="4">
+        <button onClick="{{ opt.onClick }}" style-active="transform:translateY(4px);box-shadow:0 2px 0 #9a53c0" style="font-family:'Jua';font-size:{{ q.optFont }};line-height:1.25;color:#54306b;background:#f2e6ff;border:5px solid #a978d8;border-radius:22px;padding:18px 12px;min-width:150px;flex:1 1 40%;max-width:320px;box-shadow:0 6px 0 #9a53c0;cursor:pointer;transition:.06s;word-break:keep-all;">{{ opt.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="{{ mascotStyle }}">{{ mascotFace }}</div>
+  <div style="{{ mascotStyle2 }}">{{ mascotFace2 }}</div>
+
+  <sc-if value="{{ showFeedback }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(80,30,60,.5);display:flex;align-items:center;justify-content:center;z-index:40;padding:20px;">
+      <div style="{{ feedbackCardStyle }}">
+        {{ confettiEl }}
+        <div style="font-size:72px;line-height:1;animation:popin .4s ease-out;">{{ feedbackEmoji }}</div>
+        <div style="font-family:'Jua';font-size:clamp(28px,7vw,38px);margin:4px 0;color:{{ feedbackColor }};">{{ feedbackMsg }}</div>
+        <sc-if value="{{ showWord }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'Jua';font-size:clamp(34px,9vw,54px);line-height:1.25;letter-spacing:3px;color:#6b3a54;background:#ffe6f3;border:4px solid #d1568f;border-radius:18px;padding:10px 20px;margin:8px 0 2px;display:inline-block;word-break:keep-all;">{{ feedbackWord }}</div>
+        </sc-if>
+        <sc-if value="{{ hasRead }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'Gaegu';font-weight:700;font-size:20px;color:#a33f76;margin-top:4px;">{{ feedbackRead }}</div>
+        </sc-if>
+        <sc-if value="{{ canRetry }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'Gaegu';font-weight:700;font-size:24px;color:#6b3a54;">남은 기회  {{ hearts }}</div>
+          <div style="margin-top:18px;">
+            <button onClick="{{ retrySame }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:26px;color:#a33f76;background:#ffe0ef;border:4px solid #d1568f;border-radius:18px;padding:12px 40px;box-shadow:0 6px 0 #b8477e;cursor:pointer;">다시 해보기 🔄</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ showNext }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;">
+            <button onClick="{{ next }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:26px;color:#fff;background:#4fb06a;border:4px solid #3a8a50;border-radius:18px;padding:12px 40px;box-shadow:0 6px 0 #3a8a50;cursor:pointer;">다음 ▶</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ================= RESULT ================= -->
+<sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 14%,#ffeaf5,#ffc9e4 66%,#f4a9d3);position:relative;overflow:hidden;">
+  {{ resultConfettiEl }}
+  <div style="width:min(560px,94vw);text-align:center;background:#fffafd;border:7px solid #d1568f;border-radius:28px;box-shadow:0 12px 0 #f2c0dc,0 20px 36px rgba(0,0,0,.18);padding:clamp(20px,5vw,30px) clamp(16px,4.5vw,26px);position:relative;z-index:2;animation:popin .5s ease-out;">
+    <div style="font-family:'Jua';font-size:clamp(23px,6vw,30px);color:#6b3a54;">{{ resultTitle }}</div>
+    <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(15px,4vw,18px);color:#a33f76;margin-top:2px;">{{ islandIcon }} {{ islandName }} · {{ levelLabel }}</div>
+    <div style="display:flex;justify-content:center;gap:8px;margin:14px 0 6px;">
+      <sc-for list="{{ starIcons }}" as="st" hint-placeholder-count="3">
+        <span style="{{ st.style }}">{{ st.face }}</span>
+      </sc-for>
+    </div>
+    <div style="font-size:clamp(64px,20vw,96px);line-height:1;margin:6px 0;animation:popin .6s ease-out;">{{ resultMedal }}</div>
+    <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(18px,5vw,24px);color:#8a4a6f;">{{ resultMessage }}</div>
+    <div style="font-family:'Jua';font-size:clamp(18px,4.8vw,22px);color:#c85d95;margin-top:6px;">맞힌 문제  {{ resultCorrect }} / {{ resultTotal }}</div>
+    <sc-if value="{{ hasTime }}" hint-placeholder-val="{{ true }}">
+      <div style="font-family:'Jua';font-size:clamp(15px,4vw,19px);color:#a2739a;margin-top:4px;">{{ resultTime }}</div>
+    </sc-if>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:22px;">
+      <sc-if value="{{ hasWrong }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ retryWrong }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:24px;color:#a33f76;background:#ffe0ef;border:4px solid #d1568f;border-radius:20px;padding:14px;box-shadow:0 6px 0 #b8477e;cursor:pointer;">✏️ 틀린 문제 {{ wrongCount }}개 다시 풀기</button>
+      </sc-if>
+      <sc-if value="{{ canNext }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ nextStage }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:26px;color:#fff;background:#4fb06a;border:4px solid #3a8a50;border-radius:20px;padding:14px;box-shadow:0 6px 0 #3a8a50;cursor:pointer;">🌈 다음 단계로!</button>
+      </sc-if>
+      <button onClick="{{ playAgain }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:22px;color:#a33f76;background:#fff0f8;border:4px solid #d1568f;border-radius:20px;padding:12px;box-shadow:0 6px 0 #d1568f;cursor:pointer;">🔁 이 단계 다시 하기</button>
+      <button onClick="{{ backToIsland }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:22px;color:#54306b;background:#efe3ff;border:4px solid #a978d8;border-radius:20px;padding:12px;box-shadow:0 6px 0 #9a53c0;cursor:pointer;">📋 단계 선택으로</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="104" fill="#ff8ec0"/><circle cx="256" cy="256" r="158" fill="#fff0f8" stroke="#d1568f" stroke-width="14"/><text x="256" y="330" font-size="190" text-anchor="middle" fill="#d1568f" font-family="sans-serif">가</text></svg>
+</template>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1024,&quot;height&quot;:768},&quot;soundOn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;게임 설정&quot;},&quot;questionsPerStage&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:8,&quot;min&quot;:5,&quot;max&quot;:15,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;게임 설정&quot;},&quot;autoAdvance&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;게임 설정&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.stages = [
+      {topic:'jamo',    name:'자음 모음 숲',   short:'자모 숲',   icon:'🌳', color:'#4fb06a', desc:'자음과 모음의 이름을 익혀요'},
+      {topic:'combine', name:'글자 마법방',    short:'마법방',    icon:'✨', color:'#a978d8', desc:'자모를 모으고 나눠 글자를 만들어요'},
+      {topic:'word',    name:'그림 낱말 마을', short:'낱말 마을', icon:'🏡', color:'#ff8ec0', desc:'그림을 보고 바른 낱말을 골라요'},
+      {topic:'sound',   name:'첫소리 바닷가',  short:'바닷가',    icon:'🐚', color:'#2f9bd1', desc:'첫소리·끝소리로 낱말을 이어요'},
+      {topic:'mean',    name:'말놀이 언덕',    short:'말놀이',    icon:'🎪', color:'#f2a01c', desc:'반대말·비슷한말로 말놀이 해요'},
+    ];
+    this.STAGES = 3;
+    this.LEVEL_DESC = ['쉬워요','보통','조금 어려워요'];
+    this.MAX_TRY = 3;
+    this.nodePos = [{x:14,y:66},{x:32,y:40},{x:50,y:72},{x:68,y:40},{x:86,y:64}];
+    // 좁은 화면은 가로 5칸이 겹쳐서 2열로. 마지막 하나는 가운데.
+    this.nodePosNarrow = [{x:28,y:16},{x:72,y:16},{x:28,y:50},{x:72,y:50},{x:50,y:84}];
+    this.GOOD = ['잘 읽었어! 🎉','정답이야! ⭐','최고야! 👏','예뻐 예뻐! 🌸','반짝반짝! ✨','대단해! 🦋'];
+    this.EMO_GOOD = ['🎉','⭐','👏','🌸','💖','🦋'];
+
+    // ── 한글 자모 ──
+    this.CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split('');
+    this.JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ'.split('');
+    this.JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    this.SIMPLE_JONG=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'];
+    this.CONS=[['ㄱ','기역'],['ㄴ','니은'],['ㄷ','디귿'],['ㄹ','리을'],['ㅁ','미음'],['ㅂ','비읍'],['ㅅ','시옷'],['ㅇ','이응'],['ㅈ','지읒'],['ㅊ','치읓'],['ㅋ','키읔'],['ㅌ','티읕'],['ㅍ','피읖'],['ㅎ','히읗']];
+    this.VOWS=[['ㅏ','아'],['ㅑ','야'],['ㅓ','어'],['ㅕ','여'],['ㅗ','오'],['ㅛ','요'],['ㅜ','우'],['ㅠ','유'],['ㅡ','으'],['ㅣ','이']];
+    this.CONS2=[['ㄲ','쌍기역'],['ㄸ','쌍디귿'],['ㅃ','쌍비읍'],['ㅆ','쌍시옷'],['ㅉ','쌍지읒']];
+    this.VOWS2=[['ㅐ','애'],['ㅔ','에'],['ㅚ','외'],['ㅟ','위'],['ㅢ','의'],['ㅘ','와'],['ㅝ','워']];
+    // 획이 비슷하거나 소리가 헷갈리는 짝 — 오답 보기를 여기서 우선 뽑는다.
+    this.LOOKALIKE={
+      'ㄱ':['ㅋ','ㄴ','ㄲ'],'ㄴ':['ㄷ','ㄱ','ㄹ'],'ㄷ':['ㄴ','ㅌ','ㄹ'],'ㄹ':['ㄷ','ㄴ','ㅁ'],
+      'ㅁ':['ㅂ','ㅍ','ㅇ'],'ㅂ':['ㅁ','ㅍ','ㅃ'],'ㅅ':['ㅈ','ㅊ','ㅆ'],'ㅇ':['ㅎ','ㅁ','ㅍ'],
+      'ㅈ':['ㅅ','ㅊ','ㅉ'],'ㅊ':['ㅈ','ㅅ','ㅌ'],'ㅋ':['ㄱ','ㅌ','ㅍ'],'ㅌ':['ㅋ','ㄷ','ㅍ'],
+      'ㅍ':['ㅁ','ㅂ','ㅌ'],'ㅎ':['ㅇ','ㅊ','ㅋ'],
+      'ㄲ':['ㄱ','ㅋ','ㄸ'],'ㄸ':['ㄷ','ㅌ','ㄲ'],'ㅃ':['ㅂ','ㅍ','ㅆ'],'ㅆ':['ㅅ','ㅉ','ㅃ'],'ㅉ':['ㅈ','ㅆ','ㅊ'],
+      'ㅏ':['ㅓ','ㅑ','ㅣ'],'ㅑ':['ㅏ','ㅕ','ㅐ'],'ㅓ':['ㅏ','ㅕ','ㅗ'],'ㅕ':['ㅓ','ㅑ','ㅔ'],
+      'ㅗ':['ㅜ','ㅛ','ㅓ'],'ㅛ':['ㅗ','ㅠ','ㅜ'],'ㅜ':['ㅗ','ㅠ','ㅡ'],'ㅠ':['ㅜ','ㅛ','ㅡ'],
+      'ㅡ':['ㅜ','ㅣ','ㅗ'],'ㅣ':['ㅡ','ㅏ','ㅓ'],
+      'ㅐ':['ㅔ','ㅏ','ㅑ'],'ㅔ':['ㅐ','ㅓ','ㅕ'],'ㅚ':['ㅟ','ㅘ','ㅗ'],'ㅟ':['ㅚ','ㅝ','ㅜ'],
+      'ㅢ':['ㅣ','ㅡ','ㅚ'],'ㅘ':['ㅝ','ㅚ','ㅗ'],'ㅝ':['ㅘ','ㅟ','ㅜ'],
+    };
+
+    // 낱말 풀 — lv1 받침 있는 두 글자 / lv2 세 글자 / lv3 소리와 표기가 다른 낱말(s=소리)
+    this.WORDS=[
+      {w:'가방',e:'🎒',lv:1},{w:'구름',e:'☁️',lv:1},{w:'김밥',e:'🍙',lv:1},{w:'학교',e:'🏫',lv:1},
+      {w:'손톱',e:'💅',lv:1},{w:'사탕',e:'🍬',lv:1},{w:'수박',e:'🍉',lv:1},{w:'연필',e:'✏️',lv:1},
+      {w:'우산',e:'☂️',lv:1},{w:'장갑',e:'🧤',lv:1},{w:'양말',e:'🧦',lv:1},{w:'달걀',e:'🥚',lv:1},
+      {w:'신발',e:'👟',lv:1},{w:'책상',e:'🪑',lv:1},{w:'그림',e:'🖼️',lv:1},{w:'창문',e:'🪟',lv:1},
+      {w:'얼음',e:'🧊',lv:1},{w:'바람',e:'🌬️',lv:1},{w:'꽃밭',e:'🌷',lv:1},{w:'지붕',e:'🏠',lv:1},
+      {w:'무지개',e:'🌈',lv:2},{w:'자전거',e:'🚲',lv:2},{w:'코끼리',e:'🐘',lv:2},{w:'병아리',e:'🐤',lv:2},
+      {w:'강아지',e:'🐕',lv:2},{w:'다람쥐',e:'🐿️',lv:2},{w:'거북이',e:'🐢',lv:2},{w:'개구리',e:'🐸',lv:2},
+      {w:'도토리',e:'🌰',lv:2},{w:'옥수수',e:'🌽',lv:2},{w:'소나무',e:'🌲',lv:2},{w:'눈사람',e:'⛄',lv:2},
+      {w:'목도리',e:'🧣',lv:2},{w:'우체통',e:'📮',lv:2},{w:'진달래',e:'💐',lv:2},{w:'할머니',e:'👵',lv:2},
+      {w:'놀이터',e:'🛝',lv:3,s:'노리터'},{w:'물고기',e:'🐟',lv:3,s:'물꼬기'},{w:'젓가락',e:'🥢',lv:3,s:'젇까락'},
+      {w:'나뭇잎',e:'🍃',lv:3,s:'나문닙'},{w:'국물',e:'🍜',lv:3,s:'궁물'},{w:'꽃잎',e:'🌺',lv:3,s:'꼰닙'},
+      {w:'햇빛',e:'☀️',lv:3,s:'해삗'},{w:'같이',e:'👫',lv:3,s:'가치'},{w:'맑다',e:'🌤️',lv:3,s:'막따'},
+      {w:'읽다',e:'📖',lv:3,s:'익따'},{w:'좋다',e:'👍',lv:3,s:'조타'},{w:'국화',e:'🌼',lv:3,s:'구콰'},
+    ];
+    // 겹받침 낱말 — syl 이 겹받침을 가진 글자
+    this.DOUBLE=[
+      {w:'닭',e:'🐔',syl:'닭'},{w:'앉다',e:'🪑',syl:'앉'},{w:'값',e:'💰',syl:'값'},{w:'읽다',e:'📖',syl:'읽'},
+      {w:'넓다',e:'📏',syl:'넓'},{w:'많다',e:'🫙',syl:'많'},{w:'삶다',e:'🍲',syl:'삶'},{w:'밟다',e:'👣',syl:'밟'},
+      {w:'없다',e:'🕳️',syl:'없'},{w:'싫다',e:'🙅',syl:'싫'},{w:'맑다',e:'🌤️',syl:'맑'},{w:'젊다',e:'🧒',syl:'젊'},
+    ];
+    // 끝말잇기 — [앞말, 뒷말]
+    this.CHAIN=[
+      ['가방','방울'],['나비','비누'],['사자','자전거'],['우산','산딸기'],['김밥','밥상'],['수박','박수'],
+      ['바다','다리'],['연필','필통'],['학교','교실'],['시계','계단'],['모자','자석'],['딸기','기차'],
+      ['나무','무지개'],['개미','미역'],['고구마','마늘'],['병아리','리본'],
+    ];
+    this.OPPO=[
+      ['크다','작다'],['많다','적다'],['높다','낮다'],['길다','짧다'],['뜨겁다','차갑다'],['무겁다','가볍다'],
+      ['빠르다','느리다'],['밝다','어둡다'],['열다','닫다'],['웃다','울다'],['앉다','서다'],['위','아래'],
+      ['낮','밤'],['여름','겨울'],['안','밖'],['가다','오다'],
+    ];
+    this.SIMI=[
+      ['예쁘다','곱다'],['기쁘다','즐겁다'],['무섭다','두렵다'],['친구','동무'],['얼굴','낯'],
+      ['날쌔다','재빠르다'],['말하다','이야기하다'],['달리다','뛰다'],['씩씩하다','용감하다'],
+    ];
+    this.GROUPS=[
+      {n:'동물', items:[['토끼','🐰'],['호랑이','🐯'],['거북이','🐢'],['다람쥐','🐿️'],['개구리','🐸']]},
+      {n:'과일', items:[['수박','🍉'],['딸기','🍓'],['포도','🍇'],['참외','🍈'],['사과','🍎']]},
+      {n:'채소', items:[['당근','🥕'],['옥수수','🌽'],['가지','🍆'],['오이','🥒'],['배추','🥬']]},
+      {n:'탈것', items:[['자전거','🚲'],['기차','🚂'],['배','⛵'],['비행기','✈️'],['자동차','🚗']]},
+      {n:'몸',   items:[['손','✋'],['발','🦶'],['눈','👁️'],['귀','👂'],['입','👄']]},
+      {n:'날씨', items:[['비','🌧️'],['바람','🌬️'],['구름','☁️'],['무지개','🌈'],['번개','⚡']]},
+    ];
+    this.SENT=[
+      {t:'하늘에 (  ) 이 둥둥 떠 있어요.', a:'구름', d:['가방','연필','장갑']},
+      {t:'추운 겨울에는 (  ) 을 껴요.', a:'장갑', d:['수박','창문','국물']},
+      {t:'비가 오면 (  ) 을 써요.', a:'우산', d:['사탕','책상','달걀']},
+      {t:'(  ) 에 가서 공부를 해요.', a:'학교', d:['얼음','바람','신발']},
+      {t:'(  ) 로 그림을 그려요.', a:'연필', d:['김밥','지붕','양말']},
+      {t:'물속에서 (  ) 가 헤엄쳐요.', a:'물고기', d:['목도리','우체통','눈사람']},
+      {t:'비가 그치고 (  ) 가 떴어요.', a:'무지개', d:['자전거','도토리','옥수수']},
+      {t:'(  ) 을 신고 밖에 나가요.', a:'신발', d:['창문','국물','얼음']},
+      {t:'(  ) 으로 밥을 먹어요.', a:'젓가락', d:['목도리','도토리','다람쥐']},
+      {t:'겨울에 눈을 뭉쳐 (  ) 을 만들어요.', a:'눈사람', d:['우체통','자전거','병아리']},
+    ];
+
+    const users=(()=>{ try{ const p=localStorage.getItem('hangulfairy_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } })();
+    let userName=''; try{ userName=localStorage.getItem('hangulfairy_user')||''; }catch(e){}
+    if(userName && !users[userName]) userName='';
+    const progress=(userName && users[userName] && users[userName].progress)?users[userName].progress:{};
+    const history=(userName && users[userName] && users[userName].history)?users[userName].history:[];
+    this.state = {
+      screen: userName?'home':'name', islandIndex:0, level:1, progress, history, userName, nameInput:'',
+      isRetry:false, retryQueue:[], total:0, qPos:0, current:null,
+      attempts:0, correctCount:0, wrong:[],
+      feedback:null, lastResult:null, narrow:this.isNarrow(),
+    };
+  }
+
+  isNarrow(){ try{ return window.matchMedia('(max-width:700px)').matches; }catch(e){ return false; } }
+  componentDidMount(){
+    this._onResize=()=>{ const n=this.isNarrow(); if(n!==this.state.narrow) this.setState({narrow:n}); };
+    window.addEventListener('resize',this._onResize);
+  }
+  componentWillUnmount(){ if(this._onResize) window.removeEventListener('resize',this._onResize); }
+
+  rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+  shuffle(a){ const r=a.slice(); for(let i=r.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]]; } return r; }
+  qCount(){ return this.props.questionsPerStage ?? 8; }
+  soundOn(){ return this.props.soundOn ?? true; }
+  autoAdvance(){ return this.props.autoAdvance ?? true; }
+  cleared(i){ return this.state.progress[i]||0; }
+  loadUsers(){ try{ const p=localStorage.getItem('hangulfairy_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } }
+  saveUsers(u){ try{ localStorage.setItem('hangulfairy_users',JSON.stringify(u)); }catch(e){} }
+  persist(progress,history){ const nm=this.state.userName; if(!nm) return; const users=this.loadUsers(); users[nm]=Object.assign({progress:{},history:[]},users[nm],{progress,history}); this.saveUsers(users); try{ localStorage.setItem('hangulfairy_user',nm); }catch(e){} }
+  setNameInput(v){ this.setState({nameInput:v}); }
+  confirmName(){ const nm=(this.state.nameInput||'').trim().slice(0,10); if(!nm) return; this.playClick(); const users=this.loadUsers(); const u=users[nm]||{progress:{},history:[]}; users[nm]=u; this.saveUsers(users); try{ localStorage.setItem('hangulfairy_user',nm); }catch(e){} this.setState({userName:nm, progress:u.progress||{}, history:u.history||[], screen:'home'}); }
+  pickUser(nm){ this.playClick(); const users=this.loadUsers(); const u=users[nm]||{progress:{},history:[]}; try{ localStorage.setItem('hangulfairy_user',nm); }catch(e){} this.setState({userName:nm, progress:u.progress||{}, history:u.history||[], screen:'home'}); }
+  changeUser(){ this.playClick(); this.setState({screen:'name', nameInput:''}); }
+  // 지도 진행도(progress)만 초기화해 처음부터 다시. 기록(history)은 그대로 남겨 난이도 조절에 계속 활용.
+  newAdventure(){
+    if(!window.confirm('처음부터 다시 시작할까요?\n지금까지의 기록은 그대로 남아요 📒')) return;
+    this.playClick(); const progress={}; this.persist(progress, this.state.history);
+    this.setState({progress, screen:'home', islandIndex:0, level:1});
+  }
+  openRecords(){ this.playClick(); this.setState({screen:'records'}); }
+  closeRecords(){ this.playClick(); this.setState({screen:'home'}); }
+
+  _buildTrail(p){ const d=[]; for(let i=0;i<p.length-1;i++){ const a=p[i],b=p[i+1];
+      for(let s=1;s<=5;s++){ const f=s/6; const x=a.x+(b.x-a.x)*f, y=a.y+(b.y-a.y)*f;
+        d.push({style:`position:absolute;left:${x}%;top:${y}%;width:14px;height:14px;background:#c98adf;border:2px solid #7b5aa8;border-radius:50%;transform:translate(-50%,-50%);opacity:.7`}); } }
+    return d;
+  }
+
+  audio(){ try{ if(!this._actx){ const AC=window.AudioContext||window.webkitAudioContext; this._actx=new AC(); } if(this._actx.state==='suspended') this._actx.resume(); return this._actx; }catch(e){ return null; } }
+  tone(freq,start,dur,type,vol){ const c=this.audio(); if(!c)return; const o=c.createOscillator(),g=c.createGain(); o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(c.destination); const t=c.currentTime+start; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||0.2,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.02); }
+  playCorrect(){ if(!this.soundOn())return; [659,784,988].forEach((f,i)=>this.tone(f,i*0.09,0.18,'triangle',0.24)); }
+  playWrong(){ if(!this.soundOn())return; this.tone(330,0,0.14,'sine',0.14); this.tone(240,0.12,0.2,'sine',0.14); }
+  playClick(){ if(!this.soundOn())return; this.tone(740,0,0.05,'sine',0.1); }
+  playFanfare(){ if(!this.soundOn())return; [659,659,659,784,988,1047].forEach((f,i)=>this.tone(f,i*0.13,0.22,'triangle',0.25)); this.applause(0.2); }
+  applause(delay){ const c=this.audio(); if(!c)return; for(let k=0;k<10;k++){ const b=c.createBuffer(1,1200,c.sampleRate); const ch=b.getChannelData(0); for(let i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*(1-i/ch.length); const src=c.createBufferSource(); src.buffer=b; const g=c.createGain(); g.gain.value=0.06; src.connect(g); g.connect(c.destination); src.start(c.currentTime+(delay||0)+k*0.05); } }
+
+  // ---- adaptive difficulty (누적 기록 기반) ----
+  // 최근 성적 위주로 주제별 난이도 오프셋 d 계산. -1(쉽게) ~ 0(기준 70%) ~ +1(어렵게).
+  topicDiff(topic){
+    const st=this.stages, recs=(this.state.history||[]).filter(r=>st[r.island]&&st[r.island].topic===topic&&r.total>0);
+    if(!recs.length) return 0;
+    const last=recs.slice(-5); let ws=0, acc=0;
+    last.forEach((r,i)=>{ const w=i+1; ws+=w; acc+=w*(r.correct/r.total); }); // 최근 판일수록 가중치 큼
+    return Math.max(-1, Math.min(1, (acc/ws-0.7)/0.2));
+  }
+  // [lo,hi] 창을 d만큼 이동/축소. d>0이면 위로(어렵게), d<0이면 위쪽을 깎아(쉽게). [min,max]로 클램프.
+  adjRange(lo,hi,d,min,max){
+    const k=Math.round((hi-lo)*0.4*d);
+    let nlo=lo+Math.max(0,k), nhi=hi+k;
+    if(min!=null){ nlo=Math.max(min,nlo); nhi=Math.max(min+1,nhi); }
+    if(max!=null){ nhi=Math.min(max,nhi); nlo=Math.min(nlo,nhi-1); }
+    return [nlo,nhi];
+  }
+  // 숫자 범위 대신 '낱말 풀의 난이도 등급'을 조절한다. 등급 L은 1..30 척도의 [10L-9, 10L] 칸을 차지하고,
+  // adjRange 로 옮긴 창과 겹치는 등급만 후보가 된다. 잘 맞히면 위 등급 낱말이 섞여 들어온다.
+  poolLevels(level,d){
+    const [a,b]=this.adjRange((level-1)*10+1, level*10, d, 1, 30);
+    const out=[];
+    for(let L=1;L<=3;L++){ const lo=(L-1)*10+1, hi=L*10; if(a<=hi && b>=lo) out.push(L); }
+    return out.length?out:[level];
+  }
+  wordPool(level,d,noSound){
+    const lvs=this.poolLevels(level,d);
+    let pool=this.WORDS.filter(x=>lvs.indexOf(x.lv)>=0);
+    if(noSound) pool=pool.filter(x=>!x.s);
+    if(!pool.length) pool=noSound?this.WORDS.filter(x=>!x.s):this.WORDS;
+    return pool;
+  }
+
+  // ---- 한글 분해·조합 ----
+  decomp(ch){ const c=(ch||'').charCodeAt(0)-0xAC00; if(!(c>=0&&c<11172)) return null;
+    return [this.CHO[Math.floor(c/588)], this.JUNG[Math.floor((c%588)/28)], this.JONG[c%28]]; }
+  comp(c,v,t){ const i=this.CHO.indexOf(c), j=this.JUNG.indexOf(v), k=this.JONG.indexOf(t||'');
+    if(i<0||j<0||k<0) return ''; return String.fromCharCode(0xAC00+i*588+j*28+k); }
+  hasJong(w){ const p=this.decomp(w[w.length-1]); return !!(p&&p[2]); }
+  // 받침 하나만 다르거나 획이 비슷한 자모로 바꾼, '헷갈리는' 오답 낱말들
+  nearWords(w,n){
+    const out=[]; let guard=0;
+    while(out.length<n && guard++<300){
+      const i=this.rand(0,w.length-1); const p=this.decomp(w[i]); if(!p) continue;
+      const q=p.slice(); const mode=this.rand(0,2);
+      if(mode===0){
+        const cand=(p[2]?this.SIMPLE_JONG.concat(['']):this.SIMPLE_JONG).filter(x=>x!==p[2]);
+        q[2]=this.pick(cand);
+      } else {
+        const m=mode===1?1:0;
+        const valid=m===1?this.JUNG:this.CHO;
+        let cand=(this.LOOKALIKE[p[m]]||[]).filter(x=>valid.indexOf(x)>=0 && x!==p[m]);
+        if(!cand.length) cand=valid.filter(x=>x!==p[m]);
+        q[m]=this.pick(cand);
+      }
+      const ch=this.comp(q[0],q[1],q[2]); if(!ch) continue;
+      const nw=w.slice(0,i)+ch+w.slice(i+1);
+      if(nw!==w && out.indexOf(nw)<0) out.push(nw);
+    }
+    return out;
+  }
+  mkOpts(answer,wrongs,n){
+    const out=[answer];
+    for(const w of (wrongs||[])){ if(out.length>=(n||4)) break; if(out.indexOf(w)<0) out.push(w); }
+    return this.shuffle(out);
+  }
+
+  generateQuestion(topic,level){
+    const d=this.topicDiff(topic);
+    if(topic==='jamo') return this.genJamo(level);
+    if(topic==='combine') return this.genCombine(level,d);
+    if(topic==='word') return this.genWord(level,d);
+    if(topic==='sound') return this.genSound(level,d);
+    return this.genMean(level,d);
+  }
+
+  // 🌳 자음 모음 숲
+  genJamo(l){
+    if(l===3){
+      const c=this.pick(this.CONS), v=this.pick(this.VOWS);
+      const jongSet=[['ㄱ','기역'],['ㄴ','니은'],['ㄹ','리을'],['ㅁ','미음'],['ㅂ','비읍'],['ㅇ','이응'],['ㅅ','시옷']];
+      const useJong=Math.random()<0.8;
+      const j=useJong?this.pick(jongSet):null;
+      const ans=this.comp(c[0],v[0],j?j[0]:'');
+      if(!ans) return this.genJamo(1);
+      const wrongs=[];
+      // 받침만 다른 글자 → 받침 듣기 연습
+      this.shuffle(jongSet.map(x=>x[0]).concat([''])).forEach(x=>{
+        if(x===(j?j[0]:'')) return; const ch=this.comp(c[0],v[0],x); if(ch && ch!==ans) wrongs.push(ch);
+      });
+      // 모음만 비슷하게 다른 글자 하나
+      const vn=(this.LOOKALIKE[v[0]]||[]).filter(x=>this.JUNG.indexOf(x)>=0);
+      if(vn.length){ const ch=this.comp(c[0],this.pick(vn),j?j[0]:''); if(ch&&ch!==ans) wrongs.unshift(ch); }
+      const names=[c[1],v[1]].concat(j?[j[1]]:[]);
+      return {kind:'jamo',input:'choice',prompt:`‘${names.join(' + ')}’ 을 합치면 어떤 글자일까요?`,
+        answer:ans, answerLabel:ans, word:ans, optFont:'clamp(36px,10vw,52px)',
+        options:this.mkOpts(ans,wrongs,4).map(v2=>({label:v2,value:v2}))};
+    }
+    const set = l===1 ? this.CONS.concat(this.VOWS) : this.CONS2.concat(this.VOWS2);
+    const t=this.pick(set);
+    const byGlyph={}; this.CONS.concat(this.VOWS,this.CONS2,this.VOWS2).forEach(p=>{ byGlyph[p[0]]=p[1]; });
+    let others=(this.LOOKALIKE[t[0]]||[]).filter(g=>byGlyph[g]&&g!==t[0]).map(g=>[g,byGlyph[g]]);
+    for(const p of this.shuffle(set)){ if(others.length>=3) break; if(p[0]!==t[0] && !others.some(o=>o[0]===p[0])) others.push(p); }
+    others=others.slice(0,3);
+    const opts=this.shuffle([t].concat(others));
+    if(Math.random()<0.5){
+      return {kind:'jamo',input:'choice',prompt:'이 글자의 이름은 무엇일까요?', bigText:t[0],
+        answer:t[1], answerLabel:t[1], word:`${t[0]}  ${t[1]}`, optFont:'clamp(22px,5.6vw,30px)',
+        options:opts.map(o=>({label:o[1],value:o[1]}))};
+    }
+    return {kind:'jamo',input:'choice',prompt:`‘${t[1]}’ 은 어느 글자일까요?`,
+      answer:t[0], answerLabel:t[0], word:`${t[0]}  ${t[1]}`, optFont:'clamp(40px,11vw,56px)',
+      options:opts.map(o=>({label:o[0],value:o[0]}))};
+  }
+
+  // ✨ 글자 마법방
+  pickSylWithJong(level,d){
+    const pool=this.wordPool(level,d,true);
+    for(let i=0;i<50;i++){
+      const w=this.pick(pool).w;
+      const cands=w.split('').filter(ch=>{ const p=this.decomp(ch); return !!(p && this.SIMPLE_JONG.indexOf(p[2])>=0); });
+      if(cands.length) return this.pick(cands);
+    }
+    return '감';
+  }
+  genCombine(l,d){
+    if(l===3){
+      const t=this.pick(this.DOUBLE);
+      const j=this.decomp(t.syl)[2];
+      const all=['ㄺ','ㄼ','ㄶ','ㄵ','ㅄ','ㄻ','ㅀ','ㄳ'];
+      const wrongs=this.shuffle(all.filter(x=>x!==j));
+      return {kind:'combine',input:'choice',prompt:`‘${t.syl}’ 의 받침은 무엇일까요?`, emoji:t.e, bigText:t.w,
+        hint:'받침이 두 개 겹쳐 있어요', answer:j, answerLabel:j, word:`${t.w}  ·  받침 ${j}`,
+        optFont:'clamp(34px,9vw,46px)',
+        options:this.mkOpts(j,wrongs,4).map(v=>({label:v,value:v}))};
+    }
+    const syl=this.pickSylWithJong(l,d);
+    const p=this.decomp(syl);
+    if(l===2){
+      const right=`${p[0]} + ${p[1]} + ${p[2]}`;
+      const wrongs=[]; let guard=0;
+      while(wrongs.length<3 && guard++<120){
+        const q=p.slice(); const m=this.rand(0,2);
+        const valid=m===0?this.CHO:(m===1?this.JUNG:this.SIMPLE_JONG);
+        let cand=(this.LOOKALIKE[p[m]]||[]).filter(x=>valid.indexOf(x)>=0 && x!==p[m]);
+        if(!cand.length) cand=valid.filter(x=>x!==p[m]);
+        q[m]=this.pick(cand);
+        const s=`${q[0]} + ${q[1]} + ${q[2]}`;
+        if(s!==right && wrongs.indexOf(s)<0) wrongs.push(s);
+      }
+      return {kind:'combine',input:'choice',prompt:'이 글자를 바르게 나눈 것은?', bigText:syl,
+        answer:right, answerLabel:right, word:`${syl} = ${right}`, optFont:'clamp(19px,5vw,26px)',
+        options:this.mkOpts(right,wrongs,4).map(v=>({label:v,value:v}))};
+    }
+    const base=this.comp(p[0],p[1],'');
+    const wrongs=this.shuffle(this.SIMPLE_JONG.filter(x=>x!==p[2])).map(x=>this.comp(p[0],p[1],x)).filter(x=>x&&x!==syl);
+    return {kind:'combine',input:'choice',prompt:'받침을 붙이면 어떤 글자가 될까요?', cA:base, cB:p[2],
+      answer:syl, answerLabel:syl, word:`${base} + ${p[2]} = ${syl}`, optFont:'clamp(36px,10vw,50px)',
+      options:this.mkOpts(syl,wrongs,4).map(v=>({label:v,value:v}))};
+  }
+
+  // 🏡 그림 낱말 마을
+  genWord(l,d){
+    const t=this.pick(this.wordPool(l,d,false));
+    const wrongs=[];
+    if(t.s) wrongs.push(t.s); // 소리 나는 대로 쓴 것 = 가장 헷갈리는 오답
+    this.nearWords(t.w, 4).forEach(x=>wrongs.push(x));
+    return {kind:'word',input:'choice',
+      prompt: t.s?'바르게 쓴 낱말을 골라요!':'그림에 맞는 낱말을 골라요!',
+      emoji:t.e, answer:t.w, answerLabel:t.w, word:t.w,
+      read: t.s?`소리는 [${t.s}] 지만 이렇게 써요`:'',
+      optFont:'clamp(24px,6.4vw,34px)',
+      options:this.mkOpts(t.w,wrongs,4).map(v=>({label:v,value:v}))};
+  }
+
+  // 🐚 첫소리 바닷가
+  genSound(l,d){
+    if(l===3){
+      const c=this.pick(this.CHAIN);
+      const syl=c[0][c[0].length-1];
+      const wrongs=this.shuffle(this.CHAIN.filter(x=>x[1][0]!==syl && x[1]!==c[1])).map(x=>x[1]);
+      return {kind:'sound',input:'choice',prompt:'끝말잇기! 다음에 올 낱말을 골라요.', bigText:`${c[0]} → ?`,
+        hint:`‘${syl}’ 으로 시작하는 낱말`, answer:c[1], answerLabel:c[1], word:`${c[0]} → ${c[1]}`,
+        optFont:'clamp(22px,5.8vw,30px)',
+        options:this.mkOpts(c[1],wrongs,4).map(v=>({label:v,value:v}))};
+    }
+    const pool=this.wordPool(l,d,true);
+    const t=this.pick(pool);
+    if(l===2){
+      const first=Math.random()<0.5;
+      const key=first?this.decomp(t.w[0])[0]:(this.decomp(t.w[t.w.length-1])||[])[2];
+      const keyOf=(x)=>first?this.decomp(x.w[0])[0]:(this.decomp(x.w[x.w.length-1])||[])[2];
+      const matches=key?this.WORDS.filter(x=>!x.s && x.w!==t.w && keyOf(x)===key):[];
+      if(!matches.length) return this.genSound(1,d);
+      const ans=this.pick(matches);
+      const wrongs=this.shuffle(this.WORDS.filter(x=>!x.s && x.w!==t.w && x.w!==ans.w && keyOf(x)!==key));
+      const byWord={}; this.WORDS.forEach(x=>{ byWord[x.w]=x.e; });
+      return {kind:'sound',input:'choice',
+        prompt: first?`‘${t.w}’ 과 첫소리가 같은 낱말은?`:`‘${t.w}’ 과 끝소리가 같은 낱말은?`,
+        emoji:t.e, hint:`${first?'첫':'끝'}소리는  ${key}`,
+        answer:ans.w, answerLabel:ans.w, word:`${t.w}  ·  ${ans.w}`, optFont:'clamp(21px,5.4vw,28px)',
+        options:this.mkOpts(ans.w, wrongs.map(x=>x.w), 4).map(v=>({label:`${byWord[v]||''} ${v}`.trim(),value:v}))};
+    }
+    const lastP=this.decomp(t.w[t.w.length-1]);
+    const askEnd=!!(lastP&&lastP[2]) && Math.random()<0.5;
+    const key=askEnd?lastP[2]:this.decomp(t.w[0])[0];
+    const plain=this.CHO.filter(x=>['ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'].indexOf(x)<0);
+    let wrongs=(this.LOOKALIKE[key]||[]).filter(x=>plain.indexOf(x)>=0 && x!==key);
+    wrongs=wrongs.concat(this.shuffle(plain.filter(x=>x!==key)));
+    return {kind:'sound',input:'choice',
+      prompt: askEnd?`‘${t.w}’ 의 끝소리는 무엇일까요?`:`‘${t.w}’ 의 첫소리는 무엇일까요?`,
+      emoji:t.e, bigText:t.w,
+      answer:key, answerLabel:key, word:`${t.w}  ·  ${askEnd?'끝':'첫'}소리 ${key}`,
+      optFont:'clamp(38px,10vw,52px)',
+      options:this.mkOpts(key,wrongs,4).map(v=>({label:v,value:v}))};
+  }
+
+  // 🎪 말놀이 언덕
+  genMean(l,d){
+    if(l===1){
+      const p=this.pick(this.OPPO); const flip=Math.random()<0.5;
+      const q=flip?p[1]:p[0], a=flip?p[0]:p[1];
+      const wrongs=this.shuffle(this.OPPO.filter(x=>x[0]!==p[0]).map(x=>this.pick(x))).filter(x=>x!==a&&x!==q);
+      return {kind:'mean',input:'choice',prompt:'반대말을 골라요!', bigText:q,
+        answer:a, answerLabel:a, word:`${q}  ↔  ${a}`, optFont:'clamp(23px,6vw,31px)',
+        options:this.mkOpts(a,wrongs,4).map(v=>({label:v,value:v}))};
+    }
+    if(l===2){
+      if(Math.random()<0.5){
+        const g=this.pick(this.GROUPS);
+        const other=this.pick(this.GROUPS.filter(x=>x.n!==g.n));
+        const three=this.shuffle(g.items).slice(0,3);
+        const oddPool=other.items.filter(it=>!g.items.some(x=>x[0]===it[0]));
+        if(!oddPool.length) return this.genMean(1,d);
+        const odd=this.pick(oddPool);
+        const opts=this.shuffle(three.concat([odd]));
+        return {kind:'mean',input:'choice',prompt:'무리에서 다른 하나를 골라요!',
+          answer:odd[0], answerLabel:odd[0], word:`${odd[1]} ${odd[0]}`,
+          read:`나머지 셋은 모두 ‘${g.n}’ 이에요`, optFont:'clamp(21px,5.4vw,28px)',
+          options:opts.map(o=>({label:`${o[1]} ${o[0]}`,value:o[0]}))};
+      }
+      const p=this.pick(this.SIMI); const flip=Math.random()<0.5;
+      const q=flip?p[1]:p[0], a=flip?p[0]:p[1];
+      const wrongs=this.shuffle(this.SIMI.filter(x=>x[0]!==p[0]).map(x=>this.pick(x))).filter(x=>x!==a&&x!==q);
+      return {kind:'mean',input:'choice',prompt:'비슷한 말을 골라요!', bigText:q,
+        answer:a, answerLabel:a, word:`${q}  ≈  ${a}`, optFont:'clamp(21px,5.4vw,28px)',
+        options:this.mkOpts(a,wrongs,4).map(v=>({label:v,value:v}))};
+    }
+    if(Math.random()<0.5){
+      const t=this.pick(this.WORDS.filter(x=>x.lv<3));
+      const jong=this.hasJong(t.w);
+      const kinds=[
+        {pair:['은','는'], other:['을','를'], t:`${t.w}(  ) 참 예뻐요.`},
+        {pair:['이','가'], other:['을','를'], t:`${t.w}(  ) 여기 있어요.`},
+        {pair:['을','를'], other:['이','가'], t:`나는 ${t.w}(  ) 그려요.`},
+      ];
+      const k=this.pick(kinds);
+      const a=jong?k.pair[0]:k.pair[1];
+      const opts=this.shuffle(k.pair.concat(k.other));
+      return {kind:'mean',input:'choice',prompt:'빈칸에 알맞은 말을 골라요!', sentence:k.t,
+        hint: jong?`‘${t.w[t.w.length-1]}’ 에 받침이 있어요`:`‘${t.w[t.w.length-1]}’ 에 받침이 없어요`,
+        answer:a, answerLabel:a, word:k.t.replace('(  )',`( ${a} )`), optFont:'clamp(32px,8.5vw,44px)',
+        options:opts.map(v=>({label:v,value:v}))};
+    }
+    const s=this.pick(this.SENT);
+    return {kind:'mean',input:'choice',prompt:'빈칸에 알맞은 낱말을 골라요!', sentence:s.t,
+      answer:s.a, answerLabel:s.a, word:s.t.replace('(  )',`( ${s.a} )`), optFont:'clamp(22px,5.8vw,30px)',
+      options:this.shuffle([s.a].concat(s.d)).map(v=>({label:v,value:v}))};
+  }
+
+  startGame(){ this.playClick(); this.setState({screen:'map'}); }
+  goHome(){ this.playClick(); this.setState({screen:'home'}); }
+  openIsland(i){ this.playClick(); this.setState({screen:'island', islandIndex:i}); }
+  backToMap(){ this.playClick(); this.setState({screen:'map'}); }
+  backToIsland(){ this.playClick(); this.setState({screen:'island', feedback:null}); }
+  openStage(level){ const i=this.state.islandIndex; if(level<=this.cleared(i)+1){ this.playClick(); this.begin(i,level); } else { this.playWrong(); } }
+  begin(i,level){ this.setState({screen:'quiz', islandIndex:i, level, isRetry:false, total:this.qCount(), qPos:0, correctCount:0, wrong:[], attempts:0, feedback:null, startedAt:Date.now(), current:this.generateQuestion(this.stages[i].topic,level)}); }
+
+  choose(v){ if(this.state.feedback) return; this.check(v); }
+  check(val){
+    const cur=this.state.current;
+    const ok=String(val)===String(cur.answer);
+    if(ok){
+      this.playCorrect();
+      this.setState(s=>({feedback:{correct:true, msg:this.pick(this.GOOD), emoji:this.pick(this.EMO_GOOD), word:cur.word||cur.answerLabel, read:cur.read||''}, correctCount:s.correctCount+1}));
+      // 정답 낱말을 크게 읽을 시간을 준다.
+      if(this.autoAdvance()) setTimeout(()=>{ if(this.state.feedback && this.state.feedback.correct) this.next(); }, 1700);
+    } else {
+      this.playWrong();
+      this.setState(s=>{
+        const attempts=s.attempts+1;
+        const exhausted=attempts>=this.MAX_TRY;
+        return {
+          attempts,
+          feedback: exhausted
+            ? {correct:false, exhausted:true, msg:'괜찮아! 같이 읽어 볼까?', emoji:'🥺', word:cur.word||cur.answerLabel, read:cur.read||''}
+            : {correct:false, canRetry:true, msg:'앗, 다시 해볼까?', emoji:'🤔'},
+          wrong: exhausted ? s.wrong.concat([cur]) : s.wrong,
+        };
+      });
+    }
+  }
+  retrySame(){ this.playClick(); this.setState({feedback:null}); }
+  next(){
+    const s=this.state; const pos=s.qPos+1;
+    if(pos>=s.total){ this.finish(); return; }
+    const q = s.isRetry ? s.retryQueue[pos] : this.generateQuestion(this.stages[s.islandIndex].topic, s.level);
+    this.setState({qPos:pos, current:q, feedback:null, attempts:0});
+  }
+  fmtSecs(n){ return n>=60 ? `${Math.floor(n/60)}분 ${n%60}초` : `${n}초`; }
+  // 같은 섬·같은 단계에서 통과한 이전 기록 중 최단 시간. 없으면 Infinity.
+  bestSecs(history, island, level){
+    return (history||[]).filter(r=>r.island===island && r.level===level && r.passed && !r.isRetry && r.secs)
+      .reduce((m,r)=>Math.min(m,r.secs), Infinity);
+  }
+  finish(){
+    const s=this.state, total=s.total, correct=s.correctCount, ratio=total?correct/total:0;
+    const stars = ratio>=0.9?3: ratio>=0.7?2: ratio>=0.4?1:0;
+    const passed = ratio>=0.7;
+    let progress=Object.assign({}, s.progress);
+    if(passed && !s.isRetry){ progress[s.islandIndex]=Math.max(progress[s.islandIndex]||0, s.level); }
+    const st=this.stages[s.islandIndex];
+    const secs=Math.max(1, Math.round((Date.now()-(s.startedAt||Date.now()))/1000));
+    const isBest = passed && !s.isRetry && secs < this.bestSecs(s.history, s.islandIndex, s.level);
+    const rec={island:s.islandIndex, icon:st.icon, sname:st.name, level:s.level, correct, total, stars, passed, isRetry:s.isRetry, secs, date:Date.now()};
+    const history=(s.history||[]).concat([rec]);
+    this.persist(progress,history);
+    if(passed) this.playFanfare();
+    this.setState({screen:'result', progress, history, feedback:null, lastResult:{correct,total,stars,passed,secs,isBest,wrong:s.wrong.slice(),islandIndex:s.islandIndex,level:s.level,isRetry:s.isRetry}});
+  }
+  retryWrong(){ const w=this.state.lastResult.wrong; if(!w.length) return; this.playClick(); this.setState({screen:'quiz', isRetry:true, retryQueue:w, total:w.length, qPos:0, current:w[0], feedback:null, correctCount:0, wrong:[], attempts:0, startedAt:Date.now()}); }
+  playAgain(){ this.playClick(); this.begin(this.state.lastResult.islandIndex, this.state.lastResult.level); }
+  nextStage(){ const lr=this.state.lastResult; if(lr.level<this.STAGES){ this.playClick(); this.begin(lr.islandIndex, lr.level+1); } else { this.backToIsland(); } }
+
+  renderVals(){
+    const s=this.state;
+    const island=this.stages[s.islandIndex]||this.stages[0];
+    const medalCount=this.stages.filter((_,i)=>(s.progress[i]||0)>=this.STAGES).length;
+
+    const stageBadges=this.stages.map((st,i)=>{ const done=(s.progress[i]||0)>=this.STAGES;
+      return {name:st.short, face: done?'🏵️':st.icon,
+        style:`width:98px;padding:12px 6px;border-radius:16px;border:3px solid ${done?'#d1568f':'#e6b8d2'};background:${done?'#fff0f8':'#f7dcea'};box-shadow:0 5px 0 ${done?'#d1568f':'#e6b8d2'};opacity:${done?1:0.6};`};
+    });
+
+    // 좁은 화면은 2열 배치 + 노드 축소로 겹침을 없앤다.
+    const nar=s.narrow;
+    const posList = nar?this.nodePosNarrow:this.nodePos;
+    const dia = nar?58:84, ico = nar?28:40, pf = nar?12:15, gf = nar?11:13;
+    const nodes=this.stages.map((st,i)=>{
+      const cl=s.progress[i]||0; const full=cl>=this.STAGES; const pos=posList[i];
+      const bg=full?'#4fb06a':st.color; const border=full?'#3a8a50':'#ff8ec0';
+      const extra=full?'':'animation:pulsering 2.2s infinite;';
+      return {
+        face: st.icon, iconStyle:`font-size:${ico}px;line-height:1;`,
+        label: (full?'🏵️ ':'')+st.name,
+        prog: '⭐ '+cl+' / '+this.STAGES,
+        wrapStyle:`position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:${nar?3:5}px;`,
+        circleStyle:`width:${dia}px;height:${dia}px;border-radius:50%;background:${bg};border:${nar?4:6}px solid ${border};box-shadow:0 ${nar?5:8}px 0 rgba(0,0,0,.14);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.06s;${extra}`,
+        pillStyle:`font-family:'Gaegu';font-weight:700;font-size:${pf}px;color:#54306b;background:#fff6fb;border:2px solid ${border};border-radius:12px;padding:${nar?'2px 7px':'3px 10px'};white-space:nowrap;box-shadow:0 3px 0 rgba(0,0,0,.1);`,
+        progStyle:`font-family:'Jua';font-size:${gf}px;color:#54306b;background:#ffe0ef;border:2px solid #d1568f;border-radius:10px;padding:1px ${nar?6:8}px;`,
+        onClick:()=>this.openIsland(i),
+      };
+    });
+    const trailDots=this._buildTrail(posList);
+    const mapStyle=`position:relative;width:min(1080px,97vw);aspect-ratio:${nar?'3/4':'16/9'};background:linear-gradient(150deg,#e8ffe4,#d5f4c9 55%,#bfe6ac);border:${nar?8:12}px solid #7b5aa8;border-radius:24px;box-shadow:inset 0 0 0 6px #cbb6ee, 0 14px 30px rgba(0,0,0,.2);overflow:hidden;`;
+
+    const cl=s.progress[s.islandIndex]||0;
+    const stageCards=[1,2,3].map(L=>{
+      const isCleared=L<=cl; const isOpen=L<=cl+1; const locked=!isOpen;
+      const bg = isCleared?'#d6f0dc' : (locked?'#eadff0':'#ffe6f3');
+      const bd = isCleared?'#4fb06a' : (locked?'#c3aed6':island.color);
+      return {
+        top: locked?'🔒':(isCleared?'✅':'▶️'),
+        title:'Lv.'+L,
+        desc:this.LEVEL_DESC[L-1],
+        stars: isCleared?'⭐⭐⭐':(locked?'잠김':'도전 가능'),
+        style:`width:164px;padding:20px 10px;border-radius:22px;border:5px solid ${bd};background:${bg};box-shadow:0 7px 0 ${bd};color:#54306b;cursor:${locked?'not-allowed':'pointer'};opacity:${locked?0.6:1};transition:.06s;`,
+        onClick:()=>this.openStage(L),
+      };
+    });
+
+    const cur=s.current; let q=null;
+    if(cur){
+      q={ prompt:cur.prompt||'', hasPrompt:!!cur.prompt,
+        hasEmoji:!!cur.emoji, emoji:cur.emoji||'',
+        hasBig:!!cur.bigText, bigText:cur.bigText||'',
+        hasCombine:!!cur.cA, cA:cur.cA||'', cB:cur.cB||'',
+        hasSentence:!!cur.sentence, sentence:cur.sentence||'',
+        hasHint:!!cur.hint, hint:cur.hint||'',
+        optFont:cur.optFont||'clamp(24px,6.4vw,34px)',
+        options:(cur.options||[]).map(o=>({label:o.label, onClick:()=>this.choose(o.value)})),
+      };
+    }
+    const fb=s.feedback;
+    const heartsLeft=Math.max(0,this.MAX_TRY-s.attempts);
+    const hearts='💖'.repeat(heartsLeft)+'🤍'.repeat(this.MAX_TRY-heartsLeft);
+
+    let mascotAnim='animation:floaty 3.5s ease-in-out infinite;';
+    if(fb){ mascotAnim = fb.correct?'animation:jump .6s ease-out;':'animation:shakex .5s;'; }
+    const mascotStyle=`position:fixed;left:${s.narrow?8:22}px;bottom:${s.narrow?6:16}px;font-size:${s.narrow?38:64}px;z-index:30;pointer-events:none;opacity:${s.narrow?0.85:1};filter:drop-shadow(0 8px 6px rgba(0,0,0,.18));${mascotAnim}`;
+    // 병아리 동료(우하단): idle만 다르게, 정답/오답 반응은 유니콘과 동일
+    let chickAnim='animation:bob 3s ease-in-out infinite;';
+    if(fb){ chickAnim = fb.correct?'animation:jump .6s ease-out;':'animation:shakex .5s;'; }
+    const mascotStyle2=`position:fixed;right:${s.narrow?8:22}px;bottom:${s.narrow?6:16}px;font-size:${s.narrow?38:64}px;z-index:30;pointer-events:none;opacity:${s.narrow?0.85:1};filter:drop-shadow(0 8px 6px rgba(0,0,0,.18));${chickAnim}`;
+
+    const confettiEl = fb && fb.correct ? this.confetti(18,'absolute') : null;
+
+    const lr=s.lastResult||{correct:0,total:0,stars:0,passed:false,wrong:[],islandIndex:0,level:1,isRetry:false};
+    const starIcons=[0,1,2].map(i=>({ face: i<lr.stars?'⭐':'☆',
+      style:`font-size:52px;${i<lr.stars?'animation:starpop .5s ease-out '+(i*0.18)+'s both;':'opacity:.4;'}`}));
+    const passed=lr.passed;
+    const nextExists = lr.level<this.STAGES;
+    const resultMedal = passed ? (nextExists?'🏵️':'👑') : '💪';
+    const rIsland=this.stages[lr.islandIndex]||island;
+
+    const fmtDate=(t)=>{ const d=new Date(t); const mm=d.getMonth()+1, dd=d.getDate(); const hh=String(d.getHours()).padStart(2,'0'), mi=String(d.getMinutes()).padStart(2,'0'); return `${mm}월 ${dd}일 ${hh}:${mi}`; };
+    const records=(s.history||[]).slice().reverse().map(r=>({
+      icon:r.icon, title:`${r.sname} · Lv.${r.level}${r.isRetry?' (복습)':''}`,
+      score:`${r.correct} / ${r.total}`,
+      stars:'⭐'.repeat(r.stars)+'☆'.repeat(3-r.stars),
+      date:fmtDate(r.date)+(r.secs?` · ⏱️ ${this.fmtSecs(r.secs)}`:''),
+      badge:r.passed?'통과 🏵️':'재도전 💪',
+      style:`display:flex;align-items:center;gap:12px;background:${r.passed?'#f2fbf2':'#fff0f8'};border:3px solid ${r.passed?'#4fb06a':'#e6b8d2'};border-radius:16px;padding:10px 14px;text-align:left;`,
+    }));
+    const userList=Object.keys(this.loadUsers()).slice(0,8).map(nm=>({ name:nm, onClick:()=>this.pickUser(nm) }));
+    return {
+      isHome:s.screen==='home', isMap:s.screen==='map', isIsland:s.screen==='island', isQuiz:s.screen==='quiz', isResult:s.screen==='result',
+      isName:s.screen==='name', isRecords:s.screen==='records',
+      userName:s.userName, greeting:s.userName?`${s.userName} 어린이, 환영해요! 💕`:'',
+      nameInput:s.nameInput,
+      onNameInput:(e)=>this.setNameInput(e.target.value),
+      confirmName:()=>this.confirmName(), changeUser:()=>this.changeUser(), newAdventure:()=>this.newAdventure(),
+      openRecords:()=>this.openRecords(), closeRecords:()=>this.closeRecords(),
+      userList, hasUsers:userList.length>0,
+      records, hasRecords:records.length>0, noRecords:!records.length, recordCount:records.length,
+      startGame:()=>this.startGame(), goHome:()=>this.goHome(), backToMap:()=>this.backToMap(), backToIsland:()=>this.backToIsland(),
+      medalCount, stageBadges, nodes, trailDots, mapStyle,
+      islandName: s.screen==='result'?rIsland.name:island.name,
+      islandIcon: s.screen==='result'?rIsland.icon:island.icon,
+      islandDesc: island.desc,
+      stageCards,
+      levelLabel:'Lv.'+(s.screen==='result'?lr.level:s.level)+' '+this.LEVEL_DESC[(s.screen==='result'?lr.level:s.level)-1],
+      qNumber:Math.min(s.qPos+1, s.total||1), total:s.total||this.qCount(),
+      progressPct: s.total? Math.round((s.qPos/s.total)*100):0,
+      q,
+      next:()=>this.next(), retrySame:()=>this.retrySame(),
+      hearts,
+      mascotFace:'🦄', mascotStyle, mascotFace2:'🐥', mascotStyle2,
+      showFeedback:!!fb, feedbackMsg:fb?fb.msg:'', feedbackEmoji:fb?fb.emoji:'',
+      feedbackColor: fb&&fb.correct?'#4fb06a':'#d1568f',
+      canRetry: !!(fb && fb.canRetry),
+      showNext: !!(fb && (fb.correct || fb.exhausted)),
+      showWord: !!(fb && fb.word), feedbackWord: fb?(fb.word||''):'',
+      hasRead: !!(fb && fb.read), feedbackRead: fb?(fb.read||''):'',
+      feedbackCardStyle:`position:relative;overflow:hidden;background:#fffafd;border:6px solid ${fb&&fb.correct?'#4fb06a':'#d1568f'};border-radius:26px;padding:26px 30px;text-align:center;box-shadow:0 14px 34px rgba(0,0,0,.28);min-width:min(340px,86vw);max-width:min(560px,92vw);animation:popin .35s ease-out;`,
+      confettiEl,
+      resultTitle: passed?'단계 통과!':'조금 더 해볼까?',
+      resultMessage: passed? (nextExists?'다음 단계가 열렸어! 🎉':'이 마을을 모두 완성했어! 👑') : '별 2개를 모으면 통과해요!',
+      resultMedal, resultCorrect:lr.correct, resultTotal:lr.total, starIcons,
+      hasTime: !!lr.secs, resultTime: lr.secs? `⏱️ 걸린 시간 ${this.fmtSecs(lr.secs)}${lr.isBest?'  🥇 최고 기록!':''}` : '',
+      hasWrong: lr.wrong.length>0, wrongCount:lr.wrong.length,
+      canNext: passed && nextExists && !lr.isRetry,
+      retryWrong:()=>this.retryWrong(), playAgain:()=>this.playAgain(), nextStage:()=>this.nextStage(),
+      resultConfettiEl: passed ? this.confetti(30,'fixed') : null,
+    };
+  }
+
+  confetti(n,pos){
+    const colors=['#ff8ec0','#f2a01c','#2f9bd1','#4fb06a','#a978d8','#ffd35c'];
+    return React.createElement('div',{style:{position:pos,inset:0,overflow:'hidden',pointerEvents:'none',zIndex:1}},
+      Array.from({length:n}).map((_,i)=>React.createElement('div',{key:i,style:{
+        position:'absolute', left:(3+i*(94/n))+'%', top:'-24px',
+        width:'12px', height:'16px', borderRadius:'2px',
+        background:colors[i%colors.length],
+        animation:`fall ${1+(i%5)*0.18}s ease-in ${(i%7)*0.09}s forwards`,
+      }})));
+  }
+}
+</script>
+</body>
+</html>
