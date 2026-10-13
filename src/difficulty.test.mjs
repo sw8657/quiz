@@ -1,6 +1,7 @@
 // 난이도 로직 셀프체크 — treasure-map-math.dc.html의 topicDiff/adjRange를 그대로 반영.
 // 실행: node src/difficulty.test.mjs   (프레임워크 없음)
 import assert from 'node:assert';
+import { readFileSync } from 'node:fs';
 
 const stages = [{topic:'add'},{topic:'sub'},{topic:'mul'},{topic:'three'},{topic:'time'},{topic:'length'}];
 
@@ -141,4 +142,17 @@ for(let i=0;i<500;i++){
   }
 }
 
-console.log('OK: difficulty + shape-pattern + stage-time + Lv4-5 checks passed');
+// ── callName: 받침 있는 이름에만 '이' (세 게임 공통) ──
+function callName(nm){ nm=nm||''; const c=nm.charCodeAt(nm.length-1); return (c>=0xAC00 && c<=0xD7A3 && (c-0xAC00)%28) ? nm+'이' : nm; }
+assert.strictEqual(callName('지한'), '지한이');
+assert.strictEqual(callName('시현'), '시현이');
+assert.strictEqual(callName('민수'), '민수');
+assert.strictEqual(callName('Tom'), 'Tom');
+assert.strictEqual(callName(''), '');
+const callSrc = callName.toString().replace(/^function /,'  ').replace(/\s+/g,' ');
+for(const f of ['treasure-map-math','fairy-land-math','hangul-fairy-land']){
+  const src=readFileSync(new URL(`./${f}.dc.html`, import.meta.url),'utf8').replace(/\s+/g,' ');
+  assert.ok(src.includes(callSrc.trim()), `${f}: callName이 테스트 사본과 다름`);
+}
+
+console.log('OK: difficulty + shape-pattern + stage-time + Lv4-5 + callName checks passed');
