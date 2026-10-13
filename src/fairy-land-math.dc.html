@@ -213,7 +213,7 @@ button{font-family:inherit;}
     </sc-if>
 
     <sc-if value="{{ q.hasBig }}" hint-placeholder-val="{{ false }}">
-      <div style="font-size:clamp(58px,17vw,96px);line-height:1;margin:4px 0 10px;">{{ q.bigText }}</div>
+      <div style="font-family:'Jua';font-size:clamp(40px,12vw,64px);color:#6b3a54;line-height:1.1;margin:4px 0 10px;">{{ q.bigText }}</div>
     </sc-if>
 
     <sc-if value="{{ q.isEquation }}" hint-placeholder-val="{{ true }}">
@@ -332,12 +332,17 @@ class Component extends DCLogic {
     // 좁은 화면은 가로 5칸이 겹쳐서 2열로. 마지막 하나는 가운데.
     this.nodePosNarrow = [{x:28,y:16},{x:72,y:16},{x:28,y:50},{x:72,y:50},{x:50,y:84}];
     this.GOOD = ['잘했어! 🎉','정답이야! ⭐','최고야! 👏','예뻐 예뻐! 🌸','반짝반짝! ✨','대단해! 🦋'];
+    this.SPLIT_EMO = ['🍬','🍭','🧁','🍓','🍩'];
+    this.NAME_GOOD = ['{n} 최고야! 👏','{n} 반짝반짝! ✨','역시 {n}! 💖','{n} 예뻐 예뻐! 🌸']; // {n}=부르는 이름(지한이, 시현이)
     this.EMO_GOOD = ['🎉','⭐','👏','🌸','💖','🦋'];
     this.SHAPES = [{e:'🔺',n:'세모'},{e:'🟦',n:'네모'},{e:'⭕',n:'동그라미'},{e:'⭐',n:'별'},{e:'💗',n:'하트'},{e:'🌙',n:'달'}];
     this.COLORS = [{e:'🔴',n:'빨강'},{e:'🟡',n:'노랑'},{e:'🔵',n:'파랑'},{e:'🟢',n:'초록'},{e:'🟣',n:'보라'},{e:'🟠',n:'주황'}];
     this.COUNT_EMO = ['🌸','🍓','🦋','⭐','🍭','🐥','🌷','🍎','🐝'];
     const users=(()=>{ try{ const p=localStorage.getItem('fairymath_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } })();
     let userName=''; try{ userName=localStorage.getItem('fairymath_user')||''; }catch(e){}
+    // 런처에서 ?name=지한 처럼 들어오면 그 아이로 바로 시작(처음이면 새로 만듦).
+    const qName=this.urlName();
+    if(qName){ userName=qName; if(!users[qName]){ users[qName]={progress:{},history:[]}; try{ localStorage.setItem('fairymath_users',JSON.stringify(users)); }catch(e){} } try{ localStorage.setItem('fairymath_user',qName); }catch(e){} }
     if(userName && !users[userName]) userName='';
     const progress=(userName && users[userName] && users[userName].progress)?users[userName].progress:{};
     const history=(userName && users[userName] && users[userName].history)?users[userName].history:[];
@@ -363,6 +368,11 @@ class Component extends DCLogic {
   soundOn(){ return this.props.soundOn ?? true; }
   autoAdvance(){ return this.props.autoAdvance ?? true; }
   cleared(i){ return this.state.progress[i]||0; }
+  urlName(){ try{ return (new URLSearchParams(window.location.search).get('name')||'').trim().slice(0,10); }catch(e){ return ''; } }
+  // 부를 때 쓰는 이름: 마지막 글자에 받침이 있으면 '이'를 붙인다(지한→지한이, 시현→시현이).
+  callName(nm){ nm=nm||''; const c=nm.charCodeAt(nm.length-1); return (c>=0xAC00 && c<=0xD7A3 && (c-0xAC00)%28) ? nm+'이' : nm; }
+  // 정답 칭찬: 이름이 있으면 절반은 이름을 불러 준다.
+  praise(){ const nm=this.state.userName; return (nm && Math.random()<0.5) ? this.pick(this.NAME_GOOD).replace('{n}',this.callName(nm)) : this.pick(this.GOOD); }
   loadUsers(){ try{ const p=localStorage.getItem('fairymath_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } }
   saveUsers(u){ try{ localStorage.setItem('fairymath_users',JSON.stringify(u)); }catch(e){} }
   persist(progress,history){ const nm=this.state.userName; if(!nm) return; const users=this.loadUsers(); users[nm]=Object.assign({progress:{},history:[]},users[nm],{progress,history}); this.saveUsers(users); try{ localStorage.setItem('fairymath_user',nm); }catch(e){} }
@@ -431,7 +441,14 @@ class Component extends DCLogic {
     let opts=this.shuffle([...set]).slice(0,4); if(!opts.includes(n)) opts[0]=n;
     return {kind:'count',input:'choice',prompt:'모두 몇 개일까요?',countEmoji:e,countN:n,answer:n,answerLabel:String(n)+'개',options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
   }
-  genAdd(l,d){ d=d||0; let ar,br; if(l===1){ar=[1,5];br=[1,5];} else if(l===2){ar=[2,9];br=[2,9];} else {ar=[4,13];br=[3,9];} const A=this.adjRange(ar[0],ar[1],d,1,19), B=this.adjRange(br[0],br[1],d,1,13); const a=this.rand(A[0],A[1]),b=this.rand(B[0],B[1]); return {kind:'add',input:'numpad',a,op:'+',b,answer:a+b,answerLabel:String(a+b)}; }
+  // 1학년 1학기 '모으기와 가르기': 10까지의 수를 두 수로 가르기. 입학 전 덧셈의 기초.
+  genSplit(l){
+    const n=l===2?this.rand(5,9):this.rand(6,10), a=this.rand(1,n-1), ans=n-a;
+    const opts=[ans]; this.shuffle([ans+1,ans-1,ans+2,ans-2,n,a]).forEach(v=>{ if(v>=0 && opts.length<4 && !opts.includes(v)) opts.push(v); });
+    return {kind:'split',input:'choice',prompt:`${this.SPLIT_EMO[n%this.SPLIT_EMO.length]} 모으면 ${n}! 빈칸의 수는?`,
+      bigText:`${a} + ? = ${n}`,answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+  }
+  genAdd(l,d){ d=d||0; if(l>=2 && Math.random()<0.3) return this.genSplit(l); let ar,br; if(l===1){ar=[1,5];br=[1,5];} else if(l===2){ar=[2,9];br=[2,9];} else {ar=[4,13];br=[3,9];} const A=this.adjRange(ar[0],ar[1],d,1,19), B=this.adjRange(br[0],br[1],d,1,13); const a=this.rand(A[0],A[1]),b=this.rand(B[0],B[1]); return {kind:'add',input:'numpad',a,op:'+',b,answer:a+b,answerLabel:String(a+b)}; }
   genSub(l,d){ d=d||0; let ar; if(l===1){ar=[2,9];} else if(l===2){ar=[5,15];} else {ar=[10,20];} const A=this.adjRange(ar[0],ar[1],d,2,25); const a=this.rand(A[0],A[1]),b=this.rand(1,a); return {kind:'sub',input:'numpad',a,op:'−',b,answer:a-b,answerLabel:String(a-b)}; }
   genCompare(l,d){ d=d||0; const base=l===1?9:(l===2?20:50); const max=this.adjRange(2,base,d,5,60)[1]; let a=this.rand(1,max),b=this.rand(1,max); while(a===b) b=this.rand(1,max); const askBig=Math.random()<0.6; const ans=askBig?Math.max(a,b):Math.min(a,b); return {kind:'compare',input:'choice',prompt:askBig?'더 큰 수를 골라요!':'더 작은 수를 골라요!',answer:ans,answerLabel:String(ans),options:this.shuffle([a,b]).map(v=>({label:String(v),value:v}))}; }
   genShape(l){
@@ -473,7 +490,7 @@ class Component extends DCLogic {
     const ok=String(val)===String(cur.answer);
     if(ok){
       this.playCorrect();
-      this.setState(s=>({feedback:{correct:true, msg:this.pick(this.GOOD), emoji:this.pick(this.EMO_GOOD)}, correctCount:s.correctCount+1}));
+      this.setState(s=>({feedback:{correct:true, msg:this.praise(), emoji:this.pick(this.EMO_GOOD)}, correctCount:s.correctCount+1}));
       if(this.autoAdvance()) setTimeout(()=>{ if(this.state.feedback && this.state.feedback.correct) this.next(); }, 1150);
     } else {
       this.playWrong();

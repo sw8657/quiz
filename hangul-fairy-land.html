@@ -319,6 +319,7 @@ class Component extends DCLogic {
     // 좁은 화면은 가로 5칸이 겹쳐서 2열로. 마지막 하나는 가운데.
     this.nodePosNarrow = [{x:28,y:16},{x:72,y:16},{x:28,y:50},{x:72,y:50},{x:50,y:84}];
     this.GOOD = ['잘 읽었어! 🎉','정답이야! ⭐','최고야! 👏','예뻐 예뻐! 🌸','반짝반짝! ✨','대단해! 🦋'];
+    this.NAME_GOOD = ['{n} 잘 읽었어! 🎉','{n} 최고야! 👏','역시 {n}! ⭐','{n} 반짝반짝! ✨']; // {n}=부르는 이름(지한이, 시현이)
     this.EMO_GOOD = ['🎉','⭐','👏','🌸','💖','🦋'];
 
     // ── 한글 자모 ──
@@ -404,6 +405,9 @@ class Component extends DCLogic {
 
     const users=(()=>{ try{ const p=localStorage.getItem('hangulfairy_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } })();
     let userName=''; try{ userName=localStorage.getItem('hangulfairy_user')||''; }catch(e){}
+    // 런처에서 ?name=지한 처럼 들어오면 그 아이로 바로 시작(처음이면 새로 만듦).
+    const qName=this.urlName();
+    if(qName){ userName=qName; if(!users[qName]){ users[qName]={progress:{},history:[]}; try{ localStorage.setItem('hangulfairy_users',JSON.stringify(users)); }catch(e){} } try{ localStorage.setItem('hangulfairy_user',qName); }catch(e){} }
     if(userName && !users[userName]) userName='';
     const progress=(userName && users[userName] && users[userName].progress)?users[userName].progress:{};
     const history=(userName && users[userName] && users[userName].history)?users[userName].history:[];
@@ -429,6 +433,11 @@ class Component extends DCLogic {
   soundOn(){ return this.props.soundOn ?? true; }
   autoAdvance(){ return this.props.autoAdvance ?? true; }
   cleared(i){ return this.state.progress[i]||0; }
+  urlName(){ try{ return (new URLSearchParams(window.location.search).get('name')||'').trim().slice(0,10); }catch(e){ return ''; } }
+  // 부를 때 쓰는 이름: 마지막 글자에 받침이 있으면 '이'를 붙인다(지한→지한이, 시현→시현이).
+  callName(nm){ nm=nm||''; const c=nm.charCodeAt(nm.length-1); return (c>=0xAC00 && c<=0xD7A3 && (c-0xAC00)%28) ? nm+'이' : nm; }
+  // 정답 칭찬: 이름이 있으면 절반은 이름을 불러 준다.
+  praise(){ const nm=this.state.userName; return (nm && Math.random()<0.5) ? this.pick(this.NAME_GOOD).replace('{n}',this.callName(nm)) : this.pick(this.GOOD); }
   loadUsers(){ try{ const p=localStorage.getItem('hangulfairy_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } }
   saveUsers(u){ try{ localStorage.setItem('hangulfairy_users',JSON.stringify(u)); }catch(e){} }
   persist(progress,history){ const nm=this.state.userName; if(!nm) return; const users=this.loadUsers(); users[nm]=Object.assign({progress:{},history:[]},users[nm],{progress,history}); this.saveUsers(users); try{ localStorage.setItem('hangulfairy_user',nm); }catch(e){} }
@@ -743,7 +752,7 @@ class Component extends DCLogic {
     const ok=String(val)===String(cur.answer);
     if(ok){
       this.playCorrect();
-      this.setState(s=>({feedback:{correct:true, msg:this.pick(this.GOOD), emoji:this.pick(this.EMO_GOOD), word:cur.word||cur.answerLabel, read:cur.read||''}, correctCount:s.correctCount+1}));
+      this.setState(s=>({feedback:{correct:true, msg:this.praise(), emoji:this.pick(this.EMO_GOOD), word:cur.word||cur.answerLabel, read:cur.read||''}, correctCount:s.correctCount+1}));
       // 정답 낱말을 크게 읽을 시간을 준다.
       if(this.autoAdvance()) setTimeout(()=>{ if(this.state.feedback && this.state.feedback.correct) this.next(); }, 1700);
     } else {

@@ -345,9 +345,13 @@ class Component extends DCLogic {
     // 좁은 화면은 가로 6칸이 겹쳐서 2열 3행으로. 순서대로 이으면 Z자 경로가 된다.
     this.nodePosNarrow = [{x:28,y:16},{x:72,y:16},{x:28,y:50},{x:72,y:50},{x:28,y:84},{x:72,y:84}];
     this.GOOD = ['잘했어! 🎉','정답이야! ⭐','최고야! 👏','대단해! 🌟','멋지다! 🚀','완벽해! 💎'];
+    this.NAME_GOOD = ['{n} 최고야! 👏','{n} 대단해! 🌟','역시 {n}! ⭐','{n} 멋지다! 🚀']; // {n}=부르는 이름(지한이, 시현이)
     this.EMO_GOOD = ['🎉','⭐','👏','🌟','💯','🏅'];
     const users=(()=>{ try{ const p=localStorage.getItem('mathmap_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } })();
     let userName=''; try{ userName=localStorage.getItem('mathmap_user')||''; }catch(e){}
+    // 런처에서 ?name=지한 처럼 들어오면 그 아이로 바로 시작(처음이면 새로 만듦).
+    const qName=this.urlName();
+    if(qName){ userName=qName; if(!users[qName]){ users[qName]={progress:{},history:[]}; try{ localStorage.setItem('mathmap_users',JSON.stringify(users)); }catch(e){} } try{ localStorage.setItem('mathmap_user',qName); }catch(e){} }
     if(userName && !users[userName]) userName='';
     const progress=(userName && users[userName] && users[userName].progress)?users[userName].progress:{};
     const history=(userName && users[userName] && users[userName].history)?users[userName].history:[];
@@ -376,6 +380,11 @@ class Component extends DCLogic {
   soundOn(){ return this.props.soundOn ?? true; }
   autoAdvance(){ return this.props.autoAdvance ?? true; }
   cleared(i){ return this.state.progress[i]||0; }
+  urlName(){ try{ return (new URLSearchParams(window.location.search).get('name')||'').trim().slice(0,10); }catch(e){ return ''; } }
+  // 부를 때 쓰는 이름: 마지막 글자에 받침이 있으면 '이'를 붙인다(지한→지한이, 시현→시현이).
+  callName(nm){ nm=nm||''; const c=nm.charCodeAt(nm.length-1); return (c>=0xAC00 && c<=0xD7A3 && (c-0xAC00)%28) ? nm+'이' : nm; }
+  // 정답 칭찬: 이름이 있으면 절반은 이름을 불러 준다.
+  praise(){ const nm=this.state.userName; return (nm && Math.random()<0.5) ? this.pick(this.NAME_GOOD).replace('{n}',this.callName(nm)) : this.pick(this.GOOD); }
   loadUsers(){ try{ const p=localStorage.getItem('mathmap_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } }
   saveUsers(u){ try{ localStorage.setItem('mathmap_users',JSON.stringify(u)); }catch(e){} }
   persist(progress,history){ const nm=this.state.userName; if(!nm) return; const users=this.loadUsers(); users[nm]=Object.assign({progress:{},history:[]},users[nm],{progress,history}); this.saveUsers(users); try{ localStorage.setItem('mathmap_user',nm); }catch(e){} }
@@ -491,6 +500,8 @@ class Component extends DCLogic {
     }
   }
   genTime(l){
+    // 2학년 2학기 '시각과 시간': Lv.3부터 시간 단위(1시간=60분·하루·1주일·1년) 문제를 섞는다.
+    if(l>=3 && Math.random()<0.35) return this.genTimeUnit(l);
     const lab=(H,M)=>M===0?`${H}시`:`${H}시 ${M}분`;
     const h=this.rand(1,12);
     // Lv.1 정시·30분 → Lv.2~3 5분 단위 → Lv.4 1분 단위 → Lv.5 "○분 후"
@@ -513,6 +524,43 @@ class Component extends DCLogic {
       const v=dh+':'+dm; if(!set.has(v)) set.set(v,lab(dh,dm)); }
     const opts=this.shuffle([...set.keys()]).map(v=>({label:set.get(v),value:v}));
     return {kind:'time',input:'choice',prompt:'시계를 보고 몇 시 몇 분인지 골라요!',answer:h+':'+m,answerLabel:lab(h,m),options:opts,clock:{hAngle:(h%12)*30+m*0.5,mAngle:m*6}};
+  }
+  // 시계 그림 없이 단위만 묻는 문제(kind가 'time'이 아니라 시계가 안 나온다).
+  genTimeUnit(l){
+    const mk=(prompt,bigText,ans,wrongs,fmt)=>{
+      const opts=[ans]; this.shuffle(wrongs).forEach(v=>{ if(v>0 && opts.length<4 && !opts.includes(v)) opts.push(v); });
+      for(let k=1; opts.length<4; k++){ if(!opts.includes(ans+k)) opts.push(ans+k); }
+      return {kind:'timeunit',input:'choice',prompt,bigText,answer:ans,answerLabel:fmt(ans),options:this.shuffle(opts).map(v=>({label:fmt(v),value:v}))};
+    };
+    const hm=v=>{ const h=Math.floor(v/60), m=v%60; return m?`${h}시간 ${m}분`:`${h}시간`; };
+    const modes=l===3?['h2m','fact']:l===4?['h2m','m2h','fact','week']:['h2m','m2h','week','ampm'];
+    const mode=this.pick(modes);
+    if(mode==='h2m'){
+      const H=this.rand(1,l>=4?3:2), M=this.rand(1,l>=4?11:5)*(l>=4?5:10), ans=H*60+M;
+      // H*100+M: '1시간 20분=120분'처럼 100으로 착각하는 실수
+      return mk('몇 분일까요?',`${H}시간 ${M}분`,ans,[H*100+M,ans+10,ans-10,H*60,ans+60],v=>v+'분');
+    }
+    if(mode==='m2h'){
+      const t=this.rand(13,35)*5, h=Math.floor(t/60), m=t%60;
+      const wrongs=[t+10,t-10,t+60,t-60].filter(v=>v>0);
+      if(t>=100) wrongs.unshift(Math.floor(t/100)*60+t%100); // 100분=1시간으로 착각
+      return mk('몇 시간 몇 분일까요?',`${t}분`,t,wrongs,hm);
+    }
+    if(mode==='week'){
+      const kind=this.pick(['week','day','year']);
+      if(kind==='week'){ const N=this.rand(2,4); return mk('며칠일까요?',`${N}주일`,N*7,[N*5,N*10,N*7+1,N*7-1],v=>v+'일'); }
+      if(kind==='day'){ const N=this.rand(2,3); return mk('몇 시간일까요?',`${N}일`,N*24,[N*12,N*60,N*24+12,N*10],v=>v+'시간'); }
+      const Y=this.rand(1,2), Mo=this.rand(1,6), ans=Y*12+Mo;
+      return mk('몇 개월일까요?',`${Y}년 ${Mo}개월`,ans,[Y*10+Mo,ans+12,ans-1,ans+1],v=>v+'개월');
+    }
+    if(mode==='ampm'){
+      const S=this.rand(8,11), E=this.rand(1,5), ans=12-S+E;
+      return mk('몇 시간 동안일까요?',`오전 ${S}시 → 오후 ${E}시`,ans,[Math.abs(S-E),ans+1,ans-1,ans+2,S+E],v=>v+'시간');
+    }
+    const facts=[['하루는 몇 시간일까요?',24,[12,60,10]],['1시간은 몇 분일까요?',60,[100,10,30]],['1주일은 며칠일까요?',7,[5,10,12]],['1년은 몇 개월일까요?',12,[10,7,24]]];
+    const units={24:'시간',60:'분',7:'일',12:'개월'};
+    const [p,ans,w]=this.pick(facts), u=units[ans];
+    return mk(p,'',ans,w,v=>v+u);
   }
   genLen(l){
     // Lv.4에서 mm, Lv.5에서 길이 덧셈 추가.
@@ -570,7 +618,7 @@ class Component extends DCLogic {
     const ok=String(val)===String(cur.answer);
     if(ok){
       this.playCorrect();
-      this.setState(s=>({feedback:{correct:true, msg:this.pick(this.GOOD), emoji:this.pick(this.EMO_GOOD)}, correctCount:s.correctCount+1}));
+      this.setState(s=>({feedback:{correct:true, msg:this.praise(), emoji:this.pick(this.EMO_GOOD)}, correctCount:s.correctCount+1}));
       if(this.autoAdvance()) setTimeout(()=>{ if(this.state.feedback && this.state.feedback.correct) this.next(); }, 1150);
     } else {
       this.playWrong();
