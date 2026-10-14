@@ -332,9 +332,9 @@ button{font-family:inherit;}
       <div style="font-family:'Jua';font-size:20px;color:#123a66;margin-bottom:8px;">📒 지난 연습 (최근 순)</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <sc-for list="{{ testRecs }}" as="tr" hint-placeholder-count="3">
-          <div style="display:flex;justify-content:space-between;gap:8px;background:#f4f9ff;border:3px solid #9cc0e6;border-radius:14px;padding:8px 12px;font-family:'Jua';font-size:clamp(13px,3.6vw,16px);color:#123a66;">
+          <button onClick="{{ tr.onClick }}" style-active="transform:translateY(2px)" style="display:flex;justify-content:space-between;gap:8px;background:#f4f9ff;border:3px solid #9cc0e6;border-radius:14px;padding:8px 12px;font-family:'Jua';font-size:clamp(13px,3.6vw,16px);color:#123a66;cursor:pointer;text-align:left;">
             <span>{{ tr.left }}</span><span style="white-space:nowrap;">{{ tr.right }}</span>
-          </div>
+          </button>
         </sc-for>
       </div>
     </div>
@@ -411,6 +411,52 @@ button{font-family:inherit;}
 </div>
 </sc-if>
 
+<!-- ================= 채점표 ================= -->
+<sc-if value="{{ isSheet }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px 10px 26px;background:#f4f9ff;">
+  <div style="width:min(640px,98vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+    <button onClick="{{ closeSheet }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.8vw,18px);color:#5e3d1c;background:#fff3d8;border:3px solid #b9820f;padding:8px 12px;border-radius:15px;box-shadow:0 4px 0 #b9820f;cursor:pointer;white-space:nowrap;flex:none;">← 돌아가기</button>
+    <div style="font-family:'Jua';font-size:clamp(20px,5.4vw,28px);color:#123a66;white-space:nowrap;">📝 채점표</div>
+    <div style="width:clamp(0px,9vw,80px);flex:none;"></div>
+  </div>
+  <div style="font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:#3a5f86;text-align:center;">{{ shSummary }}</div>
+  <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(13px,3.5vw,15px);color:#3a5f86;text-align:center;margin-top:2px;">⏱️ 막대가 길수록 오래 걸린 문제 · 빨간 시간은 목표({{ targetSecs }}초)보다 느린 문제</div>
+  <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;justify-content:center;">
+    <sc-for list="{{ shFilters }}" as="fl" hint-placeholder-count="3">
+      <button onClick="{{ fl.onClick }}" style="{{ fl.style }}">{{ fl.label }}</button>
+    </sc-for>
+  </div>
+  <div style="width:min(640px,98vw);background:#fff;border:4px solid #2f6bb0;border-radius:16px;overflow:hidden;">
+    <div style="display:grid;grid-template-columns:2.4em 1fr 4.6em 2em 5.6em;gap:4px;align-items:center;padding:6px 8px;background:#2f6bb0;color:#fff;font-family:'Jua';font-size:clamp(13px,3.5vw,15px);">
+      <div>번호</div><div>문제</div><div style="text-align:right;">고른 답</div><div style="text-align:center;">채점</div><div style="text-align:right;">시간</div>
+    </div>
+    <sc-for list="{{ shRows }}" as="r" hint-placeholder-count="10">
+      <sc-if value="{{ r.isHead }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:5px 10px;background:#e3f0ff;font-family:'Jua';font-size:clamp(14px,3.8vw,16px);color:#1f4f86;border-top:2px solid #9cc0e6;">{{ r.head }}</div>
+      </sc-if>
+      <sc-if value="{{ r.isRow }}" hint-placeholder-val="{{ true }}">
+        <div style="{{ r.style }}">
+          <div style="color:#7a8aa0;">{{ r.no }}</div>
+          <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.problem }}</div>
+          <div style="text-align:right;white-space:nowrap;{{ r.pickStyle }}">{{ r.pick }}</div>
+          <div style="text-align:center;font-size:1.15em;">{{ r.mark }}</div>
+          <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;">
+            <div style="flex:1;height:8px;background:#eef3f9;border-radius:4px;overflow:hidden;min-width:16px;"><div style="{{ r.barStyle }}"></div></div>
+            <span style="{{ r.secStyle }}">{{ r.secs }}</span>
+          </div>
+        </div>
+        <sc-if value="{{ r.showAns }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 10px 6px 3.4em;font-family:'Gaegu';font-weight:700;font-size:clamp(13px,3.5vw,15px);color:#d1462f;background:#fff4f2;">정답은 {{ r.answer }}</div>
+        </sc-if>
+      </sc-if>
+    </sc-for>
+    <sc-if value="{{ shEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:18px;text-align:center;font-family:'Gaegu';font-weight:700;font-size:18px;color:#3a5f86;">해당하는 문제가 없어요 🎉</div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
 <!-- ================= TEST RESULT ================= -->
 <sc-if value="{{ isTestResult }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;background:radial-gradient(circle at 50% 8%,#e3f0ff,#bcd7f2 70%,#9cc0e6);">
@@ -427,14 +473,7 @@ button{font-family:inherit;}
         <div style="{{ ts.cell }}">{{ ts.name }}</div><div style="{{ ts.cell }}">{{ ts.done }}</div><div style="{{ ts.cell }}">{{ ts.right }}</div><div style="{{ ts.paceCell }}">{{ ts.avg }}</div>
       </sc-for>
     </div>
-    <sc-if value="{{ trHasWrong }}" hint-placeholder-val="{{ false }}">
-      <div style="margin-top:16px;text-align:left;">
-        <div style="font-family:'Jua';font-size:18px;color:#d1462f;margin-bottom:6px;">✏️ 틀린 문제</div>
-        <sc-for list="{{ trWrong }}" as="w" hint-placeholder-count="2">
-          <div style="font-family:'Jua';font-size:clamp(15px,4vw,18px);color:#4a3620;background:#fff3d8;border-radius:10px;padding:5px 10px;margin-bottom:5px;">{{ w.text }}</div>
-        </sc-for>
-      </div>
-    </sc-if>
+    <button onClick="{{ openSheet }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:22px;color:#123a66;background:#fff3d8;border:4px solid #b9820f;border-radius:18px;padding:12px;box-shadow:0 6px 0 #b9820f;cursor:pointer;width:100%;margin-top:16px;">📝 채점표 보기 (문제별 시간)</button>
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
       <button onClick="{{ retryTest }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:22px;color:#fff;background:#2f6bb0;border:4px solid #1f4f86;border-radius:18px;padding:12px;box-shadow:0 6px 0 #1f4f86;cursor:pointer;">🔁 같은 연습 다시</button>
       <button onClick="{{ openTest }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:20px;color:#123a66;background:#e3f0ff;border:4px solid #2f6bb0;border-radius:18px;padding:10px;box-shadow:0 5px 0 #1f4f86;cursor:pointer;">📋 연습 고르기</button>
@@ -910,13 +949,18 @@ class Component extends DCLogic {
     t.picks.forEach((p,i)=>{ const q=t.qs[i], ok=p.v===q.answer; if(ok) correct++;
       const sc=secs[q.sec]||(secs[q.sec]={n:0,c:0,t:0,total:0}); sc.n++; sc.t+=p.secs; if(ok) sc.c++; });
     t.qs.forEach(q=>{ (secs[q.sec]||(secs[q.sec]={n:0,c:0,t:0,total:0})).total++; });
-    const rec={date:Date.now(), mode:t.mode, total:t.qs.length, limit:t.limit, answered:t.picks.length, correct, used, secs};
+    // 채점표용 문제별 기록(지난 연습도 다시 볼 수 있게 저장): 문제·정답·고른 답·걸린 초·유형
+    const items=t.qs.map((q,i)=>{ const p=t.picks[i]; return {t:`${q.top} ${q.op} ${q.bottom}`, a:q.answerLabel, p:p?p.v:null, s:p?Math.round(p.secs*10)/10:null, sec:q.sec}; });
+    const rec={date:Date.now(), mode:t.mode, total:t.qs.length, limit:t.limit, answered:t.picks.length, correct, used, secs, items};
     const nm=this.state.userName;
     if(nm){ const users=this.loadUsers(); const u=users[nm]||{progress:{},history:[]}; u.tests=(u.tests||[]).concat([rec]).slice(-50); users[nm]=u; this.saveUsers(users); }
     if(t.picks.length && correct/t.picks.length>=0.9) this.playFanfare();
     this.setState({screen:'testResult', testResult:Object.assign({},rec,{qs:t.qs, picks:t.picks})});
   }
   retryTest(){ const r=this.state.testResult; if(r) this.startTest(r.mode); }
+  openSheet(rec, from){ this.playClick(); this.setState({screen:'testSheet', sheet:{rec:rec||this.state.testResult, from:from||'testResult', filter:'all'}}); }
+  closeSheet(){ this.playClick(); this.setState({screen:(this.state.sheet&&this.state.sheet.from)||'testIntro'}); }
+  setSheetFilter(f){ this.setState({sheet:Object.assign({},this.state.sheet,{filter:f})}); }
 
   // ---- 🔥 암산 스프린트: 60초 동안 머리로 푼 개수. 단계를 올려 '연습장 없이 풀 수 있는 범위'를 넓힌다. ----
   sprintLevelList(){
@@ -1161,7 +1205,8 @@ class Component extends DCLogic {
       testModes:modes.map(m=>({title:m.title, desc:m.desc, onClick:()=>this.startTest(m.id)})),
       testRecs:myTests.map(r=>{ const m=modes.find(x=>x.id===r.mode); return {
         left:`${fmtDate(r.date)} · ${m?m.title.replace(/^\S+\s/,''):r.mode}`,
-        right:`${r.answered}/${r.total}문제 · 정답 ${r.correct} · ${r.answered?(r.used/r.answered).toFixed(1):'-'}초`}; }),
+        right:`${r.answered}/${r.total}문제 · 정답 ${r.correct} · ${r.answered?(r.used/r.answered).toFixed(1):'-'}초${r.items?' 📝':''}`,
+        onClick:()=>{ if(r.items) this.openSheet(r,'testIntro'); }}; }),
       hasTestRecs:myTests.length>0,
       testRemain:this.fmtClock(tRemain),
       testClockStyle:`font-family:'Jua';font-size:clamp(18px,5vw,24px);color:${tRemain<=60?'#d1462f':'#123a66'};background:${tRemain<=60?'#fbe0da':'#e3f0ff'};border:3px solid ${tRemain<=60?'#d1462f':'#2f6bb0'};border-radius:14px;padding:6px 10px;white-space:nowrap;flex:none;`,
@@ -1184,9 +1229,34 @@ class Component extends DCLogic {
         const cell='padding:4px 0;border-top:2px solid #d6e4f4;';
         return {name:SEC_NAME[k], done:`${x.n}/${x.total}`, right:x.n?`${x.c}`:'-', avg:x.n?avg.toFixed(1)+'초':'-', cell,
           paceCell:cell+(slow?'color:#d1462f;':'color:#2f8f4e;')}; }) : [],
-      trWrong: R ? R.picks.map((p,i)=>({p,q:R.qs[i]})).filter(x=>x.p.v!==x.q.answer).map(x=>({text:`${x.q.top} ${x.q.op} ${x.q.bottom} = ${x.q.answerLabel}   (고른 답 ${x.p.v})`})) : [],
-      trHasWrong: !!(R && R.picks.some((p,i)=>p.v!==R.qs[i].answer)),
       isTestIntro:s.screen==='testIntro', isTest:s.screen==='test', isTestResult:s.screen==='testResult',
+      isSheet:s.screen==='testSheet', openSheet:()=>this.openSheet(), closeSheet:()=>this.closeSheet(),
+      ...(()=>{ const sh=s.sheet; if(!sh||!sh.rec||!sh.rec.items) return {shRows:[], shFilters:[], shSummary:'', shEmpty:false};
+        const rec=sh.rec, items=rec.items, done=items.filter(x=>x.p!=null);
+        const slow=x=>x.s!=null && x.s>target, wrong=x=>x.p!=null && x.p!==x.a;
+        const keep=x=>sh.filter==='wrong'?wrong(x):sh.filter==='slow'?slow(x):true;
+        const rows=[]; let last=null;
+        items.forEach((x,i)=>{
+          if(!keep(x)) return;
+          if(x.sec!==last){ rows.push({isHead:true, isRow:false, head:SEC_NAME[x.sec]||x.sec}); last=x.sec; }
+          const ans=x.p==null?null:x.p===x.a;
+          const w=x.s==null?0:Math.min(100,Math.round(x.s/40*100)); // 40초를 꽉 찬 막대로
+          rows.push({isHead:false, isRow:true, no:i+1, problem:x.t, answer:x.a,
+            pick:x.p==null?'안 풂':x.p, mark:ans==null?'·':ans?'⭕':'❌', showAns:ans===false,
+            pickStyle:ans===false?'color:#d1462f;':ans==null?'color:#a8b4c4;':'',
+            secs:x.s==null?'-':x.s.toFixed(1)+'초',
+            secStyle:`white-space:nowrap;min-width:3.2em;text-align:right;color:${x.s==null?'#a8b4c4':slow(x)?'#d1462f':'#2f8f4e'};`,
+            barStyle:`height:100%;width:${w}%;background:${slow(x)?'#e8735f':'#6cc08b'};border-radius:4px;`,
+            style:`display:grid;grid-template-columns:2.4em 1fr 4.6em 2em 5.6em;gap:4px;align-items:center;padding:6px 8px;border-top:1px solid #e3ecf6;font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:${x.p==null?'#a8b4c4':'#123a66'};background:${ans===false?'#fff4f2':'#fff'};`});
+        });
+        const nWrong=items.filter(wrong).length, nSlow=items.filter(slow).length;
+        const fBtn=(id,label)=>({label, onClick:()=>this.setSheetFilter(id),
+          style:`font-family:'Jua';font-size:clamp(14px,3.8vw,17px);border-radius:14px;padding:6px 14px;cursor:pointer;border:3px solid #2f6bb0;${sh.filter===id?'background:#2f6bb0;color:#fff;':'background:#fff;color:#123a66;'}`});
+        return {
+          shSummary:`${fmtDate(rec.date)} · 푼 문제 ${done.length}/${items.length} · 정답 ${rec.correct} · 평균 ${done.length?(rec.used/done.length).toFixed(1):'-'}초`,
+          shFilters:[fBtn('all','전체'), fBtn('wrong',`❌ 틀린 문제 ${nWrong}`), fBtn('slow',`🐢 느린 문제 ${nSlow}`)],
+          shRows:rows, shEmpty:rows.length===0,
+        }; })(),
       trTierLine: (()=>{ if(!R) return ''; const easy=[], hard=[]; R.picks.forEach((p,i)=>{ const q=R.qs[i]; if(q.tier==null) return; (q.tier<2?easy:hard).push(p.secs); });
         const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
         return easy.length && hard.length ? `쉬운 문제 평균 ${avg(easy).toFixed(1)}초 · 어려운 문제 평균 ${avg(hard).toFixed(1)}초` : easy.length ? `쉬운 문제 평균 ${avg(easy).toFixed(1)}초` : ''; })(),

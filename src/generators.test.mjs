@@ -122,7 +122,8 @@ for(let i=0;i<5000;i++){
   g.startSprint(3);
   for(let i=0;i<5;i++){ for(const d of String(g.state.sprint.q.answer)) g.sprintPress(d); }
   assert.strictEqual(g.state.sprint.n, 5);
-  g.sprintPress(String(g.state.sprint.q.answer)[0]==='1' ? '2' : '1'); // 첫 자리부터 틀린 숫자 assert.strictEqual(g.state.sprint.wrong, 1); assert.strictEqual(g.state.sprint.input, '');
+  g.sprintPress(String(g.state.sprint.q.answer)[0]==='1' ? '2' : '1'); // 첫 자리부터 틀린 숫자
+  assert.strictEqual(g.state.sprint.wrong, 1); assert.strictEqual(g.state.sprint.input, '');
   g.renderVals();
   g.state.sprint.startedAt -= 61000; g.sprintTick();
   assert.strictEqual(g.state.screen, 'sprintResult');
@@ -130,6 +131,34 @@ for(let i=0;i<5000;i++){
   assert.ok(v.srCount===5 && v.srTitle.includes('새 기록'), '스프린트 결과 이상');
   assert.strictEqual(g.sprintBest(3), 5);
   g.state.screen='testIntro'; assert.ok(g.renderVals().sprintLevels[2].best.includes('5'));
+}
+
+// 📝 채점표: 문제별 기록 저장, 필터(전체·틀린·느린), 지난 연습에서 다시 열기
+{
+  const g = load('treasure-map-math.dc.html');
+  g.state.userName = '지한';
+  g.startTest('mini');
+  for(let i=0;i<12;i++){ const q=g.state.test.qs[g.state.test.idx]; g.state.test.lastAt -= (i===3?30000:2000); g.pickTest(i===5 ? q.options.find(o=>o!==q.answer) : q.answer); }
+  g.submitTest();
+  const rec = g.state.testResult;
+  assert.strictEqual(rec.items.length, 40);
+  assert.ok(rec.items[3].s >= 30 && rec.items[0].s < 11 && rec.items[20].p === null, '문제별 시간·안 푼 문제 기록 이상');
+  g.openSheet();
+  let v = g.renderVals();
+  assert.strictEqual(v.shRows.filter(r=>r.isRow).length, 40);
+  assert.strictEqual(v.shRows.filter(r=>r.isHead).length, 4, '유형 머리줄 4개');
+  g.setSheetFilter('wrong'); v = g.renderVals();
+  assert.ok(v.shRows.filter(r=>r.isRow).length===1 && v.shRows.find(r=>r.isRow).showAns, '틀린 문제 필터');
+  g.setSheetFilter('slow'); v = g.renderVals();
+  assert.deepStrictEqual(v.shRows.filter(r=>r.isRow).map(r=>r.no), [4], '느린 문제 필터');
+  g.closeSheet(); assert.strictEqual(g.state.screen, 'testResult');
+  g.state.screen='testIntro'; v = g.renderVals();
+  v.testRecs[0].onClick(); assert.strictEqual(g.state.screen, 'testSheet');
+  assert.strictEqual(g.renderVals().shRows.filter(r=>r.isRow).length, 40);
+  g.closeSheet(); assert.strictEqual(g.state.screen, 'testIntro');
+  // 예전(문제별 기록 없는) 기록이 있어도 화면이 깨지지 않음
+  const users=g.loadUsers(); users['지한'].tests.unshift({date:1, mode:'mini', total:40, limit:480, answered:10, correct:10, used:200, secs:{}}); g.saveUsers(users);
+  v = g.renderVals(); v.testRecs[v.testRecs.length-1].onClick(); assert.strictEqual(g.state.screen, 'testIntro');
 }
 
 console.log('OK: generators fuzz passed');
