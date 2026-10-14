@@ -161,4 +161,29 @@ for(let i=0;i<5000;i++){
   v = g.renderVals(); v.testRecs[v.testRecs.length-1].onClick(); assert.strictEqual(g.state.screen, 'testIntro');
 }
 
+// 중간 그만두기·기록 지우기
+{
+  const g = load('treasure-map-math.dc.html');
+  g.state.userName = '지한';
+  const tests = () => (g.loadUsers()['지한']||{}).tests || [];
+  g.startTest('mini'); g.pickTest(g.state.test.qs[0].answer);
+  g.cancelTest();
+  assert.strictEqual(g.state.screen, 'testIntro'); assert.strictEqual(tests().length, 0, '그만두면 기록되지 않아야 함');
+  for(let k=0;k<3;k++){ g.startTest('mini'); g.pickTest(g.state.test.qs[0].answer); g.state.test.startedAt -= 1000*(k+1); g.submitTest(); }
+  assert.strictEqual(tests().length, 3);
+  // 같은 밀리초에 끝나 date가 겹치지 않게 보정
+  { const u=g.loadUsers(); u['지한'].tests.forEach((r,i)=>r.date=1000+i); g.saveUsers(u); }
+  g.state.screen='testIntro'; let v=g.renderVals();
+  v.testRecs[0].onDelete();
+  assert.deepStrictEqual(tests().map(r=>r.date), [1000,1001], '최근 기록 하나만 지워져야 함');
+  window.confirm = () => false; g.renderVals().testRecs[0].onDelete(); window.confirm = () => true;
+  assert.strictEqual(tests().length, 2, '확인 취소하면 안 지워짐');
+  g.clearTests(); assert.strictEqual(tests().length, 0);
+  g.startSprint(1); g.state.sprint.startedAt -= 61000; g.sprintTick();
+  g.state.screen='testIntro'; assert.ok(g.renderVals().hasSprintRecs);
+  g.clearSprints(); v=g.renderVals();
+  assert.ok(!v.hasSprintRecs && v.sprintLevels[0].best==='아직 기록 없음');
+  assert.ok(Array.isArray(g.loadUsers()['지한'].history), '모험 기록은 그대로');
+}
+
 console.log('OK: generators fuzz passed');
