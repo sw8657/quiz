@@ -187,4 +187,54 @@ for(let i=0;i<5000;i++){
   assert.ok(Array.isArray(g.loadUsers()['지한'].history), '모험 기록은 그대로');
 }
 
+// 시현(예비 초1): 덧셈·뺄셈 범위가 1학년 1학기(9까지)에 맞는지 — 자동 조절 없는 기본(d=0) 기준
+{
+  const g = load('fairy-land-math.dc.html');
+  for(let i=0;i<4000;i++){
+    const a1=g.genAdd(1,0), a2=g.genAdd(2,0), a3=g.genAdd(3,0);
+    assert.ok(a1.answer<=5, `더하기 Lv.1 합 5 초과: ${a1.a}+${a1.b}`);
+    if(a2.kind==='add') assert.ok(a2.answer<=9, `더하기 Lv.2 합 9 초과: ${a2.a}+${a2.b}`);
+    if(a3.kind==='add') assert.ok(a3.answer>=10 && a3.answer<=15 && a3.a<=9 && a3.b<=9, `더하기 Lv.3 받아올림 범위 밖: ${a3.a}+${a3.b}`);
+    const s1=g.genSub(1,0), s2=g.genSub(2,0), s3=g.genSub(3,0);
+    assert.ok(s1.a<=5 && s2.a<=9 && s1.answer>=0 && s2.answer>=0, `빼기 Lv.1~2 범위 밖: ${s1.a}-${s1.b}, ${s2.a}-${s2.b}`);
+    assert.ok(s3.a>=10 && s3.answer<=9 && s3.b<=9, `빼기 Lv.3 범위 밖: ${s3.a}-${s3.b}`);
+  }
+}
+// 시현: 한글 Lv.1에 받침 없는 글자·낱말이 나오는지
+{
+  const g = load('hangul-fairy-land.dc.html');
+  const jong = ch => (ch.charCodeAt(0)-0xAC00)%28 !== 0;
+  let nojongCombine=0, easyWord=0;
+  for(let i=0;i<2000;i++){
+    const c=g.genCombine(1,0); if(c.cA && /^[ㄱ-ㅎ]$/.test(c.cA)){ nojongCombine++; assert.ok(!jong(c.answer), `받침 없는 글자 만들기인데 받침: ${c.answer}`); }
+    const w=g.genWord(1,0); if(g.EASY.some(x=>x.w===w.answer)){ easyWord++; assert.ok([...w.answer].every(ch=>!jong(ch)), `받침 없는 낱말에 받침: ${w.answer}`); }
+  }
+  assert.ok(nojongCombine>500 && easyWord>500, `Lv.1 받침 없는 문제가 너무 적음 ${nojongCombine}/${easyWord}`);
+  g.EASY.forEach(x=>assert.ok([...x.w].every(ch=>!jong(ch)), `EASY에 받침 있는 낱말: ${x.w}`));
+  // 문제 문장의 조사: 받침에 맞게
+  assert.strictEqual(g.josa('아','은','는'),'는'); assert.strictEqual(g.josa('기역','은','는'),'은');
+  assert.strictEqual(g.josaRo('물'),'로'); assert.strictEqual(g.josaRo('방'),'으로'); assert.strictEqual(g.josaRo('비'),'로');
+  for(let i=0;i<500;i++){ const q=g.genJamo(1); if(q.prompt.includes('어느 글자')) assert.ok(!/[ㅏ-ㅣ가-히]’은/.test(q.prompt) || g.hasJong(q.prompt.match(/‘(.+)’/)[1]), `조사 틀림: ${q.prompt}`); }
+}
+// 🔊 읽어 주기: 모든 문제의 읽을 문장에 이모지·따옴표가 없고, 문장 읽기 문제는 문장을 읽어 주지 않음, 새 문제·정답에 말함
+for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
+  const g = load(file);
+  const said=[]; globalThis.SpeechSynthesisUtterance=function(t){ this.text=t; };
+  window.speechSynthesis={ cancel(){}, getVoices(){ return []; }, speak(u){ said.push(u.text); } };
+  for(const st of g.stages) for(let l=1;l<=3;l++) for(let i=0;i<300;i++){
+    const q=g.generateQuestion(st.topic,l), t=g.speechText(g.sayFor(q));
+    assert.ok(t.length>0, `${file} ${st.topic} Lv.${l}: 읽을 문장 없음`);
+    assert.ok(!/[\u{1F000}-\u{1FAFF}‘’"]/u.test(t), `${file}: 읽을 문장에 이모지/따옴표: ${t}`);
+    if(q.sentence && q.prompt.includes('그림')) assert.ok(!t.includes(q.sentence.slice(0,4)), '문장 읽기 문제의 문장을 읽어 주면 안 됨');
+  }
+  g.state.userName='시현'; g.begin(0,1); g.componentDidUpdate();
+  assert.strictEqual(said.length, 1, `${file}: 새 문제를 읽어 주지 않음`);
+  g.componentDidUpdate(); assert.strictEqual(said.length, 1, '같은 문제를 또 읽음');
+  g.check(g.state.current.answer); g.componentDidUpdate(); assert.strictEqual(said.length, 2, '정답 피드백을 읽지 않음');
+  g.toggleVoice(); const n=said.length; g.next(); g.componentDidUpdate(); assert.strictEqual(said.length, n, '끄면 읽지 않아야 함');
+  g.replay(); assert.strictEqual(said.length, n+1, '🔊 버튼은 꺼져 있어도 읽음');
+  g.toggleVoice(); assert.ok(g.voiceOn());
+  delete window.speechSynthesis;
+}
+
 console.log('OK: generators fuzz passed');
