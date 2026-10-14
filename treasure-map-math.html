@@ -105,8 +105,9 @@ button{font-family:inherit;}
     <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,22px);color:#8a5a2b;margin-top:8px;min-height:26px;">{{ greeting }}</div>
     <div style="font-size:clamp(72px,24vw,128px);margin:8px 0 6px;animation:bob 2.8s ease-in-out infinite;filter:drop-shadow(0 12px 10px rgba(0,0,0,.18));">🦊</div>
     <button onClick="{{ startGame }}" style-active="transform:translateY(6px);box-shadow:0 0 0 #b9820f" style="font-family:'Jua';font-size:clamp(24px,6.4vw,34px);color:#5e3d1c;background:#f2b21c;border:5px solid #b9820f;padding:clamp(14px,4vw,20px) clamp(28px,10vw,54px);border-radius:28px;box-shadow:0 8px 0 #b9820f;cursor:pointer;transition:.06s;">모험 시작!  🧭</button>
-    <div style="margin-top:14px;">
+    <div style="margin-top:14px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
       <button onClick="{{ openTest }}" style-active="transform:translateY(5px);box-shadow:0 0 0 #1f4f86" style="font-family:'Jua';font-size:clamp(20px,5.4vw,26px);color:#fff;background:#2f6bb0;border:5px solid #1f4f86;padding:12px clamp(22px,7vw,40px);border-radius:24px;box-shadow:0 7px 0 #1f4f86;cursor:pointer;transition:.06s;">⚡ 구몬 연습 (시간 재기)</button>
+      <button onClick="{{ openSprint }}" style-active="transform:translateY(5px);box-shadow:0 0 0 #a83526" style="font-family:'Jua';font-size:clamp(20px,5.4vw,26px);color:#fff;background:#d1462f;border:5px solid #a83526;padding:12px clamp(22px,7vw,40px);border-radius:24px;box-shadow:0 7px 0 #a83526;cursor:pointer;transition:.06s;">🔥 암산 스프린트</button>
     </div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
       <button onClick="{{ openRecords }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#5e3d1c;background:#fff3d8;border:4px solid #b9820f;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #b9820f;cursor:pointer;">📒 내 기록</button>
@@ -314,22 +315,6 @@ button{font-family:inherit;}
       </button>
     </sc-for>
   </div>
-  <div style="width:min(520px,94vw);margin-top:22px;">
-    <div style="font-family:'Jua';font-size:clamp(20px,5.4vw,24px);color:#a83526;">🔥 암산 스프린트 (60초)</div>
-    <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(14px,3.8vw,17px);color:#3a5f86;margin-bottom:8px;">연습장 없이 머리로! 60초 동안 몇 개 맞히나 · 단계를 올려 암산 범위를 넓혀요</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <sc-for list="{{ sprintLevels }}" as="sl" hint-placeholder-count="4">
-        <button onClick="{{ sl.onClick }}" style-active="transform:translateY(4px)" style="font-family:'Jua';background:#fff4ec;border:4px solid #d1462f;border-radius:18px;padding:10px 8px;box-shadow:0 5px 0 #a83526;cursor:pointer;color:#7a3a2a;">
-          <div style="font-size:clamp(17px,4.6vw,21px);">{{ sl.title }}</div>
-          <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(13px,3.5vw,15px);">{{ sl.desc }}</div>
-          <div style="font-size:clamp(13px,3.5vw,15px);color:#2f6bb0;margin-top:2px;">{{ sl.best }}</div>
-        </button>
-      </sc-for>
-    </div>
-    <sc-if value="{{ hasSprintRecs }}" hint-placeholder-val="{{ false }}">
-      <div style="text-align:right;margin-top:8px;"><button onClick="{{ clearSprints }}" style="font-family:'Jua';font-size:clamp(13px,3.5vw,15px);color:#a83526;background:#fff;border:2px solid #e2a79b;border-radius:12px;padding:6px 12px;cursor:pointer;">🗑️ 스프린트 기록 지우기</button></div>
-    </sc-if>
-  </div>
   <sc-if value="{{ hasTestRecs }}" hint-placeholder-val="{{ false }}">
     <div style="width:min(520px,94vw);margin-top:22px;">
       <div style="font-family:'Jua';font-size:20px;color:#123a66;margin-bottom:8px;">📒 지난 연습 (최근 순)</div>
@@ -375,11 +360,37 @@ button{font-family:inherit;}
 </div>
 </sc-if>
 
+<!-- ================= SPRINT INTRO (암산 스프린트 고르기) ================= -->
+<sc-if value="{{ isSprintIntro }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;background:radial-gradient(circle at 50% 8%,#fff7f0,#f6d2bf 70%,#e9b49a);">
+  <div style="width:min(640px,96vw);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <button onClick="{{ goHome }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:clamp(15px,4vw,20px);color:#5e3d1c;background:#fff3d8;border:4px solid #b9820f;padding:10px clamp(11px,3.4vw,20px);border-radius:18px;box-shadow:0 5px 0 #b9820f;cursor:pointer;white-space:nowrap;flex:none;">← 집으로</button>
+    <div style="font-family:'Jua';font-size:clamp(20px,5.4vw,30px);color:#a83526;white-space:nowrap;">🔥 암산 스프린트</div>
+    <div style="width:clamp(0px,9vw,96px);flex:none;"></div>
+  </div>
+  <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,20px);color:#7a3a2a;text-align:center;margin-bottom:16px;line-height:1.4;">연습장 없이 머리로! 60초 동안 몇 개 맞히나<br>30개를 넘기면 다음 단계로 🚀</div>
+  <div style="width:min(520px,94vw);">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <sc-for list="{{ sprintLevels }}" as="sl" hint-placeholder-count="4">
+        <button onClick="{{ sl.onClick }}" style-active="transform:translateY(4px)" style="font-family:'Jua';background:#fff4ec;border:4px solid #d1462f;border-radius:18px;padding:10px 8px;box-shadow:0 5px 0 #a83526;cursor:pointer;color:#7a3a2a;">
+          <div style="font-size:clamp(17px,4.6vw,21px);">{{ sl.title }}</div>
+          <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(13px,3.5vw,15px);">{{ sl.desc }}</div>
+          <div style="font-size:clamp(13px,3.5vw,15px);color:#2f6bb0;margin-top:2px;">{{ sl.best }}</div>
+        </button>
+      </sc-for>
+    </div>
+    <sc-if value="{{ hasSprintRecs }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:right;margin-top:8px;"><button onClick="{{ clearSprints }}" style="font-family:'Jua';font-size:clamp(13px,3.5vw,15px);color:#a83526;background:#fff;border:2px solid #e2a79b;border-radius:12px;padding:6px 12px;cursor:pointer;">🗑️ 스프린트 기록 지우기</button></div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
 <!-- ================= SPRINT (암산 스프린트) ================= -->
 <sc-if value="{{ isSprint }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:14px 14px 22px;background:#fff7f0;">
   <div style="width:min(520px,96vw);display:flex;align-items:center;justify-content:space-between;gap:10px;">
-    <button onClick="{{ openTest }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#5e3d1c;background:#fff3d8;border:3px solid #b9820f;padding:8px 12px;border-radius:15px;box-shadow:0 4px 0 #b9820f;cursor:pointer;white-space:nowrap;">← 그만</button>
+    <button onClick="{{ openSprint }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#5e3d1c;background:#fff3d8;border:3px solid #b9820f;padding:8px 12px;border-radius:15px;box-shadow:0 4px 0 #b9820f;cursor:pointer;white-space:nowrap;">← 그만</button>
     <div style="{{ spClockStyle }}">⏱️ {{ spRemain }}</div>
     <div style="font-family:'Jua';font-size:clamp(20px,5.6vw,28px);color:#a83526;white-space:nowrap;">🔥 {{ spCount }}</div>
   </div>
@@ -413,7 +424,7 @@ button{font-family:inherit;}
     <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.4vw,20px);color:#7a3a2a;margin-top:6px;">{{ srMessage }}</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
       <button onClick="{{ retrySprint }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:22px;color:#fff;background:#d1462f;border:4px solid #a83526;border-radius:18px;padding:12px;box-shadow:0 6px 0 #a83526;cursor:pointer;">🔥 한 번 더!</button>
-      <button onClick="{{ openTest }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:20px;color:#123a66;background:#e3f0ff;border:4px solid #2f6bb0;border-radius:18px;padding:10px;box-shadow:0 5px 0 #1f4f86;cursor:pointer;">📋 연습 고르기</button>
+      <button onClick="{{ openSprint }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:20px;color:#123a66;background:#e3f0ff;border:4px solid #2f6bb0;border-radius:18px;padding:10px;box-shadow:0 5px 0 #1f4f86;cursor:pointer;">📋 단계 고르기</button>
     </div>
   </div>
 </div>
@@ -933,6 +944,7 @@ class Component extends DCLogic {
     return {sec,top:String(top),op,bottom:String(bottom),answer,answerLabel:label,options:this.shuffle(opts)};
   }
   openTest(){ this.playClick(); this.setState({screen:'testIntro'}); }
+  openSprint(){ this.playClick(); this.setState({screen:'sprintIntro'}); }
   startTest(id){
     const m=this.testModeList().find(x=>x.id===id); if(!m) return;
     this.playClick();
@@ -1278,7 +1290,7 @@ class Component extends DCLogic {
         const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
         return easy.length && hard.length ? `쉬운 문제 평균 ${avg(easy).toFixed(1)}초 · 어려운 문제 평균 ${avg(hard).toFixed(1)}초` : easy.length ? `쉬운 문제 평균 ${avg(easy).toFixed(1)}초` : ''; })(),
       sprintLevels:this.sprintLevelList().map(x=>{ const b=this.sprintBest(x.lv); return {title:x.title, desc:x.desc, best:b?`🏅 최고 ${b}개`:'아직 기록 없음', onClick:()=>this.startSprint(x.lv)}; }),
-      isSprint:s.screen==='sprint', isSprintResult:s.screen==='sprintResult',
+      isSprint:s.screen==='sprint', isSprintResult:s.screen==='sprintResult', isSprintIntro:s.screen==='sprintIntro', openSprint:()=>this.openSprint(),
       ...(()=>{ const sp=s.sprint, rem=sp?sp.limit-((s.testNow||Date.now())-sp.startedAt)/1000:0, SR=s.sprintResult;
         const lvName=lv=>{ const x=this.sprintLevelList().find(y=>y.lv===lv); return x?x.title:''; };
         return {
