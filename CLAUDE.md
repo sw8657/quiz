@@ -7,9 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 아이용 수학·한글 놀이 웹앱. 패키지 의존성 없음(Node 스크립트 3개는 stdlib만 사용). 한국어 UI. GitHub Pages로 정적 서빙.
 
 - `index.html` — 게임 선택 런처(손으로 쓴 파일). 세 게임으로 링크.
-- `treasure-map-math.html` — "수학 보물 지도"(초등 1~2학년: 덧셈/뺄셈/구구단/세자리/시계/길이, 섬마다 Lv.1~5).
-- `fairy-land-math.html` — "수학 요정나라"(7살 유아: 수세기/더하기/빼기/비교/모양·색, Lv.1~3).
-- `hangul-fairy-land.html` — "한글 요정나라"(7살 유아: 자모/글자조합/낱말/첫끝소리/말놀이, Lv.1~3).
+- `treasure-map-math.html` — "수학 보물 지도"(초등 2학년 + 3학년 대비: 덧셈/뺄셈/구구단/네자리/시계/길이/나눗셈/분수, 섬 8개, 섬마다 Lv.1~5).
+- `fairy-land-math.html` — "수학 요정나라"(입학 준비: 수세기·10개 묶음/더하기·가르기/빼기/비교·수의 순서/모양·색, Lv.1~3).
+- `hangul-fairy-land.html` — "한글 요정나라"(입학 준비: 자모/글자조합/낱말·문장 읽기/첫끝소리/말놀이, Lv.1~3).
 
 ## 대상 아이 — 모든 작업은 이 두 아이 맞춤으로
 
@@ -39,6 +39,7 @@ python -m http.server 8000   # http://localhost:8000/index.html (배포본)
 ```
 node src/make-preview.mjs      # React 18 UMD 주입한 사본 → preview/*.html
 node src/difficulty.test.mjs   # 난이도 로직 셀프체크
+node src/generators.test.mjs   # 세 게임 실제 클래스로 모든 주제·단계 문제 퍼즈(정답이 보기에 있는지, 등식 성립 등)
 # http://localhost:8000/preview/treasure.html
 ```
 
@@ -56,7 +57,9 @@ node src/build-deploy.mjs   # src/*.dc.html → 루트 *.html + support.js
 
 ### 게임 로직 위치 (treasure-map)
 
-`src/treasure-map-math.dc.html`의 `<script data-dc-script>` 안 `class Component`가 전부다. 상태는 `localStorage` 이름별 저장: `mathmap_users`={이름:{progress,history}}, `mathmap_user`=현재 이름. `progress[섬]`=깬 최고 단계(지도 해금), `history`=판별 기록(append-only). 문제는 `generateQuestion`이 매번 랜덤 생성하며, `topicDiff`(최근 성적 가중평균)→`adjRange`로 add/sub/mul 숫자 범위를 자동 조절한다. "🔄 새 모험"(`newAdventure`)은 progress만 리셋하고 history는 유지.
+`src/treasure-map-math.dc.html`의 `<script data-dc-script>` 안 `class Component`가 전부다. 섬 목록 `this.stages`는 기록이 섬 번호(index)로 저장되므로 **새 섬은 항상 뒤에 추가**하고 순서를 바꾸지 않는다(지도 좌표 `nodePos`/`nodePosNarrow`도 같은 개수로). 상태는 `localStorage` 이름별 저장: `mathmap_users`={이름:{progress,history}}, `mathmap_user`=현재 이름. `progress[섬]`=깬 최고 단계(지도 해금), `history`=판별 기록(append-only). 문제는 `generateQuestion`이 매번 랜덤 생성하며, `topicDiff`(최근 성적 가중평균)→`adjRange`로 add/sub/mul/div 숫자 범위를 자동 조절한다. "🔄 새 모험"(`newAdventure`)은 progress만 리셋하고 history는 유지.
+
+**⚡ 구몬 연습**(시험 모드, 홈 화면 버튼): 지한이의 구몬 C 진단 테스트(덧셈·뺄셈·곱셈·나눗셈 160문제/30분, 세로셈 5지선다) 대비. 모의테스트에서 정답률은 높았지만 30분에 100문제만 풀어서(문제당 약 18초) **목표는 속도, 문제당 약 11초**다. `genKumon`이 문제를 만들고, 유형 순서대로 출제하며, 시험 중에는 채점하지 않는다. 결과(유형별 푼 수·정답·평균 초)는 `users[이름].tests`에 저장한다(history와 분리돼 있어 난이도 조절에는 영향 없음).
 
 `src/fairy-land-math.dc.html`(수학 요정나라)도 **동일 구조·동일 기능**이 적용돼 있다. 다른 점만: localStorage 키 `fairymath_users`/`fairymath_user`, 주제 count/add/sub/compare(자동조절 대상)+shape(레벨만).
 

@@ -99,10 +99,13 @@ button{font-family:inherit;}
     <div class="deco" style="position:absolute;right:0;top:40px;font-size:44px;animation:floaty 5s ease-in-out infinite;">⛵</div>
     <div style="font-family:'Gamja Flower',cursive;font-size:clamp(17px,4.6vw,24px);letter-spacing:clamp(2px,1.2vw,5px);color:#a06a24;">— 숫자섬 대모험 —</div>
     <div style="font-size:clamp(38px,11vw,66px);line-height:1.05;margin:4px 0 4px;text-shadow:3px 4px 0 #e7c88a;">수학 보물 지도</div>
-    <div style="font-family:'Gaegu',cursive;font-weight:700;font-size:clamp(17px,4.6vw,24px);color:#6b4a28;">6개의 섬을 골라 단계별로 정복하고 보물을 찾아요!</div>
+    <div style="font-family:'Gaegu',cursive;font-weight:700;font-size:clamp(17px,4.6vw,24px);color:#6b4a28;">{{ islandCount }}개의 섬을 골라 단계별로 정복하고 보물을 찾아요!</div>
     <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,22px);color:#8a5a2b;margin-top:8px;min-height:26px;">{{ greeting }}</div>
     <div style="font-size:clamp(72px,24vw,128px);margin:8px 0 6px;animation:bob 2.8s ease-in-out infinite;filter:drop-shadow(0 12px 10px rgba(0,0,0,.18));">🦊</div>
     <button onClick="{{ startGame }}" style-active="transform:translateY(6px);box-shadow:0 0 0 #b9820f" style="font-family:'Jua';font-size:clamp(24px,6.4vw,34px);color:#5e3d1c;background:#f2b21c;border:5px solid #b9820f;padding:clamp(14px,4vw,20px) clamp(28px,10vw,54px);border-radius:28px;box-shadow:0 8px 0 #b9820f;cursor:pointer;transition:.06s;">모험 시작!  🧭</button>
+    <div style="margin-top:14px;">
+      <button onClick="{{ openTest }}" style-active="transform:translateY(5px);box-shadow:0 0 0 #1f4f86" style="font-family:'Jua';font-size:clamp(20px,5.4vw,26px);color:#fff;background:#2f6bb0;border:5px solid #1f4f86;padding:12px clamp(22px,7vw,40px);border-radius:24px;box-shadow:0 7px 0 #1f4f86;cursor:pointer;transition:.06s;">⚡ 구몬 연습 (시간 재기)</button>
+    </div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
       <button onClick="{{ openRecords }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#5e3d1c;background:#fff3d8;border:4px solid #b9820f;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #b9820f;cursor:pointer;">📒 내 기록</button>
       <button onClick="{{ changeUser }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#204b46;background:#cfece6;border:4px solid #2f8f8b;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #206b68;cursor:pointer;">🙋 이름 바꾸기</button>
@@ -110,9 +113,9 @@ button{font-family:inherit;}
       <a href="index.html" style="display:inline-block;font-family:'Jua';font-size:20px;color:#5e3d1c;background:#fff3d8;border:4px solid #b9820f;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #b9820f;cursor:pointer;">🏠 놀이터로</a>
     </div>
     <div style="margin-top:38px;">
-      <div style="font-family:'Gaegu';font-weight:700;font-size:22px;color:#8a5a2b;">🏅 정복한 섬  {{ medalCount }} / 6</div>
+      <div style="font-family:'Gaegu';font-weight:700;font-size:22px;color:#8a5a2b;">🏅 정복한 섬  {{ medalCount }} / {{ islandCount }}</div>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
-        <sc-for list="{{ stageBadges }}" as="bg" hint-placeholder-count="6">
+        <sc-for list="{{ stageBadges }}" as="bg" hint-placeholder-count="8">
           <div style="{{ bg.style }}">
             <div style="font-size:32px;line-height:1;">{{ bg.face }}</div>
             <div style="font-family:'Gaegu';font-weight:700;font-size:13px;margin-top:4px;">{{ bg.name }}</div>
@@ -137,7 +140,7 @@ button{font-family:inherit;}
     <div style="position:absolute;inset:10px;border:3px dashed #b48a52;border-radius:16px;pointer-events:none;"></div>
     <div class="deco" style="position:absolute;right:20px;top:14px;font-size:40px;opacity:.85;">🧭</div>
     <div class="deco" style="position:absolute;left:6%;top:16%;font-size:34px;opacity:.7;animation:floaty 6s ease-in-out infinite;">🌊</div>
-    <div style="position:absolute;right:10%;bottom:10%;font-size:34px;opacity:.7;">🗻</div>
+    <div style="position:absolute;right:2%;bottom:3%;font-size:34px;opacity:.7;">🗻</div>
     <div style="position:absolute;left:2%;bottom:6%;font-size:30px;opacity:.7;">⚓</div>
     <div class="deco" style="position:absolute;left:50%;top:6%;font-size:28px;opacity:.6;">☁️</div>
 
@@ -145,7 +148,7 @@ button{font-family:inherit;}
       <div style="{{ d.style }}"></div>
     </sc-for>
 
-    <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="6">
+    <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="8">
       <div style="{{ n.wrapStyle }}">
         <button onClick="{{ n.onClick }}" style-active="transform:translateY(3px)" style="{{ n.circleStyle }}">
           <span style="{{ n.iconStyle }}">{{ n.face }}</span>
@@ -221,6 +224,12 @@ button{font-family:inherit;}
       </div>
     </sc-if>
 
+    <sc-if value="{{ q.isFrac }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;width:min(420px,80vw);height:clamp(54px,14vw,76px);margin:6px auto 10px;border:5px solid #5e3d1c;border-radius:12px;overflow:hidden;background:#fff;">
+        <sc-for list="{{ q.fracParts }}" as="fp" hint-placeholder-count="4"><div style="{{ fp.style }}"></div></sc-for>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ q.hasBig }}" hint-placeholder-val="{{ false }}">
       <div style="{{ q.bigStyle }}">{{ q.bigText }}</div>
     </sc-if>
@@ -286,6 +295,94 @@ button{font-family:inherit;}
 </div>
 </sc-if>
 
+<!-- ================= TEST INTRO (구몬 연습) ================= -->
+<sc-if value="{{ isTestIntro }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;background:radial-gradient(circle at 50% 8%,#e3f0ff,#bcd7f2 70%,#9cc0e6);">
+  <div style="width:min(640px,96vw);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <button onClick="{{ goHome }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:clamp(15px,4vw,20px);color:#5e3d1c;background:#fff3d8;border:4px solid #b9820f;padding:10px clamp(11px,3.4vw,20px);border-radius:18px;box-shadow:0 5px 0 #b9820f;cursor:pointer;white-space:nowrap;flex:none;">← 집으로</button>
+    <div style="font-family:'Jua';font-size:clamp(20px,5.4vw,30px);color:#123a66;white-space:nowrap;">⚡ 구몬 연습</div>
+    <div style="width:clamp(0px,9vw,96px);flex:none;"></div>
+  </div>
+  <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,20px);color:#1e4d7a;text-align:center;margin-bottom:16px;line-height:1.4;">실제 시험처럼 세로셈 · 5지선다 · 정답은 끝나고 알려줘요.<br>목표는 한 문제에 {{ targetSecs }}초! 🚀</div>
+  <div style="display:flex;flex-direction:column;gap:12px;width:min(520px,94vw);">
+    <sc-for list="{{ testModes }}" as="m" hint-placeholder-count="3">
+      <button onClick="{{ m.onClick }}" style-active="transform:translateY(4px)" style="font-family:'Jua';text-align:left;background:#fff;border:5px solid #2f6bb0;border-radius:20px;padding:14px 18px;box-shadow:0 6px 0 #1f4f86;cursor:pointer;color:#123a66;">
+        <div style="font-size:clamp(20px,5.4vw,26px);">{{ m.title }}</div>
+        <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(14px,3.8vw,17px);color:#3a5f86;">{{ m.desc }}</div>
+      </button>
+    </sc-for>
+  </div>
+  <sc-if value="{{ hasTestRecs }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(520px,94vw);margin-top:22px;">
+      <div style="font-family:'Jua';font-size:20px;color:#123a66;margin-bottom:8px;">📒 지난 연습 (최근 순)</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <sc-for list="{{ testRecs }}" as="tr" hint-placeholder-count="3">
+          <div style="display:flex;justify-content:space-between;gap:8px;background:#f4f9ff;border:3px solid #9cc0e6;border-radius:14px;padding:8px 12px;font-family:'Jua';font-size:clamp(13px,3.6vw,16px);color:#123a66;">
+            <span>{{ tr.left }}</span><span style="white-space:nowrap;">{{ tr.right }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ================= TEST ================= -->
+<sc-if value="{{ isTest }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 22px;background:#f4f9ff;">
+  <div style="width:min(760px,96vw);display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <div style="{{ testClockStyle }}">⏱️ {{ testRemain }}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;justify-content:space-between;font-family:'Jua';font-size:clamp(13px,3.4vw,16px);color:#1e4d7a;margin-bottom:3px;"><span>{{ testSection }}</span><span>{{ testPos }}</span></div>
+      <div style="height:12px;background:#d6e4f4;border:2px solid #2f6bb0;border-radius:8px;overflow:hidden;"><div style="height:100%;width:{{ testPct }}%;background:#2f6bb0;"></div></div>
+    </div>
+    <button onClick="{{ submitTest }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#fff;background:#d1462f;border:3px solid #a83526;border-radius:14px;padding:8px 12px;box-shadow:0 4px 0 #a83526;cursor:pointer;white-space:nowrap;flex:none;">제출하기</button>
+  </div>
+  <div style="{{ testPaceStyle }}">{{ testPace }}</div>
+  <div style="width:min(760px,96vw);background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:18px 14px 20px;margin-top:10px;display:flex;flex-direction:column;align-items:center;">
+    {{ testProblemEl }}
+    <div style="display:flex;flex-direction:column;gap:10px;width:min(360px,86vw);margin-top:16px;">
+      <sc-for list="{{ testOptions }}" as="o" hint-placeholder-count="5">
+        <button onClick="{{ o.onClick }}" style-active="transform:translateY(3px);background:#dcecff" style="display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(24px,6.6vw,32px);color:#123a66;background:#fff;border:4px solid #9cc0e6;border-radius:16px;padding:8px 18px;cursor:pointer;text-align:left;">
+          <span style="font-size:.85em;color:#2f6bb0;">{{ o.mark }}</span><span>{{ o.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= TEST RESULT ================= -->
+<sc-if value="{{ isTestResult }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;background:radial-gradient(circle at 50% 8%,#e3f0ff,#bcd7f2 70%,#9cc0e6);">
+  <div style="width:min(600px,96vw);background:#fff;border:6px solid #2f6bb0;border-radius:26px;padding:clamp(18px,5vw,26px);text-align:center;box-shadow:0 10px 0 #1f4f86;">
+    <div style="font-family:'Jua';font-size:clamp(24px,6.4vw,32px);color:#123a66;">{{ trTitle }}</div>
+    <div style="font-size:clamp(56px,16vw,80px);line-height:1;margin:8px 0;">{{ trEmoji }}</div>
+    <div style="font-family:'Jua';font-size:clamp(18px,5vw,24px);color:#123a66;">푼 문제 {{ trAnswered }} / {{ trTotal }} · 정답 {{ trCorrect }}</div>
+    <div style="font-family:'Jua';font-size:clamp(16px,4.4vw,20px);color:#2f6bb0;margin-top:4px;">{{ trPaceLine }}</div>
+    <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.4vw,20px);color:#3a5f86;margin-top:6px;">{{ trMessage }}</div>
+    <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:4px 6px;margin-top:16px;font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:#123a66;text-align:center;">
+      <div style="color:#3a5f86;">유형</div><div style="color:#3a5f86;">푼 문제</div><div style="color:#3a5f86;">정답</div><div style="color:#3a5f86;">평균</div>
+      <sc-for list="{{ trSections }}" as="ts" hint-placeholder-count="4">
+        <div style="{{ ts.cell }}">{{ ts.name }}</div><div style="{{ ts.cell }}">{{ ts.done }}</div><div style="{{ ts.cell }}">{{ ts.right }}</div><div style="{{ ts.paceCell }}">{{ ts.avg }}</div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ trHasWrong }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:16px;text-align:left;">
+        <div style="font-family:'Jua';font-size:18px;color:#d1462f;margin-bottom:6px;">✏️ 틀린 문제</div>
+        <sc-for list="{{ trWrong }}" as="w" hint-placeholder-count="2">
+          <div style="font-family:'Jua';font-size:clamp(15px,4vw,18px);color:#4a3620;background:#fff3d8;border-radius:10px;padding:5px 10px;margin-bottom:5px;">{{ w.text }}</div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
+      <button onClick="{{ retryTest }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:22px;color:#fff;background:#2f6bb0;border:4px solid #1f4f86;border-radius:18px;padding:12px;box-shadow:0 6px 0 #1f4f86;cursor:pointer;">🔁 같은 연습 다시</button>
+      <button onClick="{{ openTest }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:20px;color:#123a66;background:#e3f0ff;border:4px solid #2f6bb0;border-radius:18px;padding:10px;box-shadow:0 5px 0 #1f4f86;cursor:pointer;">📋 연습 고르기</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
 <!-- ================= RESULT ================= -->
 <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 14%,#f9f0d9,#ead29c 66%,#d8bb8c);position:relative;overflow:hidden;">
@@ -332,17 +429,20 @@ class Component extends DCLogic {
       {topic:'add',   name:'덧셈 마을', icon:'🏘️', color:'#d1462f'},
       {topic:'sub',   name:'뺄셈 동굴', icon:'🕳️', color:'#6b4fb0'},
       {topic:'mul',   name:'구구단 숲', icon:'🌲', color:'#4e8b3d'},
-      {topic:'three', name:'세자리 성', icon:'🏰', color:'#c98a1e'},
+      {topic:'three', name:'네자리 성', icon:'🏰', color:'#c98a1e'},
       {topic:'time',  name:'시계탑',   icon:'🕰️', color:'#2f8f8b'},
       {topic:'length',name:'보물 다리', icon:'🌉', color:'#2f6bb0'},
+      // 3학년 대비 섬 — 순서를 바꾸면 기존 기록(island 번호)이 어긋나니 항상 뒤에 붙인다.
+      {topic:'div',   name:'나눗셈 등대', icon:'🗼', color:'#b0457a'},
+      {topic:'frac',  name:'분수 정원', icon:'🌷', color:'#7a8f1e'},
     ];
     this.STAGES = 5;
     this.TIME_LIMIT = 30;
     this.LEVEL_DESC = ['쉬움','보통','어려움','도전','최고 난이도'];
     this.MAX_TRY = 3;
-    this.nodePos = [{x:11,y:70},{x:27,y:42},{x:44,y:72},{x:60,y:38},{x:76,y:66},{x:91,y:32}];
-    // 좁은 화면은 가로 6칸이 겹쳐서 2열 3행으로. 순서대로 이으면 Z자 경로가 된다.
-    this.nodePosNarrow = [{x:28,y:16},{x:72,y:16},{x:28,y:50},{x:72,y:50},{x:28,y:84},{x:72,y:84}];
+    this.nodePos = [{x:8,y:70},{x:20,y:38},{x:32,y:72},{x:44,y:38},{x:56,y:72},{x:68,y:38},{x:80,y:72},{x:92,y:38}];
+    // 좁은 화면은 가로로 겹쳐서 2열 4행으로. 순서대로 이으면 Z자 경로가 된다.
+    this.nodePosNarrow = [{x:28,y:12},{x:72,y:12},{x:28,y:37},{x:72,y:37},{x:28,y:62},{x:72,y:62},{x:28,y:87},{x:72,y:87}];
     this.GOOD = ['잘했어! 🎉','정답이야! ⭐','최고야! 👏','대단해! 🌟','멋지다! 🚀','완벽해! 💎'];
     this.NAME_GOOD = ['{n} 최고야! 👏','{n} 대단해! 🌟','역시 {n}! ⭐','{n} 멋지다! 🚀']; // {n}=부르는 이름(지한이, 시현이)
     this.EMO_GOOD = ['🎉','⭐','👏','🌟','💯','🏅'];
@@ -365,7 +465,10 @@ class Component extends DCLogic {
 
   isNarrow(){ try{ return window.matchMedia('(max-width:700px)').matches; }catch(e){ return false; } }
   componentDidMount(){
-    this._timer=setInterval(()=>{ if(this.state.screen==='quiz' && !this.state.feedback && this.state.elapsed<this.TIME_LIMIT) this.setState(s=>({elapsed:Math.min(this.TIME_LIMIT,s.elapsed+1)})); },1000);
+    this._timer=setInterval(()=>{
+      if(this.state.screen==='test'){ this.testTick(); return; }
+      if(this.state.screen==='quiz' && !this.state.feedback && this.state.elapsed<this.TIME_LIMIT) this.setState(s=>({elapsed:Math.min(this.TIME_LIMIT,s.elapsed+1)}));
+    },1000);
     this._onResize=()=>{ const n=this.isNarrow(); if(n!==this.state.narrow) this.setState({narrow:n}); };
     window.addEventListener('resize',this._onResize);
   }
@@ -448,6 +551,8 @@ class Component extends DCLogic {
     if(topic==='mul') return this.genMul(level,d);
     // ponytail: three/time/length는 단계 구조 자체가 난이도라 레벨로만 조절. 필요하면 여기도 adjRange 적용.
     if(topic==='three') return this.genThree(level);
+    if(topic==='div') return this.genDiv(level,d);
+    if(topic==='frac') return this.genFrac(level);
     if(topic==='time') return this.genTime(level);
     return this.genLen(level);
   }
@@ -478,7 +583,12 @@ class Component extends DCLogic {
     let xr,yr; if(l===1){xr=[2,5];yr=[2,5];} else if(l===2){xr=[2,9];yr=[2,9];} else {xr=[4,9];yr=[4,9];} const X=this.adjRange(xr[0],xr[1],d,2,9), Y=this.adjRange(yr[0],yr[1],d,2,9); const x=this.rand(X[0],X[1]),y=this.rand(Y[0],Y[1]); return {kind:'mul',input:'numpad',a:x,op:'×',b:y,answer:x*y,answerLabel:String(x*y)}; }
   genThree(l){
     // Lv.4부터 네 자리(천의 자리) 도입, Lv.5는 보기 4개 + '가장 작은 수'도 물음.
-    if(this.pick(['place','compare'])==='place'){
+    // 2학년 2학기 '네 자리 수': Lv.3부터 뛰어 세기, Lv.4부터 몇천 몇백 몇십 몇(자릿값 모으기)도 섞는다.
+    const modes=l>=4?['place','compare','skip','expand']:l===3?['place','compare','skip']:['place','compare'];
+    const mode=this.pick(modes);
+    if(mode==='skip') return this.genSkip(l);
+    if(mode==='expand') return this.genExpand(l);
+    if(mode==='place'){
       const R={1:[120,399],2:[120,699],3:[300,989],4:[1200,8999],5:[1005,9999]}[l]||[300,989];
       const n=this.rand(R[0],R[1]);
       const places=l>=4?[['천',1000],['백',100],['십',10],['일',1]]:[['백',100],['십',10],['일',1]];
@@ -497,6 +607,73 @@ class Component extends DCLogic {
       const ans=askMin?Math.min(...nums):Math.max(...nums);
       return {kind:'three',input:'choice',prompt:askMin?'가장 작은 수를 골라요!':'가장 큰 수를 골라요!',answer:ans,answerLabel:String(ans),options:this.shuffle(nums).map(v=>({label:String(v),value:v}))};
     }
+  }
+  // 뛰어 세기: 일정하게 커지는 수 4개 중 빈칸 하나.
+  genSkip(l){
+    const step=this.pick(l===3?[10,100]:[10,100,1000]);
+    const start=step===1000?this.rand(1,5)*1000+this.rand(0,9)*100:(l===3?this.rand(100,590):this.rand(1100,8400));
+    const seq=[0,1,2,3].map(i=>start+i*step), hole=this.rand(1,3), ans=seq[hole];
+    const show=seq.map((v,i)=>i===hole?'?':String(v)).join(' → ');
+    // 다른 자리를 뛰어 센 수(ans±10/100)가 가장 헷갈리는 오답
+    const opts=[ans]; this.shuffle([ans+1,ans+(step===10?100:10),ans-(step===10?100:10),ans+step,ans+step*10]).forEach(v=>{ if(v>0 && v<10000 && opts.length<4 && !opts.includes(v)) opts.push(v); });
+    return {kind:'three',input:'choice',prompt:`${step}씩 뛰어 세었어요. ?에 알맞은 수는?`,bigText:show,answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+  }
+  // 자릿값 모으기: 3000+400+20+5 / '천이 3, 백이 4…' → 숫자로. 0이 끼는 자리(3025)가 핵심 실수 포인트.
+  genExpand(l){
+    const th=this.rand(1,9), h=this.rand(0,9), t=this.rand(0,9), o=this.rand(0,9);
+    const ans=th*1000+h*100+t*10+o;
+    const parts=[th*1000,h*100,t*10,o].filter(v=>v>0);
+    const text=Math.random()<0.5 ? parts.join(' + ') : `1000이 ${th}개, 100이 ${h}개, 10이 ${t}개, 1이 ${o}개`;
+    const digits=[th,h,t,o].filter(v=>v>0).join(''); // 0 자리를 빼먹는 실수
+    const wrongs=[+digits, th*1000+t*100+h*10+o, ans+1000, ans+100, ans-10].filter(v=>v>0 && v!==ans);
+    const opts=[ans]; this.shuffle(wrongs).forEach(v=>{ if(opts.length<4 && !opts.includes(v)) opts.push(v); });
+    while(opts.length<4){ const v=ans+this.rand(1,9)*10; if(!opts.includes(v)) opts.push(v); }
+    return {kind:'three',input:'choice',prompt:'어떤 수일까요?',bigText:text,answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+  }
+  // ---- 3학년 대비: 나눗셈 (3학년 1학기 '나눗셈'). 나머지 없는 나눗셈만, 곱셈구구 범위 안에서. ----
+  genDiv(l,d){ d=d||0;
+    const B=this.adjRange(2,l===1?3:l===2?5:9,d,2,9), b=this.rand(B[0],B[1]), c=this.rand(2,l<=2?5:9), a=b*c;
+    const things=['🍪','🍬','🍓','🎈','🖍️','⚽'], e=this.pick(things);
+    if(l===1) return {kind:'div',input:'numpad',prompt:`${e} ${a}개를 ${b}명이 똑같이 나눠요. 한 명에 몇 개?`,answer:c,answerLabel:String(c),expr:[String(a),'÷',String(b),'=','?']};
+    if(l===4){ // 빈칸 위치를 바꿔 곱셈과 나눗셈의 관계를 생각하게
+      return Math.random()<0.5
+        ? {kind:'div',input:'numpad',answer:b,answerLabel:String(b),expr:[String(a),'÷','?','=',String(c)]}
+        : {kind:'div',input:'numpad',answer:a,answerLabel:String(a),expr:['?','÷',String(b),'=',String(c)]};
+    }
+    if(l===5){ // 묶어 세기(포함제) 문장제
+      const box=this.pick([['상자','개씩 담으면'],['봉지','개씩 넣으면'],['모둠','명씩 앉으면']]);
+      const unit=box[0]==='모둠'?'명':'개', what=box[0]==='모둠'?'🧒 친구':`${e}`;
+      return {kind:'div',input:'numpad',prompt:`${what} ${a}${unit}${unit==='명'?'을':'를'} 한 ${box[0]}에 ${b}${box[1]} 몇 ${box[0]}?`,answer:c,answerLabel:String(c),expr:[String(a),'÷',String(b),'=','?']};
+    }
+    return {kind:'div',input:'numpad',answer:c,answerLabel:String(c),expr:[String(a),'÷',String(b),'=','?']};
+  }
+  // ---- 3학년 대비: 분수 맛보기 (3학년 1학기 '분수와 소수', 2학기 '분수') ----
+  fracLabel(k,n){ return `${n}분의 ${k}`; }
+  genFrac(l){
+    const mkOpts=(ans,cands)=>{ const o=[ans]; this.shuffle(cands).forEach(v=>{ if(o.length<4 && !o.includes(v)) o.push(v); });
+      while(o.length<4){ const y=this.rand(2,9), v=this.rand(1,y-1)+'/'+y; if(!o.includes(v)) o.push(v); } return o; };
+    if(l<=2){ // 막대 그림: 색칠한 부분은 전체의 몇 분의 몇?
+      const n=this.rand(2,l===1?4:8), k=l===1?1:this.rand(1,n-1), ans=k+'/'+n;
+      // 오답: 색칠 안 한 부분, 칸 수를 잘못 센 분모
+      const opts=mkOpts(ans,[(n-k)+'/'+n, k+'/'+(n+1), (k+1)+'/'+n, '1/'+n, k+'/'+(n-1)].filter(v=>{ const [x,y]=v.split('/').map(Number); return x>0 && y>1 && v!==ans; }));
+      return {kind:'frac',input:'choice',prompt:'색칠한 부분은 전체의 얼마일까요?',frac:{n,k},answer:ans,answerLabel:this.fracLabel(k,n),
+        options:this.shuffle(opts).map(v=>{ const [x,y]=v.split('/'); return {label:this.fracLabel(x,y),value:v}; })};
+    }
+    if(l===3){ // 분모가 같은 분수: 분자가 클수록 크다
+      const n=this.rand(3,9); let a=this.rand(1,n-1), b=this.rand(1,n-1); while(a===b) b=this.rand(1,n-1);
+      const ans=Math.max(a,b)+'/'+n;
+      return {kind:'frac',input:'choice',prompt:'더 큰 분수를 골라요!',answer:ans,answerLabel:this.fracLabel(Math.max(a,b),n),
+        options:this.shuffle([a,b]).map(k=>({label:this.fracLabel(k,n),value:k+'/'+n}))};
+    }
+    if(l===4){ // 단위분수: 분모가 작을수록 크다 (가장 헷갈리는 부분)
+      let p=this.rand(2,9), q=this.rand(2,9); while(p===q) q=this.rand(2,9);
+      const askBig=Math.random()<0.6, ans='1/'+(askBig?Math.min(p,q):Math.max(p,q));
+      return {kind:'frac',input:'choice',prompt:askBig?'더 큰 분수를 골라요! (피자 한 판을 나눈다면?)':'더 작은 분수를 골라요!',answer:ans,answerLabel:this.fracLabel(1,ans.split('/')[1]),
+        options:this.shuffle([p,q]).map(n=>({label:this.fracLabel(1,n),value:'1/'+n}))};
+    }
+    // Lv.5: 분수만큼은 얼마? (12의 4분의 1 / 12의 4분의 3)
+    const n=this.pick([2,3,4,5,6]), unit=this.rand(2,6), whole=n*unit, k=this.rand(1,n-1);
+    return {kind:'frac',input:'numpad',prompt:`🍬 ${whole}개의 ${this.fracLabel(k,n)}만큼은 몇 개일까요?`,answer:unit*k,answerLabel:String(unit*k),expr:[`${whole}의 ${k}/${n}`,'=','?']};
   }
   genTime(l){
     // 2학년 2학기 '시각과 시간': Lv.3부터 시간 단위(1시간=60분·하루·1주일·1년) 문제를 섞는다.
@@ -599,6 +776,95 @@ class Component extends DCLogic {
     }
   }
 
+  // ---- ⚡ 구몬 연습 (시험 모드) ----
+  // 구몬 C 진단 테스트 흉내: 덧셈·뺄셈·곱셈·나눗셈 세로셈 5지선다, 전체 제한시간, 중간 채점 없음.
+  // 실전 160문제/30분 = 문제당 약 11초가 목표 페이스.
+  testModeList(){
+    return [
+      {id:'full',  title:'🏁 실전 160문제 · 30분', desc:'덧셈 40 → 뺄셈 40 → 곱셈 40 → 나눗셈 40', plan:[['add',40],['sub',40],['mul',40],['div',40]], limit:1800},
+      {id:'mini',  title:'⏱️ 미니 40문제 · 8분',   desc:'네 유형 10문제씩, 실전과 같은 속도',      plan:[['add',10],['sub',10],['mul',10],['div',10]], limit:480},
+      {id:'muldiv',title:'✖️➗ 곱셈·나눗셈 40문제 · 8분', desc:'뒤쪽 유형만 집중 연습',          plan:[['mul',20],['div',20]], limit:480},
+    ];
+  }
+  // 받아올림 없이 자리마다 더한(뺀) 값 — 가장 흔한 실수를 오답 보기로.
+  digitwise(a,b,fn){ const A=String(a), B=String(b).padStart(A.length,'0'); let r=''; for(let i=0;i<A.length;i++) r+=String(fn(+A[i],+B[i])); return +r; }
+  genKumon(sec){
+    let top, op, bottom, ans, label, wrongs;
+    if(sec==='add'){
+      const form=this.pick(['22','22','32','32','33']);
+      const a=form[0]==='2'?this.rand(15,99):this.rand(105,899), b=form[1]==='2'?this.rand(12,99):this.rand(105,899);
+      top=a; op='+'; bottom=b; ans=a+b;
+      wrongs=[this.digitwise(a,b,(x,y)=>(x+y)%10), ans+10, ans-10, ans+1, ans-1, ans+100, ans-2];
+    } else if(sec==='sub'){
+      const form=this.pick(['22','32','32','33']);
+      let a=form[0]==='2'?this.rand(30,99):this.rand(150,999), b=form[1]==='2'?this.rand(12,Math.min(89,a-5)):this.rand(102,a-20);
+      top=a; op='−'; bottom=b; ans=a-b;
+      wrongs=[this.digitwise(a,b,(x,y)=>Math.abs(x-y)), ans+10, ans-10, ans+1, ans-1, ans+100, ans+2];
+    } else if(sec==='mul'){
+      const form=this.pick(['11','21','21','31']);
+      const a=form==='11'?this.rand(2,9):form==='21'?this.rand(12,99):this.rand(102,499), b=this.rand(2,9);
+      top=a; op='×'; bottom=b; ans=a*b;
+      wrongs=[ans+b, ans-b, ans+10, ans-10, ans+1, ans+100, ans-1];
+    } else {
+      const b=this.rand(2,9);
+      if(Math.random()<0.4){ const q=this.rand(2,9), a=b*q; return this.kumonQ('div',a,'÷',b,String(q),String(q),[q+1,q-1,q+2,q-2,q*2,q+10].filter(v=>v>0).map(String)); }
+      const a=this.rand(Math.max(11,b*2),99), q=Math.floor(a/b), r=a%b;
+      const lab=(x,y)=>y?`${x} … ${y}`:`${x}`;
+      const cand=[[q+1,r],[q-1,r],[q,(r+1)%b],[q,r?0:1],[q+1,(r+1)%b],[q,b-r],[q-1,(r+b-1)%b]].filter(([x,y])=>x>0 && y>=0 && y<b);
+      return this.kumonQ('div',a,'÷',b,lab(q,r),lab(q,r),cand.map(([x,y])=>lab(x,y)));
+    }
+    return this.kumonQ(sec,top,op,bottom,String(ans),String(ans),wrongs.filter(v=>v>0).map(String));
+  }
+  kumonQ(sec,top,op,bottom,answer,label,wrongs){
+    const opts=[answer]; this.shuffle(wrongs).forEach(v=>{ if(opts.length<5 && !opts.includes(v)) opts.push(v); });
+    for(let k=3; opts.length<5; k++){ const v=String((parseInt(answer,10)||0)+k*11); if(!opts.includes(v)) opts.push(v); }
+    return {sec,top:String(top),op,bottom:String(bottom),answer,answerLabel:label,options:this.shuffle(opts)};
+  }
+  openTest(){ this.playClick(); this.setState({screen:'testIntro'}); }
+  startTest(id){
+    const m=this.testModeList().find(x=>x.id===id); if(!m) return;
+    this.playClick();
+    const qs=[]; m.plan.forEach(([sec,n])=>{ for(let i=0;i<n;i++) qs.push(this.genKumon(sec)); });
+    const now=Date.now();
+    this.setState({screen:'test', test:{mode:m.id, title:m.title, limit:m.limit, qs, idx:0, picks:[], startedAt:now, lastAt:now}, testNow:now});
+  }
+  testTick(){ const t=this.state.test; if(!t) return; const now=Date.now(); if((now-t.startedAt)/1000>=t.limit) this.finishTest(); else this.setState({testNow:now}); }
+  pickTest(v){
+    const t=this.state.test; if(!t || t.idx>=t.qs.length) return;
+    this.playClick();
+    const now=Date.now(), picks=t.picks.concat([{v, secs:(now-t.lastAt)/1000}]), idx=t.idx+1;
+    const nt=Object.assign({},t,{picks, idx, lastAt:now});
+    if(idx>=t.qs.length){ this.finishTest(nt); return; }
+    this.setState({test:nt, testNow:now});
+  }
+  submitTest(){ if(!window.confirm('지금 제출할까요?\n남은 문제는 안 푼 걸로 처리돼요.')) return; this.finishTest(); }
+  finishTest(done){
+    const t=done||this.state.test; if(!t || this.state.screen!=='test') return;
+    const used=Math.min(t.limit, Math.round((Date.now()-t.startedAt)/1000));
+    const secs={}; let correct=0;
+    t.picks.forEach((p,i)=>{ const q=t.qs[i], ok=p.v===q.answer; if(ok) correct++;
+      const sc=secs[q.sec]||(secs[q.sec]={n:0,c:0,t:0,total:0}); sc.n++; sc.t+=p.secs; if(ok) sc.c++; });
+    t.qs.forEach(q=>{ (secs[q.sec]||(secs[q.sec]={n:0,c:0,t:0,total:0})).total++; });
+    const rec={date:Date.now(), mode:t.mode, total:t.qs.length, limit:t.limit, answered:t.picks.length, correct, used, secs};
+    const nm=this.state.userName;
+    if(nm){ const users=this.loadUsers(); const u=users[nm]||{progress:{},history:[]}; u.tests=(u.tests||[]).concat([rec]).slice(-50); users[nm]=u; this.saveUsers(users); }
+    if(t.picks.length && correct/t.picks.length>=0.9) this.playFanfare();
+    this.setState({screen:'testResult', testResult:Object.assign({},rec,{qs:t.qs, picks:t.picks})});
+  }
+  retryTest(){ const r=this.state.testResult; if(r) this.startTest(r.mode); }
+  fmtClock(sec){ sec=Math.max(0,Math.ceil(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
+  // 세로셈(나눗셈은 가로) — 자리마다 칸을 맞춘 그리드.
+  kumonEl(q){
+    const h=React.createElement, font="'Jua',sans-serif";
+    if(q.op==='÷') return h('div',{style:{fontFamily:font,fontSize:'clamp(46px,13vw,68px)',color:'#123a66',letterSpacing:'4px'}},`${q.top} ÷ ${q.bottom}`);
+    const w=Math.max(q.top.length,q.bottom.length)+1;
+    const row=(str,opCh)=>Array.from({length:w},(_,i)=>{ const pad=str.padStart(w,' '); const ch=i===0&&opCh?opCh:pad[i];
+      return h('div',{key:i,style:{width:'0.72em',textAlign:'center',color:i===0&&opCh?'#d1462f':'#123a66'}},ch===' '?' ':ch); });
+    return h('div',{style:{fontFamily:font,fontSize:'clamp(46px,13vw,68px)',lineHeight:1.15}},
+      h('div',{style:{display:'flex'}},row(q.top,null)),
+      h('div',{style:{display:'flex',borderBottom:'5px solid #123a66',paddingBottom:'4px'}},row(q.bottom,q.op)));
+  }
+
   // ---- flow ----
   startGame(){ this.playClick(); this.setState({screen:'map'}); }
   goHome(){ this.playClick(); this.setState({screen:'home'}); }
@@ -697,7 +963,7 @@ class Component extends DCLogic {
       };
     });
     const trailDots=this._buildTrail(posList);
-    const mapStyle=`position:relative;width:min(1080px,97vw);aspect-ratio:${nar?'3/4':'16/9'};background:linear-gradient(150deg,#f6e8c4,#ead29c 60%,#dcbf8e);border:${nar?8:12}px solid #5e3d1c;border-radius:24px;box-shadow:inset 0 0 0 6px #c9a86e, 0 14px 30px rgba(0,0,0,.25);overflow:hidden;`;
+    const mapStyle=`position:relative;width:min(1080px,97vw);aspect-ratio:${nar?'2/3':'16/9'};background:linear-gradient(150deg,#f6e8c4,#ead29c 60%,#dcbf8e);border:${nar?8:12}px solid #5e3d1c;border-radius:24px;box-shadow:inset 0 0 0 6px #c9a86e, 0 14px 30px rgba(0,0,0,.25);overflow:hidden;`;
 
     // island stage cards
     const cl=s.progress[s.islandIndex]||0;
@@ -729,8 +995,10 @@ class Component extends DCLogic {
       q={ kind:cur.kind, prompt:cur.prompt||'', hasPrompt:!!cur.prompt,
         isEquation:isEq, expr,
         hasChoice: cur.input==='choice', isClock: cur.kind==='time',
+        isFrac: !!cur.frac,
+        fracParts: cur.frac ? Array.from({length:cur.frac.n},(_,i)=>({style:`flex:1;${i<cur.frac.k?'background:#9ccc65;':''}${i?'border-left:3px solid #5e3d1c;':''}`})) : [],
         hasBig: !!cur.bigText, bigText:cur.bigText||'',
-        bigStyle:`font-family:'Jua';font-size:${((cur.bigText||'').length>9?(s.narrow?26:40):(s.narrow?44:64))}px;color:#2f6bb0;letter-spacing:${s.narrow?2:4}px;margin:4px 0;`,
+        bigStyle:`font-family:'Jua';font-size:${((cur.bigText||'').length>20?(s.narrow?20:32):(cur.bigText||'').length>9?(s.narrow?26:40):(s.narrow?44:64))}px;color:#2f6bb0;letter-spacing:${s.narrow?2:4}px;margin:4px 0;`,
         clockH: cur.clock?cur.clock.hAngle:0, clockM: cur.clock?cur.clock.mAngle:0,
         options:(cur.options||[]).map(o=>({label:o.label, onClick:()=>this.choose(o.value)})),
       };
@@ -767,7 +1035,50 @@ class Component extends DCLogic {
       style:`display:flex;align-items:center;gap:12px;background:${r.passed?'#f3f9ec':'#fff3d8'};border:3px solid ${r.passed?'#4e8b3d':'#d8c298'};border-radius:16px;padding:10px 14px;text-align:left;`,
     }));
     const userList=Object.keys(this.loadUsers()).slice(0,8).map(nm=>({ name:nm, onClick:()=>this.pickUser(nm) }));
-    return {
+    // ---- 구몬 연습 화면 값 ----
+    const SEC_NAME={add:'덧셈',sub:'뺄셈',mul:'곱셈',div:'나눗셈'};
+    const modes=this.testModeList();
+    const target=Math.round(1800/160*10)/10; // 실전 목표: 문제당 초
+    const T=s.test, TQ=T&&T.qs[T.idx];
+    const tUsed=T?((s.testNow||Date.now())-T.startedAt)/1000:0, tRemain=T?T.limit-tUsed:0;
+    const expected=T?Math.floor(tUsed/(T.limit/T.qs.length)):0, ahead=T?T.idx-expected:0;
+    const marks=['①','②','③','④','⑤'];
+    const myTests=((this.loadUsers()[s.userName]||{}).tests||[]).slice().reverse().slice(0,8);
+    const R=s.testResult;
+    const rAvg=R&&R.answered?R.used/R.answered:0;
+    const testVals={
+      openTest:()=>this.openTest(), targetSecs:target,
+      testModes:modes.map(m=>({title:m.title, desc:m.desc, onClick:()=>this.startTest(m.id)})),
+      testRecs:myTests.map(r=>{ const m=modes.find(x=>x.id===r.mode); return {
+        left:`${fmtDate(r.date)} · ${m?m.title.replace(/^\S+\s/,''):r.mode}`,
+        right:`${r.answered}/${r.total}문제 · 정답 ${r.correct} · ${r.answered?(r.used/r.answered).toFixed(1):'-'}초`}; }),
+      hasTestRecs:myTests.length>0,
+      testRemain:this.fmtClock(tRemain),
+      testClockStyle:`font-family:'Jua';font-size:clamp(18px,5vw,24px);color:${tRemain<=60?'#d1462f':'#123a66'};background:${tRemain<=60?'#fbe0da':'#e3f0ff'};border:3px solid ${tRemain<=60?'#d1462f':'#2f6bb0'};border-radius:14px;padding:6px 10px;white-space:nowrap;flex:none;`,
+      testSection:TQ?`${SEC_NAME[TQ.sec]}`:'',
+      testPos:T?`${Math.min(T.idx+1,T.qs.length)} / ${T.qs.length}`:'',
+      testPct:T?Math.round(T.idx/T.qs.length*100):0,
+      testPace: !T||tUsed<20 ? '목표: 한 문제 '+target+'초 🚀' : ahead>=0 ? `목표보다 ${ahead}문제 앞서요! 🚀` : `목표보다 ${-ahead}문제 늦어요 🐢 조금 더 빨리!`,
+      testPaceStyle:`font-family:'Jua';font-size:clamp(15px,4vw,19px);color:${!T||tUsed<20||ahead>=0?'#2f8f4e':'#d1462f'};`,
+      testProblemEl: TQ?this.kumonEl(TQ):null,
+      testOptions: TQ?TQ.options.map((v,i)=>({mark:marks[i], label:v, onClick:()=>this.pickTest(v)})):[],
+      submitTest:()=>this.submitTest(), retryTest:()=>this.retryTest(),
+      trTitle: R ? (R.answered>=R.total?'다 풀었어요! 🎉':'시간 끝! ⏰') : '',
+      trEmoji: R ? (R.answered>=R.total && R.correct>=R.answered*0.9 ? '🏆' : R.correct>=R.answered*0.9 ? '🚀' : '💪') : '',
+      trAnswered: R?R.answered:0, trTotal: R?R.total:0, trCorrect: R?R.correct:0,
+      trPaceLine: R ? `걸린 시간 ${this.fmtSecs(R.used)} · 한 문제 평균 ${rAvg.toFixed(1)}초 (목표 ${target}초)` : '',
+      trMessage: !R ? '' : !R.answered ? '다음엔 한 문제라도 풀어 보자!' :
+        R.correct<R.answered*0.9 ? '조금 천천히, 정확하게 푸는 연습부터 해요 🙂' :
+        rAvg<=target ? '정확하고 빨라요! 실전도 문제없어요 🏅' : `정확해요! 이제 속도만 올리면 돼요. 한 문제에 ${(rAvg-target).toFixed(1)}초만 줄여 봐요 💨`,
+      trSections: R ? Object.keys(SEC_NAME).filter(k=>R.secs[k]).map(k=>{ const x=R.secs[k], avg=x.n?x.t/x.n:0, slow=x.n&&avg>target;
+        const cell='padding:4px 0;border-top:2px solid #d6e4f4;';
+        return {name:SEC_NAME[k], done:`${x.n}/${x.total}`, right:x.n?`${x.c}`:'-', avg:x.n?avg.toFixed(1)+'초':'-', cell,
+          paceCell:cell+(slow?'color:#d1462f;':'color:#2f8f4e;')}; }) : [],
+      trWrong: R ? R.picks.map((p,i)=>({p,q:R.qs[i]})).filter(x=>x.p.v!==x.q.answer).map(x=>({text:`${x.q.top} ${x.q.op} ${x.q.bottom} = ${x.q.answerLabel}   (고른 답 ${x.p.v})`})) : [],
+      trHasWrong: !!(R && R.picks.some((p,i)=>p.v!==R.qs[i].answer)),
+      isTestIntro:s.screen==='testIntro', isTest:s.screen==='test', isTestResult:s.screen==='testResult',
+    };
+    return Object.assign(testVals, {
       isHome:s.screen==='home', isMap:s.screen==='map', isIsland:s.screen==='island', isQuiz:s.screen==='quiz', isResult:s.screen==='result',
       isName:s.screen==='name', isRecords:s.screen==='records',
       userName:s.userName, greeting:s.userName?`${s.userName} 탐험가, 환영해요! 🧭`:'',
@@ -778,7 +1089,7 @@ class Component extends DCLogic {
       userList, hasUsers:userList.length>0,
       records, hasRecords:records.length>0, noRecords:!records.length, recordCount:records.length,
       startGame:()=>this.startGame(), goHome:()=>this.goHome(), backToMap:()=>this.backToMap(), backToIsland:()=>this.backToIsland(),
-      medalCount, stageBadges, nodes, trailDots, mapStyle, clockTicks:this._ticks,
+      medalCount, islandCount:this.stages.length, stageBadges, nodes, trailDots, mapStyle, clockTicks:this._ticks,
       islandName: s.screen==='result'?rIsland.name:island.name,
       islandIcon: s.screen==='result'?rIsland.icon:island.icon,
       stageCards,
@@ -810,7 +1121,7 @@ class Component extends DCLogic {
       canNext: passed && nextExists && !lr.isRetry,
       retryWrong:()=>this.retryWrong(), playAgain:()=>this.playAgain(), nextStage:()=>this.nextStage(),
       resultConfettiEl: passed ? this.confetti(30,'fixed') : null,
-    };
+    });
   }
 
   confetti(n,pos){
