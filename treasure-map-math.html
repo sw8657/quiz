@@ -326,16 +326,23 @@ button{font-family:inherit;}
         </button>
       </sc-for>
     </div>
+    <sc-if value="{{ hasSprintRecs }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:right;margin-top:8px;"><button onClick="{{ clearSprints }}" style="font-family:'Jua';font-size:clamp(13px,3.5vw,15px);color:#a83526;background:#fff;border:2px solid #e2a79b;border-radius:12px;padding:6px 12px;cursor:pointer;">🗑️ 스프린트 기록 지우기</button></div>
+    </sc-if>
   </div>
   <sc-if value="{{ hasTestRecs }}" hint-placeholder-val="{{ false }}">
     <div style="width:min(520px,94vw);margin-top:22px;">
       <div style="font-family:'Jua';font-size:20px;color:#123a66;margin-bottom:8px;">📒 지난 연습 (최근 순)</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <sc-for list="{{ testRecs }}" as="tr" hint-placeholder-count="3">
-          <button onClick="{{ tr.onClick }}" style-active="transform:translateY(2px)" style="display:flex;justify-content:space-between;gap:8px;background:#f4f9ff;border:3px solid #9cc0e6;border-radius:14px;padding:8px 12px;font-family:'Jua';font-size:clamp(13px,3.6vw,16px);color:#123a66;cursor:pointer;text-align:left;">
-            <span>{{ tr.left }}</span><span style="white-space:nowrap;">{{ tr.right }}</span>
-          </button>
+          <div style="display:flex;gap:6px;align-items:stretch;">
+            <button onClick="{{ tr.onClick }}" style-active="transform:translateY(2px)" style="flex:1;min-width:0;display:flex;justify-content:space-between;gap:8px;background:#f4f9ff;border:3px solid #9cc0e6;border-radius:14px;padding:8px 12px;font-family:'Jua';font-size:clamp(13px,3.6vw,16px);color:#123a66;cursor:pointer;text-align:left;">
+              <span>{{ tr.left }}</span><span style="white-space:nowrap;">{{ tr.right }}</span>
+            </button>
+            <button onClick="{{ tr.onDelete }}" aria-label="이 기록 지우기" style-active="transform:translateY(2px)" style="flex:none;font-size:18px;background:#fff;border:3px solid #e2a79b;border-radius:14px;padding:0 10px;cursor:pointer;">🗑️</button>
+          </div>
         </sc-for>
+        <div style="text-align:right;margin-top:8px;"><button onClick="{{ clearTests }}" style="font-family:'Jua';font-size:clamp(13px,3.5vw,15px);color:#a83526;background:#fff;border:2px solid #e2a79b;border-radius:12px;padding:6px 12px;cursor:pointer;">🗑️ 연습 기록 모두 지우기</button></div>
       </div>
     </div>
   </sc-if>
@@ -346,6 +353,7 @@ button{font-family:inherit;}
 <sc-if value="{{ isTest }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 22px;background:#f4f9ff;">
   <div style="width:min(760px,96vw);display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <button onClick="{{ cancelTest }}" aria-label="그만하기" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#5e3d1c;background:#fff3d8;border:3px solid #b9820f;border-radius:14px;padding:8px 10px;box-shadow:0 4px 0 #b9820f;cursor:pointer;white-space:nowrap;flex:none;">✕ 그만</button>
     <div style="{{ testClockStyle }}">⏱️ {{ testRemain }}</div>
     <div style="flex:1;min-width:0;">
       <div style="display:flex;justify-content:space-between;font-family:'Jua';font-size:clamp(13px,3.4vw,16px);color:#1e4d7a;margin-bottom:3px;"><span>{{ testSection }}</span><span>{{ testPos }}</span></div>
@@ -958,6 +966,13 @@ class Component extends DCLogic {
     this.setState({screen:'testResult', testResult:Object.assign({},rec,{qs:t.qs, picks:t.picks})});
   }
   retryTest(){ const r=this.state.testResult; if(r) this.startTest(r.mode); }
+  // 중간에 그만두기: 기록을 남기지 않고 연습 고르기 화면으로.
+  cancelTest(){ if(!window.confirm('연습을 그만할까요?\n이번 연습은 기록되지 않아요.')) return; this.playClick(); this.setState({screen:'testIntro', test:null}); }
+  // 기록 지우기 — users[이름]의 tests/sprints만 고친다(모험 기록 history는 건드리지 않음).
+  editUser(fn){ const nm=this.state.userName; if(!nm) return; const users=this.loadUsers(); const u=users[nm]||{progress:{},history:[]}; fn(u); users[nm]=u; this.saveUsers(users); this.setState({testNow:Date.now()}); }
+  deleteTest(date){ if(!window.confirm('이 연습 기록을 지울까요?')) return; this.editUser(u=>{ u.tests=(u.tests||[]).filter(r=>r.date!==date); }); }
+  clearTests(){ if(!window.confirm('구몬 연습 기록을 모두 지울까요?\n지운 기록은 되돌릴 수 없어요.')) return; this.editUser(u=>{ u.tests=[]; }); }
+  clearSprints(){ if(!window.confirm('암산 스프린트 기록(최고 기록 포함)을 모두 지울까요?\n지운 기록은 되돌릴 수 없어요.')) return; this.editUser(u=>{ u.sprints=[]; }); }
   openSheet(rec, from){ this.playClick(); this.setState({screen:'testSheet', sheet:{rec:rec||this.state.testResult, from:from||'testResult', filter:'all'}}); }
   closeSheet(){ this.playClick(); this.setState({screen:(this.state.sheet&&this.state.sheet.from)||'testIntro'}); }
   setSheetFilter(f){ this.setState({sheet:Object.assign({},this.state.sheet,{filter:f})}); }
@@ -1206,7 +1221,9 @@ class Component extends DCLogic {
       testRecs:myTests.map(r=>{ const m=modes.find(x=>x.id===r.mode); return {
         left:`${fmtDate(r.date)} · ${m?m.title.replace(/^\S+\s/,''):r.mode}`,
         right:`${r.answered}/${r.total}문제 · 정답 ${r.correct} · ${r.answered?(r.used/r.answered).toFixed(1):'-'}초${r.items?' 📝':''}`,
-        onClick:()=>{ if(r.items) this.openSheet(r,'testIntro'); }}; }),
+        onClick:()=>{ if(r.items) this.openSheet(r,'testIntro'); }, onDelete:()=>this.deleteTest(r.date)}; }),
+      clearTests:()=>this.clearTests(), clearSprints:()=>this.clearSprints(), cancelTest:()=>this.cancelTest(),
+      hasSprintRecs:this.sprintRecs().length>0,
       hasTestRecs:myTests.length>0,
       testRemain:this.fmtClock(tRemain),
       testClockStyle:`font-family:'Jua';font-size:clamp(18px,5vw,24px);color:${tRemain<=60?'#d1462f':'#123a66'};background:${tRemain<=60?'#fbe0da':'#e3f0ff'};border:3px solid ${tRemain<=60?'#d1462f':'#2f6bb0'};border-radius:14px;padding:6px 10px;white-space:nowrap;flex:none;`,
