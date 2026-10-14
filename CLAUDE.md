@@ -59,7 +59,9 @@ node src/build-deploy.mjs   # src/*.dc.html → 루트 *.html + support.js
 
 `src/treasure-map-math.dc.html`의 `<script data-dc-script>` 안 `class Component`가 전부다. 섬 목록 `this.stages`는 기록이 섬 번호(index)로 저장되므로 **새 섬은 항상 뒤에 추가**하고 순서를 바꾸지 않는다(지도 좌표 `nodePos`/`nodePosNarrow`도 같은 개수로). 상태는 `localStorage` 이름별 저장: `mathmap_users`={이름:{progress,history}}, `mathmap_user`=현재 이름. `progress[섬]`=깬 최고 단계(지도 해금), `history`=판별 기록(append-only). 문제는 `generateQuestion`이 매번 랜덤 생성하며, `topicDiff`(최근 성적 가중평균)→`adjRange`로 add/sub/mul/div 숫자 범위를 자동 조절한다. "🔄 새 모험"(`newAdventure`)은 progress만 리셋하고 history는 유지.
 
-**⚡ 구몬 연습**(시험 모드, 홈 화면 버튼): 지한이의 구몬 C 진단 테스트(덧셈·뺄셈·곱셈·나눗셈 160문제/30분, 세로셈 5지선다) 대비. 모의테스트에서 정답률은 높았지만 30분에 100문제만 풀어서(문제당 약 18초) **목표는 속도, 문제당 약 11초**다. `genKumon`이 문제를 만들고, 유형 순서대로 출제하며, 시험 중에는 채점하지 않는다. 결과(유형별 푼 수·정답·평균 초)는 `users[이름].tests`에 저장한다(history와 분리돼 있어 난이도 조절에는 영향 없음).
+**⚡ 구몬 연습**(시험 모드, 홈 화면 버튼): 지한이의 구몬 C 진단 테스트(덧셈·뺄셈·곱셈·나눗셈 160문제/30분, 세로셈 5지선다) 대비. 모의테스트에서 정답률은 높았지만 30분에 100문제만 풀어서(문제당 약 18초) **목표는 속도, 문제당 약 11초**다. `genKumon(sec,tier)`이 문제를 만들고, 실제 시험처럼 유형 순서대로·유형 안에서는 쉬운 것(tier 0)→어려운 것(tier 3) 순으로 출제하며, 시험 중에는 채점하지 않는다. 결과(유형별 푼 수·정답·평균 초)는 `users[이름].tests`에 저장한다(history와 분리돼 있어 난이도 조절에는 영향 없음). 결과에 쉬운 문제·어려운 문제의 평균 초를 따로 보여 준다. **📝 채점표**(결과 화면 버튼, 지난 연습 기록을 눌러도 열림): 문제마다 고른 답·⭕❌·걸린 초(막대, 목표보다 느리면 빨강)를 보여 주고 전체/틀린/느린 문제로 거른다. 문제별 기록은 `tests[].items`({t,a,p,s,sec})에 저장한다.
+
+**🔥 암산 스프린트**(구몬 연습 화면 아래): 지한이가 연습장에 손으로 풀어서 느려지므로 **연습장 없이 암산으로 풀 수 있는 문제 수를 늘리는 게 목표**다(정말 어려운 문제는 연습장을 써도 됨). 60초 동안 맞힌 개수를 재고, 1단계 기본 덧뺄셈 → 2단계 구구단 → 3단계 두 자리±한 자리 → 4단계 두 자리 암산(`genSprint`) 순으로 단계를 올린다. 답을 다 누르면 자동으로 채점하고, 기록은 `users[이름].sprints`에 저장한다.
 
 `src/fairy-land-math.dc.html`(수학 요정나라)도 **동일 구조·동일 기능**이 적용돼 있다. 다른 점만: localStorage 키 `fairymath_users`/`fairymath_user`, 주제 count/add/sub/compare(자동조절 대상)+shape(레벨만).
 
