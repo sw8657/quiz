@@ -119,6 +119,7 @@ for(let i=0;i<5000;i++){
     assert.ok(v===q.answer && Number.isInteger(v) && v>0 && v<1000, `스프린트 답 이상 Lv.${lv}: ${q.text} = ${q.answer}`);
   }
   g.state.userName = '지한';
+  g.openSprint(); assert.strictEqual(g.state.screen, 'sprintIntro');
   g.startSprint(3);
   for(let i=0;i<5;i++){ for(const d of String(g.state.sprint.q.answer)) g.sprintPress(d); }
   assert.strictEqual(g.state.sprint.n, 5);
