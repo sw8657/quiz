@@ -105,6 +105,7 @@ button{font-family:inherit;}
       <button onClick="{{ openRecords }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#a33f76;background:#fff0f8;border:4px solid #d1568f;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #d1568f;cursor:pointer;">📒 내 기록</button>
       <button onClick="{{ changeUser }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#54306b;background:#efe3ff;border:4px solid #a978d8;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #9a53c0;cursor:pointer;">🙋 이름 바꾸기</button>
       <button onClick="{{ newAdventure }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#a33f76;background:#ffd9ec;border:4px solid #d1568f;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #b83a75;cursor:pointer;">🔄 새 모험</button>
+      <button onClick="{{ toggleVoice }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:20px;color:#54306b;background:#f2e6ff;border:4px solid #a978d8;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #9a53c0;cursor:pointer;">{{ voiceLabel }}</button>
       <a href="index.html" style="display:inline-block;font-family:'Jua';font-size:20px;color:#54306b;background:#f2e6ff;border:4px solid #a978d8;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #a978d8;cursor:pointer;">🏠 놀이터로</a>
     </div>
     <div style="margin-top:36px;">
@@ -195,7 +196,8 @@ button{font-family:inherit;}
     <div style="font-size:17px;white-space:nowrap;letter-spacing:2px;background:#fff0f8;border:3px solid #d1568f;border-radius:12px;padding:6px 10px;text-align:center;">{{ hearts }}</div>
   </div>
 
-  <div style="width:min(760px,96vw);background:#fffafd;border:6px solid #d1568f;border-radius:24px;box-shadow:0 10px 0 #f2c0dc,0 16px 30px rgba(0,0,0,.12);padding:24px;text-align:center;">
+  <div style="width:min(760px,96vw);background:#fffafd;border:6px solid #d1568f;border-radius:24px;box-shadow:0 10px 0 #f2c0dc,0 16px 30px rgba(0,0,0,.12);padding:24px;text-align:center;position:relative;">
+    <button onClick="{{ replay }}" aria-label="다시 듣기" style-active="transform:translateY(2px)" style="position:absolute;right:10px;top:10px;font-size:24px;line-height:1;background:#ffe6f3;border:3px solid #d1568f;border-radius:50%;width:46px;height:46px;cursor:pointer;">🔊</button>
     <sc-if value="{{ q.hasPrompt }}" hint-placeholder-val="{{ false }}">
       <div style="font-family:'Jua';font-size:28px;color:#6b3a54;margin-bottom:14px;">{{ q.prompt }}</div>
     </sc-if>
@@ -374,6 +376,30 @@ class Component extends DCLogic {
   callName(nm){ nm=nm||''; const c=nm.charCodeAt(nm.length-1); return (c>=0xAC00 && c<=0xD7A3 && (c-0xAC00)%28) ? nm+'이' : nm; }
   // 정답 칭찬: 이름이 있으면 절반은 이름을 불러 준다.
   praise(){ const nm=this.state.userName; return (nm && Math.random()<0.5) ? this.pick(this.NAME_GOOD).replace('{n}',this.callName(nm)) : this.pick(this.GOOD); }
+  // ---- 🔊 읽어 주기 (브라우저 음성 ko-KR) — 한글을 떼는 중이라 문제를 소리로 들려준다. ----
+  // 켬/끔은 두 요정나라가 함께 쓰는 kids_voice 키(기본 켬).
+  voiceOn(){ try{ return localStorage.getItem('kids_voice')!=='off'; }catch(e){ return true; } }
+  toggleVoice(){ const on=!this.voiceOn(); try{ localStorage.setItem('kids_voice',on?'on':'off'); }catch(e){} if(on){ this.setState({voiceTick:Date.now()}); this.speak('읽어 주기를 켰어요', true); } else { this.stopSpeak(); this.setState({voiceTick:Date.now()}); } }
+  speak(text, force){
+    if(!text || (!force && !this.voiceOn())) return;
+    try{ const ss=window.speechSynthesis; if(!ss || typeof SpeechSynthesisUtterance==='undefined') return;
+      ss.cancel(); const u=new SpeechSynthesisUtterance(this.speechText(text)); u.lang='ko-KR'; u.rate=0.85;
+      const v=(ss.getVoices()||[]).find(x=>/^ko/i.test(x.lang)); if(v) u.voice=v; ss.speak(u); }catch(e){}
+  }
+  stopSpeak(){ try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){} }
+  // 따옴표·이모지는 빼고 읽는다.
+  speechText(t){ return String(t).replace(/[‘’'"“”]/g,'').replace(/\s*\+\s*/g,', ').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim(); }
+  // 숫자 뒤 조사: 마지막 자리를 한자어로 읽었을 때 받침 유무(일·삼·육·칠·팔·십 → 받침)
+  numJ(n,withJong,noJong){ return String(n)+(/[013678]$/.test(String(n))?withJong:noJong); }
+  sayFor(q){ return q.say!=null ? q.say : (q.prompt||''); }
+  replay(){ const c=this.state.current; if(c) this.speak(this.sayFor(c), true); }
+  componentDidUpdate(){
+    const s=this.state;
+    if(s.screen!=='quiz'){ this._spokenQ=null; this._spokenFb=null; return; }
+    if(s.feedback && s.feedback!==this._spokenFb){ this._spokenFb=s.feedback; this.speak(this.sayFeedback(s.feedback, s.current)); return; }
+    if(!s.feedback && s.current && s.current!==this._spokenQ){ this._spokenQ=s.current; this.speak(this.sayFor(s.current)); }
+  }
+  sayFeedback(fb,cur){ return fb.correct ? fb.msg : fb.exhausted ? `정답은 ${cur.answerLabel}` : fb.msg; }
   loadUsers(){ try{ const p=localStorage.getItem('fairymath_users'); return p?(JSON.parse(p)||{}):{}; }catch(e){ return {}; } }
   saveUsers(u){ try{ localStorage.setItem('fairymath_users',JSON.stringify(u)); }catch(e){} }
   persist(progress,history){ const nm=this.state.userName; if(!nm) return; const users=this.loadUsers(); users[nm]=Object.assign({progress:{},history:[]},users[nm],{progress,history}); this.saveUsers(users); try{ localStorage.setItem('fairymath_user',nm); }catch(e){} }
@@ -436,7 +462,7 @@ class Component extends DCLogic {
   genBundle(){
     const N=this.rand(1,4), M=this.rand(0,9), ans=N*10+M;
     const opts=[ans]; this.shuffle([N+M, M*10+N, ans+10, ans-10, ans+1, ans-1]).forEach(v=>{ if(v>0 && opts.length<4 && !opts.includes(v)) opts.push(v); });
-    return {kind:'bundle',input:'choice',prompt:'🔟 는 10개 묶음이에요. 모두 몇 개일까요?',
+    return {kind:'bundle',input:'choice',prompt:'🔟 는 10개 묶음이에요. 모두 몇 개일까요?',say:'10개 묶음과 낱개를 세어 봐요. 모두 몇 개일까요?',
       bigText:'🔟'.repeat(N)+(M?' '+'🍬'.repeat(M):''),answer:ans,answerLabel:String(ans)+'개',options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
   }
   // 수의 순서: 바로 앞·뒤·사이의 수 (Lv.2는 20까지, Lv.3은 50까지)
@@ -445,7 +471,7 @@ class Component extends DCLogic {
     const ans=kind==='next'?n+1:kind==='prev'?n-1:n;
     const prompt=kind==='next'?`${n} 바로 뒤의 수는?`:kind==='prev'?`${n} 바로 앞의 수는?`:'사이에 들어갈 수는?';
     const opts=[ans]; this.shuffle([ans+1,ans-1,ans+2,ans-2,ans+10]).forEach(v=>{ if(v>0 && opts.length<4 && !opts.includes(v)) opts.push(v); });
-    return {kind:'order',input:'choice',prompt,bigText:kind==='between'?`${n-1}  ?  ${n+1}`:'',answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+    return {kind:'order',input:'choice',prompt,say:kind==='between'?`${this.numJ(n-1,'과','와')} ${n+1} 사이에 들어갈 수는?`:prompt,bigText:kind==='between'?`${n-1}  ?  ${n+1}`:'',answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
   }
   genCount(l,d){ d=d||0;
     if(l===3 && Math.random()<0.35) return this.genBundle();
@@ -460,13 +486,24 @@ class Component extends DCLogic {
   }
   // 1학년 1학기 '모으기와 가르기': 10까지의 수를 두 수로 가르기. 입학 전 덧셈의 기초.
   genSplit(l){
-    const n=l===2?this.rand(5,9):this.rand(6,10), a=this.rand(1,n-1), ans=n-a;
+    const n=l===2?this.rand(5,9):(Math.random()<0.5?10:this.rand(6,9)), a=this.rand(1,n-1), ans=n-a;
     const opts=[ans]; this.shuffle([ans+1,ans-1,ans+2,ans-2,n,a]).forEach(v=>{ if(v>=0 && opts.length<4 && !opts.includes(v)) opts.push(v); });
     return {kind:'split',input:'choice',prompt:`${this.SPLIT_EMO[n%this.SPLIT_EMO.length]} 모으면 ${n}! 빈칸의 수는?`,
-      bigText:`${a} + ? = ${n}`,answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+      bigText:`${a} + ? = ${n}`,say:`${this.numJ(a,'에','에')} 몇을 더하면 ${this.numJ(n,'이','가')} 될까요?`,answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
   }
-  genAdd(l,d){ d=d||0; if(l>=2 && Math.random()<0.3) return this.genSplit(l); let ar,br; if(l===1){ar=[1,5];br=[1,5];} else if(l===2){ar=[2,9];br=[2,9];} else {ar=[4,13];br=[3,9];} const A=this.adjRange(ar[0],ar[1],d,1,19), B=this.adjRange(br[0],br[1],d,1,13); const a=this.rand(A[0],A[1]),b=this.rand(B[0],B[1]); return {kind:'add',input:'numpad',a,op:'+',b,answer:a+b,answerLabel:String(a+b)}; }
-  genSub(l,d){ d=d||0; let ar; if(l===1){ar=[2,9];} else if(l===2){ar=[5,15];} else {ar=[10,20];} const A=this.adjRange(ar[0],ar[1],d,2,25); const a=this.rand(A[0],A[1]),b=this.rand(1,a); return {kind:'sub',input:'numpad',a,op:'−',b,answer:a-b,answerLabel:String(a-b)}; }
+  // 1학년 1학기 덧셈은 '9까지의 수' 안에서. Lv.1 합 5까지 → Lv.2 합 9까지(1학기 범위) → Lv.3 10 만들기·받아올림 맛보기(2학기 예습).
+  // 자동 조절(d)은 합의 상한만 움직인다.
+  genAdd(l,d){ d=d||0;
+    if(l>=2 && Math.random()<0.3) return this.genSplit(l);
+    let a,b;
+    if(l<=2){ const cap=l===1?this.adjRange(2,5,d,3,7)[1]:this.adjRange(5,9,d,6,10)[1]; a=this.rand(1,cap-1); b=this.rand(1,cap-a); }
+    else { const cap=this.adjRange(12,15,d,11,18)[1]; a=this.rand(2,9); b=this.rand(Math.max(1,10-a),Math.min(9,cap-a)); }
+    return {kind:'add',input:'numpad',a,op:'+',b,answer:a+b,answerLabel:String(a+b),say:`${a} 더하기 ${this.numJ(b,'은','는')} 얼마일까요?`}; }
+  // 뺄셈도 Lv.1 5까지 → Lv.2 9까지(0이 나오는 '같은 수 빼기' 포함) → Lv.3 십몇에서 빼기(받아내림 맛보기).
+  genSub(l,d){ d=d||0; let a,b;
+    if(l<=2){ const cap=l===1?this.adjRange(2,5,d,3,7)[1]:this.adjRange(5,9,d,6,10)[1]; a=this.rand(2,cap); b=this.rand(1,a); }
+    else { a=this.rand(this.adjRange(10,14,d,10,18)[0], this.adjRange(10,14,d,10,18)[1]); b=this.rand(Math.max(1,a-9),9); }
+    return {kind:'sub',input:'numpad',a,op:'−',b,answer:a-b,answerLabel:String(a-b),say:`${a} 빼기 ${this.numJ(b,'은','는')} 얼마일까요?`}; }
   genCompare(l,d){ d=d||0; if(l>=2 && Math.random()<0.35) return this.genOrder(l); const base=l===1?9:(l===2?20:50); const max=this.adjRange(2,base,d,5,60)[1]; let a=this.rand(1,max),b=this.rand(1,max); while(a===b) b=this.rand(1,max); const askBig=Math.random()<0.6; const ans=askBig?Math.max(a,b):Math.min(a,b); return {kind:'compare',input:'choice',prompt:askBig?'더 큰 수를 골라요!':'더 작은 수를 골라요!',answer:ans,answerLabel:String(ans),options:this.shuffle([a,b]).map(v=>({label:String(v),value:v}))}; }
   genShape(l){
     if(l===3){
@@ -654,7 +691,7 @@ class Component extends DCLogic {
     return {
       isHome:s.screen==='home', isMap:s.screen==='map', isIsland:s.screen==='island', isQuiz:s.screen==='quiz', isResult:s.screen==='result',
       isName:s.screen==='name', isRecords:s.screen==='records',
-      userName:s.userName, greeting:s.userName?`${s.userName} 어린이, 환영해요! 💕`:'',
+      userName:s.userName, replay:()=>this.replay(), toggleVoice:()=>this.toggleVoice(), voiceLabel:this.voiceOn()?'🔊 읽어 주기 켬':'🔇 읽어 주기 끔', greeting:s.userName?`${s.userName} 어린이, 환영해요! 💕`:'',
       nameInput:s.nameInput,
       onNameInput:(e)=>this.setNameInput(e.target.value),
       confirmName:()=>this.confirmName(), changeUser:()=>this.changeUser(), newAdventure:()=>this.newAdventure(),
