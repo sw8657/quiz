@@ -434,7 +434,23 @@ class Component extends DCLogic {
     // ponytail: shape(모양·색·패턴)은 크기가 아닌 구조 난이도라 레벨로만 조절.
     return this.genShape(level);
   }
+  // 1학년 1학기 '50까지의 수': 10개씩 묶음과 낱개
+  genBundle(){
+    const N=this.rand(1,4), M=this.rand(0,9), ans=N*10+M;
+    const opts=[ans]; this.shuffle([N+M, M*10+N, ans+10, ans-10, ans+1, ans-1]).forEach(v=>{ if(v>0 && opts.length<4 && !opts.includes(v)) opts.push(v); });
+    return {kind:'bundle',input:'choice',prompt:'🔟 는 10개 묶음이에요. 모두 몇 개일까요?',
+      bigText:'🔟'.repeat(N)+(M?' '+'🍬'.repeat(M):''),answer:ans,answerLabel:String(ans)+'개',options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+  }
+  // 수의 순서: 바로 앞·뒤·사이의 수 (Lv.2는 20까지, Lv.3은 50까지)
+  genOrder(l){
+    const max=l===2?20:50, n=this.rand(2,max-1), kind=this.pick(['next','prev','between']);
+    const ans=kind==='next'?n+1:kind==='prev'?n-1:n;
+    const prompt=kind==='next'?`${n} 바로 뒤의 수는?`:kind==='prev'?`${n} 바로 앞의 수는?`:'사이에 들어갈 수는?';
+    const opts=[ans]; this.shuffle([ans+1,ans-1,ans+2,ans-2,ans+10]).forEach(v=>{ if(v>0 && opts.length<4 && !opts.includes(v)) opts.push(v); });
+    return {kind:'order',input:'choice',prompt,bigText:kind==='between'?`${n-1}  ?  ${n+1}`:'',answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+  }
   genCount(l,d){ d=d||0;
+    if(l===3 && Math.random()<0.35) return this.genBundle();
     const e=this.pick(this.COUNT_EMO);
     const base=l===1?5:(l===2?10:20);
     const max=this.adjRange(1,base,d,3,30)[1]; // 셀 개수 상한만 승감
@@ -453,7 +469,7 @@ class Component extends DCLogic {
   }
   genAdd(l,d){ d=d||0; if(l>=2 && Math.random()<0.3) return this.genSplit(l); let ar,br; if(l===1){ar=[1,5];br=[1,5];} else if(l===2){ar=[2,9];br=[2,9];} else {ar=[4,13];br=[3,9];} const A=this.adjRange(ar[0],ar[1],d,1,19), B=this.adjRange(br[0],br[1],d,1,13); const a=this.rand(A[0],A[1]),b=this.rand(B[0],B[1]); return {kind:'add',input:'numpad',a,op:'+',b,answer:a+b,answerLabel:String(a+b)}; }
   genSub(l,d){ d=d||0; let ar; if(l===1){ar=[2,9];} else if(l===2){ar=[5,15];} else {ar=[10,20];} const A=this.adjRange(ar[0],ar[1],d,2,25); const a=this.rand(A[0],A[1]),b=this.rand(1,a); return {kind:'sub',input:'numpad',a,op:'−',b,answer:a-b,answerLabel:String(a-b)}; }
-  genCompare(l,d){ d=d||0; const base=l===1?9:(l===2?20:50); const max=this.adjRange(2,base,d,5,60)[1]; let a=this.rand(1,max),b=this.rand(1,max); while(a===b) b=this.rand(1,max); const askBig=Math.random()<0.6; const ans=askBig?Math.max(a,b):Math.min(a,b); return {kind:'compare',input:'choice',prompt:askBig?'더 큰 수를 골라요!':'더 작은 수를 골라요!',answer:ans,answerLabel:String(ans),options:this.shuffle([a,b]).map(v=>({label:String(v),value:v}))}; }
+  genCompare(l,d){ d=d||0; if(l>=2 && Math.random()<0.35) return this.genOrder(l); const base=l===1?9:(l===2?20:50); const max=this.adjRange(2,base,d,5,60)[1]; let a=this.rand(1,max),b=this.rand(1,max); while(a===b) b=this.rand(1,max); const askBig=Math.random()<0.6; const ans=askBig?Math.max(a,b):Math.min(a,b); return {kind:'compare',input:'choice',prompt:askBig?'더 큰 수를 골라요!':'더 작은 수를 골라요!',answer:ans,answerLabel:String(ans),options:this.shuffle([a,b]).map(v=>({label:String(v),value:v}))}; }
   genShape(l){
     if(l===3){
       // 패턴: ABAB뿐 아니라 AAB·ABB·ABC 규칙도 섞어 덜 뻔하게. 앞 4개 보여주고 5번째를 맞힘.

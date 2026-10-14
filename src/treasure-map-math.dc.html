@@ -99,7 +99,7 @@ button{font-family:inherit;}
     <div class="deco" style="position:absolute;right:0;top:40px;font-size:44px;animation:floaty 5s ease-in-out infinite;">⛵</div>
     <div style="font-family:'Gamja Flower',cursive;font-size:clamp(17px,4.6vw,24px);letter-spacing:clamp(2px,1.2vw,5px);color:#a06a24;">— 숫자섬 대모험 —</div>
     <div style="font-size:clamp(38px,11vw,66px);line-height:1.05;margin:4px 0 4px;text-shadow:3px 4px 0 #e7c88a;">수학 보물 지도</div>
-    <div style="font-family:'Gaegu',cursive;font-weight:700;font-size:clamp(17px,4.6vw,24px);color:#6b4a28;">6개의 섬을 골라 단계별로 정복하고 보물을 찾아요!</div>
+    <div style="font-family:'Gaegu',cursive;font-weight:700;font-size:clamp(17px,4.6vw,24px);color:#6b4a28;">{{ islandCount }}개의 섬을 골라 단계별로 정복하고 보물을 찾아요!</div>
     <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,22px);color:#8a5a2b;margin-top:8px;min-height:26px;">{{ greeting }}</div>
     <div style="font-size:clamp(72px,24vw,128px);margin:8px 0 6px;animation:bob 2.8s ease-in-out infinite;filter:drop-shadow(0 12px 10px rgba(0,0,0,.18));">🦊</div>
     <button onClick="{{ startGame }}" style-active="transform:translateY(6px);box-shadow:0 0 0 #b9820f" style="font-family:'Jua';font-size:clamp(24px,6.4vw,34px);color:#5e3d1c;background:#f2b21c;border:5px solid #b9820f;padding:clamp(14px,4vw,20px) clamp(28px,10vw,54px);border-radius:28px;box-shadow:0 8px 0 #b9820f;cursor:pointer;transition:.06s;">모험 시작!  🧭</button>
@@ -110,9 +110,9 @@ button{font-family:inherit;}
       <a href="index.html" style="display:inline-block;font-family:'Jua';font-size:20px;color:#5e3d1c;background:#fff3d8;border:4px solid #b9820f;padding:11px 24px;border-radius:20px;box-shadow:0 5px 0 #b9820f;cursor:pointer;">🏠 놀이터로</a>
     </div>
     <div style="margin-top:38px;">
-      <div style="font-family:'Gaegu';font-weight:700;font-size:22px;color:#8a5a2b;">🏅 정복한 섬  {{ medalCount }} / 6</div>
+      <div style="font-family:'Gaegu';font-weight:700;font-size:22px;color:#8a5a2b;">🏅 정복한 섬  {{ medalCount }} / {{ islandCount }}</div>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
-        <sc-for list="{{ stageBadges }}" as="bg" hint-placeholder-count="6">
+        <sc-for list="{{ stageBadges }}" as="bg" hint-placeholder-count="8">
           <div style="{{ bg.style }}">
             <div style="font-size:32px;line-height:1;">{{ bg.face }}</div>
             <div style="font-family:'Gaegu';font-weight:700;font-size:13px;margin-top:4px;">{{ bg.name }}</div>
@@ -137,7 +137,7 @@ button{font-family:inherit;}
     <div style="position:absolute;inset:10px;border:3px dashed #b48a52;border-radius:16px;pointer-events:none;"></div>
     <div class="deco" style="position:absolute;right:20px;top:14px;font-size:40px;opacity:.85;">🧭</div>
     <div class="deco" style="position:absolute;left:6%;top:16%;font-size:34px;opacity:.7;animation:floaty 6s ease-in-out infinite;">🌊</div>
-    <div style="position:absolute;right:10%;bottom:10%;font-size:34px;opacity:.7;">🗻</div>
+    <div style="position:absolute;right:2%;bottom:3%;font-size:34px;opacity:.7;">🗻</div>
     <div style="position:absolute;left:2%;bottom:6%;font-size:30px;opacity:.7;">⚓</div>
     <div class="deco" style="position:absolute;left:50%;top:6%;font-size:28px;opacity:.6;">☁️</div>
 
@@ -145,7 +145,7 @@ button{font-family:inherit;}
       <div style="{{ d.style }}"></div>
     </sc-for>
 
-    <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="6">
+    <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="8">
       <div style="{{ n.wrapStyle }}">
         <button onClick="{{ n.onClick }}" style-active="transform:translateY(3px)" style="{{ n.circleStyle }}">
           <span style="{{ n.iconStyle }}">{{ n.face }}</span>
@@ -218,6 +218,12 @@ button{font-family:inherit;}
           <div style="position:absolute;left:50%;bottom:50%;width:6px;height:82px;background:#d1462f;border-radius:6px;transform-origin:bottom center;transform:translateX(-50%) rotate({{ q.clockM }}deg);"></div>
           <div style="position:absolute;left:50%;top:50%;width:20px;height:20px;background:#4a3620;border-radius:50%;transform:translate(-50%,-50%);"></div>
         </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ q.isFrac }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;width:min(420px,80vw);height:clamp(54px,14vw,76px);margin:6px auto 10px;border:5px solid #5e3d1c;border-radius:12px;overflow:hidden;background:#fff;">
+        <sc-for list="{{ q.fracParts }}" as="fp" hint-placeholder-count="4"><div style="{{ fp.style }}"></div></sc-for>
       </div>
     </sc-if>
 
@@ -332,17 +338,20 @@ class Component extends DCLogic {
       {topic:'add',   name:'덧셈 마을', icon:'🏘️', color:'#d1462f'},
       {topic:'sub',   name:'뺄셈 동굴', icon:'🕳️', color:'#6b4fb0'},
       {topic:'mul',   name:'구구단 숲', icon:'🌲', color:'#4e8b3d'},
-      {topic:'three', name:'세자리 성', icon:'🏰', color:'#c98a1e'},
+      {topic:'three', name:'네자리 성', icon:'🏰', color:'#c98a1e'},
       {topic:'time',  name:'시계탑',   icon:'🕰️', color:'#2f8f8b'},
       {topic:'length',name:'보물 다리', icon:'🌉', color:'#2f6bb0'},
+      // 3학년 대비 섬 — 순서를 바꾸면 기존 기록(island 번호)이 어긋나니 항상 뒤에 붙인다.
+      {topic:'div',   name:'나눗셈 등대', icon:'🗼', color:'#b0457a'},
+      {topic:'frac',  name:'분수 정원', icon:'🌷', color:'#7a8f1e'},
     ];
     this.STAGES = 5;
     this.TIME_LIMIT = 30;
     this.LEVEL_DESC = ['쉬움','보통','어려움','도전','최고 난이도'];
     this.MAX_TRY = 3;
-    this.nodePos = [{x:11,y:70},{x:27,y:42},{x:44,y:72},{x:60,y:38},{x:76,y:66},{x:91,y:32}];
-    // 좁은 화면은 가로 6칸이 겹쳐서 2열 3행으로. 순서대로 이으면 Z자 경로가 된다.
-    this.nodePosNarrow = [{x:28,y:16},{x:72,y:16},{x:28,y:50},{x:72,y:50},{x:28,y:84},{x:72,y:84}];
+    this.nodePos = [{x:8,y:70},{x:20,y:38},{x:32,y:72},{x:44,y:38},{x:56,y:72},{x:68,y:38},{x:80,y:72},{x:92,y:38}];
+    // 좁은 화면은 가로로 겹쳐서 2열 4행으로. 순서대로 이으면 Z자 경로가 된다.
+    this.nodePosNarrow = [{x:28,y:12},{x:72,y:12},{x:28,y:37},{x:72,y:37},{x:28,y:62},{x:72,y:62},{x:28,y:87},{x:72,y:87}];
     this.GOOD = ['잘했어! 🎉','정답이야! ⭐','최고야! 👏','대단해! 🌟','멋지다! 🚀','완벽해! 💎'];
     this.NAME_GOOD = ['{n} 최고야! 👏','{n} 대단해! 🌟','역시 {n}! ⭐','{n} 멋지다! 🚀']; // {n}=부르는 이름(지한이, 시현이)
     this.EMO_GOOD = ['🎉','⭐','👏','🌟','💯','🏅'];
@@ -448,6 +457,8 @@ class Component extends DCLogic {
     if(topic==='mul') return this.genMul(level,d);
     // ponytail: three/time/length는 단계 구조 자체가 난이도라 레벨로만 조절. 필요하면 여기도 adjRange 적용.
     if(topic==='three') return this.genThree(level);
+    if(topic==='div') return this.genDiv(level,d);
+    if(topic==='frac') return this.genFrac(level);
     if(topic==='time') return this.genTime(level);
     return this.genLen(level);
   }
@@ -478,7 +489,12 @@ class Component extends DCLogic {
     let xr,yr; if(l===1){xr=[2,5];yr=[2,5];} else if(l===2){xr=[2,9];yr=[2,9];} else {xr=[4,9];yr=[4,9];} const X=this.adjRange(xr[0],xr[1],d,2,9), Y=this.adjRange(yr[0],yr[1],d,2,9); const x=this.rand(X[0],X[1]),y=this.rand(Y[0],Y[1]); return {kind:'mul',input:'numpad',a:x,op:'×',b:y,answer:x*y,answerLabel:String(x*y)}; }
   genThree(l){
     // Lv.4부터 네 자리(천의 자리) 도입, Lv.5는 보기 4개 + '가장 작은 수'도 물음.
-    if(this.pick(['place','compare'])==='place'){
+    // 2학년 2학기 '네 자리 수': Lv.3부터 뛰어 세기, Lv.4부터 몇천 몇백 몇십 몇(자릿값 모으기)도 섞는다.
+    const modes=l>=4?['place','compare','skip','expand']:l===3?['place','compare','skip']:['place','compare'];
+    const mode=this.pick(modes);
+    if(mode==='skip') return this.genSkip(l);
+    if(mode==='expand') return this.genExpand(l);
+    if(mode==='place'){
       const R={1:[120,399],2:[120,699],3:[300,989],4:[1200,8999],5:[1005,9999]}[l]||[300,989];
       const n=this.rand(R[0],R[1]);
       const places=l>=4?[['천',1000],['백',100],['십',10],['일',1]]:[['백',100],['십',10],['일',1]];
@@ -497,6 +513,73 @@ class Component extends DCLogic {
       const ans=askMin?Math.min(...nums):Math.max(...nums);
       return {kind:'three',input:'choice',prompt:askMin?'가장 작은 수를 골라요!':'가장 큰 수를 골라요!',answer:ans,answerLabel:String(ans),options:this.shuffle(nums).map(v=>({label:String(v),value:v}))};
     }
+  }
+  // 뛰어 세기: 일정하게 커지는 수 4개 중 빈칸 하나.
+  genSkip(l){
+    const step=this.pick(l===3?[10,100]:[10,100,1000]);
+    const start=step===1000?this.rand(1,5)*1000+this.rand(0,9)*100:(l===3?this.rand(100,590):this.rand(1100,8400));
+    const seq=[0,1,2,3].map(i=>start+i*step), hole=this.rand(1,3), ans=seq[hole];
+    const show=seq.map((v,i)=>i===hole?'?':String(v)).join(' → ');
+    // 다른 자리를 뛰어 센 수(ans±10/100)가 가장 헷갈리는 오답
+    const opts=[ans]; this.shuffle([ans+1,ans+(step===10?100:10),ans-(step===10?100:10),ans+step,ans+step*10]).forEach(v=>{ if(v>0 && v<10000 && opts.length<4 && !opts.includes(v)) opts.push(v); });
+    return {kind:'three',input:'choice',prompt:`${step}씩 뛰어 세었어요. ?에 알맞은 수는?`,bigText:show,answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+  }
+  // 자릿값 모으기: 3000+400+20+5 / '천이 3, 백이 4…' → 숫자로. 0이 끼는 자리(3025)가 핵심 실수 포인트.
+  genExpand(l){
+    const th=this.rand(1,9), h=this.rand(0,9), t=this.rand(0,9), o=this.rand(0,9);
+    const ans=th*1000+h*100+t*10+o;
+    const parts=[th*1000,h*100,t*10,o].filter(v=>v>0);
+    const text=Math.random()<0.5 ? parts.join(' + ') : `1000이 ${th}개, 100이 ${h}개, 10이 ${t}개, 1이 ${o}개`;
+    const digits=[th,h,t,o].filter(v=>v>0).join(''); // 0 자리를 빼먹는 실수
+    const wrongs=[+digits, th*1000+t*100+h*10+o, ans+1000, ans+100, ans-10].filter(v=>v>0 && v!==ans);
+    const opts=[ans]; this.shuffle(wrongs).forEach(v=>{ if(opts.length<4 && !opts.includes(v)) opts.push(v); });
+    while(opts.length<4){ const v=ans+this.rand(1,9)*10; if(!opts.includes(v)) opts.push(v); }
+    return {kind:'three',input:'choice',prompt:'어떤 수일까요?',bigText:text,answer:ans,answerLabel:String(ans),options:this.shuffle(opts).map(v=>({label:String(v),value:v}))};
+  }
+  // ---- 3학년 대비: 나눗셈 (3학년 1학기 '나눗셈'). 나머지 없는 나눗셈만, 곱셈구구 범위 안에서. ----
+  genDiv(l,d){ d=d||0;
+    const B=this.adjRange(2,l===1?3:l===2?5:9,d,2,9), b=this.rand(B[0],B[1]), c=this.rand(2,l<=2?5:9), a=b*c;
+    const things=['🍪','🍬','🍓','🎈','🖍️','⚽'], e=this.pick(things);
+    if(l===1) return {kind:'div',input:'numpad',prompt:`${e} ${a}개를 ${b}명이 똑같이 나눠요. 한 명에 몇 개?`,answer:c,answerLabel:String(c),expr:[String(a),'÷',String(b),'=','?']};
+    if(l===4){ // 빈칸 위치를 바꿔 곱셈과 나눗셈의 관계를 생각하게
+      return Math.random()<0.5
+        ? {kind:'div',input:'numpad',answer:b,answerLabel:String(b),expr:[String(a),'÷','?','=',String(c)]}
+        : {kind:'div',input:'numpad',answer:a,answerLabel:String(a),expr:['?','÷',String(b),'=',String(c)]};
+    }
+    if(l===5){ // 묶어 세기(포함제) 문장제
+      const box=this.pick([['상자','개씩 담으면'],['봉지','개씩 넣으면'],['모둠','명씩 앉으면']]);
+      const unit=box[0]==='모둠'?'명':'개', what=box[0]==='모둠'?'🧒 친구':`${e}`;
+      return {kind:'div',input:'numpad',prompt:`${what} ${a}${unit}${unit==='명'?'을':'를'} 한 ${box[0]}에 ${b}${box[1]} 몇 ${box[0]}?`,answer:c,answerLabel:String(c),expr:[String(a),'÷',String(b),'=','?']};
+    }
+    return {kind:'div',input:'numpad',answer:c,answerLabel:String(c),expr:[String(a),'÷',String(b),'=','?']};
+  }
+  // ---- 3학년 대비: 분수 맛보기 (3학년 1학기 '분수와 소수', 2학기 '분수') ----
+  fracLabel(k,n){ return `${n}분의 ${k}`; }
+  genFrac(l){
+    const mkOpts=(ans,cands)=>{ const o=[ans]; this.shuffle(cands).forEach(v=>{ if(o.length<4 && !o.includes(v)) o.push(v); });
+      while(o.length<4){ const y=this.rand(2,9), v=this.rand(1,y-1)+'/'+y; if(!o.includes(v)) o.push(v); } return o; };
+    if(l<=2){ // 막대 그림: 색칠한 부분은 전체의 몇 분의 몇?
+      const n=this.rand(2,l===1?4:8), k=l===1?1:this.rand(1,n-1), ans=k+'/'+n;
+      // 오답: 색칠 안 한 부분, 칸 수를 잘못 센 분모
+      const opts=mkOpts(ans,[(n-k)+'/'+n, k+'/'+(n+1), (k+1)+'/'+n, '1/'+n, k+'/'+(n-1)].filter(v=>{ const [x,y]=v.split('/').map(Number); return x>0 && y>1 && v!==ans; }));
+      return {kind:'frac',input:'choice',prompt:'색칠한 부분은 전체의 얼마일까요?',frac:{n,k},answer:ans,answerLabel:this.fracLabel(k,n),
+        options:this.shuffle(opts).map(v=>{ const [x,y]=v.split('/'); return {label:this.fracLabel(x,y),value:v}; })};
+    }
+    if(l===3){ // 분모가 같은 분수: 분자가 클수록 크다
+      const n=this.rand(3,9); let a=this.rand(1,n-1), b=this.rand(1,n-1); while(a===b) b=this.rand(1,n-1);
+      const ans=Math.max(a,b)+'/'+n;
+      return {kind:'frac',input:'choice',prompt:'더 큰 분수를 골라요!',answer:ans,answerLabel:this.fracLabel(Math.max(a,b),n),
+        options:this.shuffle([a,b]).map(k=>({label:this.fracLabel(k,n),value:k+'/'+n}))};
+    }
+    if(l===4){ // 단위분수: 분모가 작을수록 크다 (가장 헷갈리는 부분)
+      let p=this.rand(2,9), q=this.rand(2,9); while(p===q) q=this.rand(2,9);
+      const askBig=Math.random()<0.6, ans='1/'+(askBig?Math.min(p,q):Math.max(p,q));
+      return {kind:'frac',input:'choice',prompt:askBig?'더 큰 분수를 골라요! (피자 한 판을 나눈다면?)':'더 작은 분수를 골라요!',answer:ans,answerLabel:this.fracLabel(1,ans.split('/')[1]),
+        options:this.shuffle([p,q]).map(n=>({label:this.fracLabel(1,n),value:'1/'+n}))};
+    }
+    // Lv.5: 분수만큼은 얼마? (12의 4분의 1 / 12의 4분의 3)
+    const n=this.pick([2,3,4,5,6]), unit=this.rand(2,6), whole=n*unit, k=this.rand(1,n-1);
+    return {kind:'frac',input:'numpad',prompt:`🍬 ${whole}개의 ${this.fracLabel(k,n)}만큼은 몇 개일까요?`,answer:unit*k,answerLabel:String(unit*k),expr:[`${whole}의 ${k}/${n}`,'=','?']};
   }
   genTime(l){
     // 2학년 2학기 '시각과 시간': Lv.3부터 시간 단위(1시간=60분·하루·1주일·1년) 문제를 섞는다.
@@ -697,7 +780,7 @@ class Component extends DCLogic {
       };
     });
     const trailDots=this._buildTrail(posList);
-    const mapStyle=`position:relative;width:min(1080px,97vw);aspect-ratio:${nar?'3/4':'16/9'};background:linear-gradient(150deg,#f6e8c4,#ead29c 60%,#dcbf8e);border:${nar?8:12}px solid #5e3d1c;border-radius:24px;box-shadow:inset 0 0 0 6px #c9a86e, 0 14px 30px rgba(0,0,0,.25);overflow:hidden;`;
+    const mapStyle=`position:relative;width:min(1080px,97vw);aspect-ratio:${nar?'2/3':'16/9'};background:linear-gradient(150deg,#f6e8c4,#ead29c 60%,#dcbf8e);border:${nar?8:12}px solid #5e3d1c;border-radius:24px;box-shadow:inset 0 0 0 6px #c9a86e, 0 14px 30px rgba(0,0,0,.25);overflow:hidden;`;
 
     // island stage cards
     const cl=s.progress[s.islandIndex]||0;
@@ -729,8 +812,10 @@ class Component extends DCLogic {
       q={ kind:cur.kind, prompt:cur.prompt||'', hasPrompt:!!cur.prompt,
         isEquation:isEq, expr,
         hasChoice: cur.input==='choice', isClock: cur.kind==='time',
+        isFrac: !!cur.frac,
+        fracParts: cur.frac ? Array.from({length:cur.frac.n},(_,i)=>({style:`flex:1;${i<cur.frac.k?'background:#9ccc65;':''}${i?'border-left:3px solid #5e3d1c;':''}`})) : [],
         hasBig: !!cur.bigText, bigText:cur.bigText||'',
-        bigStyle:`font-family:'Jua';font-size:${((cur.bigText||'').length>9?(s.narrow?26:40):(s.narrow?44:64))}px;color:#2f6bb0;letter-spacing:${s.narrow?2:4}px;margin:4px 0;`,
+        bigStyle:`font-family:'Jua';font-size:${((cur.bigText||'').length>20?(s.narrow?20:32):(cur.bigText||'').length>9?(s.narrow?26:40):(s.narrow?44:64))}px;color:#2f6bb0;letter-spacing:${s.narrow?2:4}px;margin:4px 0;`,
         clockH: cur.clock?cur.clock.hAngle:0, clockM: cur.clock?cur.clock.mAngle:0,
         options:(cur.options||[]).map(o=>({label:o.label, onClick:()=>this.choose(o.value)})),
       };
@@ -778,7 +863,7 @@ class Component extends DCLogic {
       userList, hasUsers:userList.length>0,
       records, hasRecords:records.length>0, noRecords:!records.length, recordCount:records.length,
       startGame:()=>this.startGame(), goHome:()=>this.goHome(), backToMap:()=>this.backToMap(), backToIsland:()=>this.backToIsland(),
-      medalCount, stageBadges, nodes, trailDots, mapStyle, clockTicks:this._ticks,
+      medalCount, islandCount:this.stages.length, stageBadges, nodes, trailDots, mapStyle, clockTicks:this._ticks,
       islandName: s.screen==='result'?rIsland.name:island.name,
       islandIcon: s.screen==='result'?rIsland.icon:island.icon,
       stageCards,
