@@ -8,7 +8,11 @@ function load(file){
   const body = src.match(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/)[1];
   globalThis.localStorage = { _:{}, getItem(k){ return this._[k] ?? null; }, setItem(k,v){ this._[k]=String(v); } };
   globalThis.window = { location:{ search:'' }, matchMedia:()=>({ matches:false }) };
-  const C = new Function('DCLogic', body + ';return Component;')(class { constructor(p){ this.props=p||{}; } setState(){} });
+  globalThis.window.confirm = () => true;
+  globalThis.React = { createElement:(t,p,...c)=>({t,p,c}), Fragment:'frag' };
+  // setState는 즉시 합친다(함수형 업데이트 포함) — 화면 흐름을 동기적으로 따라가기 위해.
+  const C = new Function('DCLogic', body + ';return Component;')(class { constructor(p){ this.props=p||{}; }
+    setState(u){ this.state = Object.assign({}, this.state, typeof u==='function' ? u(this.state) : u); } });
   return new C({});
 }
 
@@ -60,6 +64,38 @@ for(let i=0;i<3000;i++){
     const f = t.genFrac(l);
     if(typeof f.answer==='string'){ const [k,n]=f.answer.split('/').map(Number); assert.ok(k>=1 && k<n, `분수 정답이 진분수 아님: ${f.answer}`); }
   }
+}
+
+// ⚡ 구몬 연습: 보기 5개·정답 포함·정답이 실제 계산과 일치
+for(let i=0;i<5000;i++){
+  for(const sec of ['add','sub','mul','div']){
+    const q = t.genKumon(sec);
+    assert.strictEqual(q.options.length, 5, `보기 5개 아님 ${JSON.stringify(q)}`);
+    assert.strictEqual(new Set(q.options).size, 5, `보기 중복 ${JSON.stringify(q)}`);
+    assert.ok(q.options.includes(q.answer), `보기에 정답 없음 ${JSON.stringify(q)}`);
+    const a=+q.top, b=+q.bottom;
+    const want = sec==='add'?String(a+b) : sec==='sub'?String(a-b) : sec==='mul'?String(a*b) : (a%b?`${Math.floor(a/b)} … ${a%b}`:String(a/b));
+    assert.strictEqual(q.answer, want, `정답 계산 틀림 ${JSON.stringify(q)}`);
+    assert.ok(sec!=='sub' || a-b>0, `뺄셈 답이 0 이하 ${JSON.stringify(q)}`);
+    q.options.forEach(o=>assert.ok(!/^-|^0$|NaN/.test(o), `이상한 보기 ${o}`));
+  }
+}
+// 시험 흐름: 시작 → 일부 풀기 → 제출 → 결과 저장·화면 값 계산까지 예외 없이
+{
+  const g = load('treasure-map-math.dc.html');
+  g.state.userName = '지한';
+  for(const mode of ['full','mini','muldiv']){
+    g.startTest(mode); g.renderVals();
+    const n = g.state.test.qs.length;
+    for(let i=0;i<Math.min(n,25);i++){ const q=g.state.test.qs[g.state.test.idx]; g.pickTest(i%7===0 ? q.options.find(o=>o!==q.answer) : q.answer); g.renderVals(); }
+    if(g.state.screen==='test') g.submitTest();
+    assert.strictEqual(g.state.screen, 'testResult');
+    const v = g.renderVals();
+    assert.ok(v.trSections.length>0 && v.trAnswered===Math.min(n,25), `결과 값 이상 ${mode}`);
+  }
+  const saved = JSON.parse(localStorage.getItem('mathmap_users'))['지한'].tests;
+  assert.strictEqual(saved.length, 3, '연습 기록 저장 안 됨');
+  g.state.screen='testIntro'; assert.strictEqual(g.renderVals().testRecs.length, 3);
 }
 
 console.log('OK: generators fuzz passed');
