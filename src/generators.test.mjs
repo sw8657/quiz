@@ -98,4 +98,38 @@ for(let i=0;i<5000;i++){
   g.state.screen='testIntro'; assert.strictEqual(g.renderVals().testRecs.length, 3);
 }
 
+// 구몬 연습: 유형 안에서 앞쪽은 쉽게(자릿수 작게), 뒤로 갈수록 어렵게
+{
+  const g = load('treasure-map-math.dc.html');
+  g.startTest('full');
+  const qs = g.state.test.qs, size = q => q.top.length + q.bottom.length;
+  for(const start of [0,40,80,120]){
+    const sec = qs.slice(start, start+40);
+    assert.ok(sec.every(q=>q.sec===sec[0].sec), '유형이 섞임');
+    assert.ok(sec.slice(0,10).every(q=>q.tier===0) && sec.slice(30).every(q=>q.tier===3), '난이도 순서 이상');
+    if(sec[0].sec!=='div') assert.ok(Math.max(...sec.slice(0,10).map(size)) <= Math.min(...sec.slice(30).map(size)), `${sec[0].sec}: 앞쪽이 더 어려움`);
+  }
+}
+// 🔥 암산 스프린트: 정답 계산·자연수, 흐름(맞힘→다음, 틀림→지우기, 시간 끝→기록 저장)
+{
+  const g = load('treasure-map-math.dc.html');
+  for(let i=0;i<5000;i++) for(const lv of [1,2,3,4]){
+    const q = g.genSprint(lv);
+    const v = eval(q.text.replace('−','-').replace('×','*').replace('÷','/'));
+    assert.ok(v===q.answer && Number.isInteger(v) && v>0 && v<1000, `스프린트 답 이상 Lv.${lv}: ${q.text} = ${q.answer}`);
+  }
+  g.state.userName = '지한';
+  g.startSprint(3);
+  for(let i=0;i<5;i++){ for(const d of String(g.state.sprint.q.answer)) g.sprintPress(d); }
+  assert.strictEqual(g.state.sprint.n, 5);
+  g.sprintPress(String(g.state.sprint.q.answer)[0]==='1' ? '2' : '1'); // 첫 자리부터 틀린 숫자 assert.strictEqual(g.state.sprint.wrong, 1); assert.strictEqual(g.state.sprint.input, '');
+  g.renderVals();
+  g.state.sprint.startedAt -= 61000; g.sprintTick();
+  assert.strictEqual(g.state.screen, 'sprintResult');
+  const v = g.renderVals();
+  assert.ok(v.srCount===5 && v.srTitle.includes('새 기록'), '스프린트 결과 이상');
+  assert.strictEqual(g.sprintBest(3), 5);
+  g.state.screen='testIntro'; assert.ok(g.renderVals().sprintLevels[2].best.includes('5'));
+}
+
 console.log('OK: generators fuzz passed');
