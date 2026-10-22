@@ -1042,7 +1042,7 @@ class Component extends DCLogic {
   testTick(){ const t=this.state.test; if(!t) return; const now=Date.now(); if((now-t.startedAt)/1000>=t.limit) this.finishTest(); else this.setState({testNow:now}); }
   testAnswered(t){ return t.picks.filter(Boolean).length; }
   // 답 고르기(문제 i, 기본은 지금 문제). 문제별 시간 = 앞 답을 고른 뒤부터 이 답을 고를 때까지.
-  // 처음 푸는 문제면 다음 안 푼 문제로 스크롤, 이미 푼 문제의 답을 바꾸면 그 자리에 둔다. 다 풀면 끝.
+  // 목록은 스크롤하지 않는다(아이가 직접 스크롤). 처음 푸는 문제면 '지금 문제' 표시만 다음 안 푼 문제로 옮긴다. 다 풀면 끝.
   pickTest(v,i){
     const t=this.state.test; if(!t || this.state.screen!=='test') return;
     if(i==null) i=t.idx;
@@ -1052,7 +1052,7 @@ class Component extends DCLogic {
     const nt=Object.assign({},t,{picks,spent,lastAt:now,idx:i});
     const n=picks.length, next=[...Array(n).keys()].map(k=>(i+1+k)%n).find(k=>!picks[k]);
     if(next==null){ this.finishTest(nt); return; }
-    if(!was){ nt.idx=next; this._pendingScroll=next; }
+    if(!was) nt.idx=next;
     this.setState({test:nt, testNow:now});
   }
   // OMR 답안지에서 번호를 눌러 그 문제로 스크롤(이미 푼 문제면 답을 바꿀 수 있음)

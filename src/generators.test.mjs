@@ -333,15 +333,16 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
     assert.deepStrictEqual(heads, ['[ 1 ~ 15 ]','[ 16 ~ 30 ]','[ 31 ~ 66 ]','[ 67 ~ 130 ]'], heads.join(','));
     assert.ok(t2.includes('덧셈을 연습합니다.') && t2.includes('곱셈을 연습합니다.') && t2.some(x=>x.startsWith('나눗셈을 연습합니다. (나누어')));
     assert.ok(t2.includes('1') && t2.includes('130'), '문제 번호'); }
-  // 처음 푸는 문제에 답하면 다음 문제로 스크롤(그리고 나서 componentDidUpdate가 스크롤 실행)
+  // 답을 골라도 목록은 스크롤하지 않음(아이가 직접 스크롤). 답안지 번호를 누를 때만 그 문제로 스크롤
   { const g3=load('treasure-map-math.dc.html'); g3.startTest('mini');
     let to=null; const box={ scrollHeight:5000, clientHeight:500, scrollTop:0, parentElement:null, getBoundingClientRect:()=>({top:100}), scrollTo(o){ to=o.top; } };
     globalThis.getComputedStyle = () => ({ overflowY:'auto' });
     const els=Array.from({length:40},(_,i)=>({ parentElement:box, getBoundingClientRect:()=>({top:100+i*250}) }));
     flat(g3.renderVals().testListEl).filter(x=>x && x.p && /^q\d+$/.test(String(x.p.key))).forEach((x,i)=>x.p.ref(els[i]));
     g3.pickTest(g3.state.test.qs[0].answer, 0); g3.componentDidUpdate();
-    assert.strictEqual(to, 250-6, '2번 문제가 목록 위쪽에');
-    to=null; g3.pickTest(g3.state.test.qs[0].options.find(o=>o!==g3.state.test.qs[0].answer), 0); g3.componentDidUpdate();
+    assert.strictEqual(to, null, '답을 골라도 스크롤 안 함');
+    assert.strictEqual(g3.state.test.idx, 1, '지금 문제 표시는 다음 문제로');
+    g3.pickTest(g3.state.test.qs[0].options.find(o=>o!==g3.state.test.qs[0].answer), 0); g3.componentDidUpdate();
     assert.strictEqual(to, null, '답을 고칠 때는 스크롤 안 함');
     g3.jumpTest(30); g3.componentDidUpdate(); assert.strictEqual(to, 30*250-6, '답안지 번호 → 그 문제로 스크롤');
     delete globalThis.getComputedStyle; }
