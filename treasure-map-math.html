@@ -355,19 +355,20 @@ button{font-family:inherit;}
   </div>
   <div style="{{ testPaceStyle }}">{{ testPace }}</div>
   <div style="{{ testSecGoalStyle }}">{{ testSecGoal }}</div>
-  <div style="width:100%;background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:18px 14px 20px;margin-top:10px;display:flex;flex-direction:column;align-items:center;">
+  <!-- 아이패드 가로(키보드 붙이면 세로가 더 좁음)에서도 한 화면에: 넓으면 문제와 보기를 나란히, 크기는 화면 높이(vh)에도 맞춘다. -->
+  <div style="width:100%;background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:clamp(10px,2vh,18px) 14px clamp(12px,2.4vh,20px);margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:clamp(20px,5vw,56px);row-gap:clamp(8px,1.6vh,14px);">
     <sc-if value="{{ testRevisit }}" hint-placeholder-val="{{ false }}">
-      <div style="font-family:'Gaegu';font-weight:700;font-size:16px;color:#7a3a2a;background:#fff3d8;border-radius:10px;padding:4px 12px;margin-bottom:8px;">{{ testRevisitText }}</div>
+      <div style="flex-basis:100%;text-align:center;font-family:'Gaegu';font-weight:700;font-size:15px;color:#7a3a2a;"><span style="background:#fff3d8;border-radius:10px;padding:3px 12px;">{{ testRevisitText }}</span></div>
     </sc-if>
-    <div style="align-self:flex-start;font-family:'Jua';color:#123a66;margin:0 0 10px 6px;line-height:1.35;">
-      <div style="font-size:clamp(16px,4.2vw,20px);">{{ testSecRange }}</div>
-      <div style="font-size:clamp(17px,4.6vw,22px);">{{ testSecText }}</div>
+    <div style="flex-basis:100%;font-family:'Jua';color:#123a66;margin-left:6px;line-height:1.3;">
+      <div style="font-size:clamp(14px,min(4vw,2.4vh),19px);">{{ testSecRange }}</div>
+      <div style="font-size:clamp(15px,min(4.4vw,2.7vh),21px);">{{ testSecText }}</div>
     </div>
-    <div style="display:flex;align-items:flex-start;gap:clamp(12px,4vw,28px);">
-      <div style="font-family:'Jua';font-size:clamp(22px,6vw,30px);color:#7a8aa0;padding-top:6px;min-width:1.6em;text-align:right;">{{ testNo }}</div>
+    <div style="display:flex;align-items:flex-start;gap:clamp(10px,3vw,24px);">
+      <div style="font-family:'Jua';font-size:clamp(20px,min(5.5vw,4vh),28px);color:#7a8aa0;padding-top:4px;min-width:1.6em;text-align:right;">{{ testNo }}</div>
       {{ testProblemEl }}
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px;width:min(360px,86vw);margin-top:16px;">
+    <div style="display:flex;flex-direction:column;gap:clamp(5px,1vh,9px);width:min(320px,86vw);">
       <sc-for list="{{ testOptions }}" as="o" hint-placeholder-count="5">
         <button onClick="{{ o.onClick }}" style-active="transform:translateY(3px)" style="{{ o.style }}">
           <span style="{{ o.markStyle }}">{{ o.mark }}</span><span>{{ o.label }}</span>
@@ -1175,7 +1176,7 @@ class Component extends DCLogic {
   }
   // 실제 시험지 모양 그대로: 세로셈(v, 자리마다 칸 맞춤) / 가로식(h, '7 × 8 =') / 세로 나눗셈 기호(long, '3)47').
   kumonEl(q){
-    const h=React.createElement, font="'Jua',sans-serif", size='clamp(46px,13vw,68px)';
+    const h=React.createElement, font="'Jua',sans-serif", size='clamp(34px,min(12vw,8.5vh),64px)';
     if(q.layout==='h' || (!q.layout && q.op==='÷')) return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',letterSpacing:'4px'}},`${q.top} ${q.op} ${q.bottom} =`);
     if(q.layout==='long') return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',display:'flex',alignItems:'flex-end',lineHeight:1.15}},
       h('span',{style:{marginRight:'2px',lineHeight:1}},q.bottom),
@@ -1404,7 +1405,7 @@ class Component extends DCLogic {
       testProblemEl: TQ?this.kumonEl(TQ):null,
       testOptions: TQ?TQ.options.map((v,i)=>{ const on=!!(T.picks[T.idx] && T.picks[T.idx].v===v);
         return {mark:marks[i], label:v, onClick:()=>this.pickTest(v),
-          style:`display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(24px,6.6vw,32px);color:${on?'#fff':'#123a66'};background:${on?'#2f6bb0':'#fff'};border:4px solid ${on?'#1f4f86':'#9cc0e6'};border-radius:16px;padding:8px 18px;cursor:pointer;text-align:left;`,
+          style:`display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(19px,min(6vw,3.6vh),28px);color:${on?'#fff':'#123a66'};background:${on?'#2f6bb0':'#fff'};border:3px solid ${on?'#1f4f86':'#9cc0e6'};border-radius:14px;padding:clamp(3px,0.8vh,7px) 16px;cursor:pointer;text-align:left;`,
           markStyle:`font-size:.85em;color:${on?'#fff':'#2f6bb0'};`}; }):[],
       ...(()=>{ if(!TQ) return {testSecRange:'', testSecText:'', testNo:''};
         const idxs=T.qs.map((q,i)=>q.sec===TQ.sec?i:-1).filter(i=>i>=0);
