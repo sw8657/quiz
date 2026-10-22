@@ -396,4 +396,37 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   }
 }
 
+// 고정 문제지 5세트: 130문제(15/15/36/64), 답이 맞게 계산돼 있고 보기에 있음, 세트 안 중복 없음, 세트끼리 다름, 언제 풀어도 같은 문제
+{
+  const g = load('treasure-map-math.dc.html');
+  const sets = g.kumonSets();
+  assert.strictEqual(sets.length, 5);
+  assert.strictEqual(new Set(sets.map(s=>s.join('\n'))).size, 5, '세트끼리 같음');
+  sets.forEach((lines, si)=>{
+    const qs = g.kumonSetQs(si+1);
+    assert.strictEqual(qs.length, 130);
+    assert.deepStrictEqual(['add','sub','mul','div'].map(sec=>qs.filter(q=>q.sec===sec).length), [15,15,36,64], `${si+1}회 구성`);
+    const keys = qs.map(q=>q.top+q.op+q.bottom);
+    assert.strictEqual(new Set(keys).size, 130, `${si+1}회 중복`);
+    qs.forEach(q=>{
+      const a=+q.top, b=+q.bottom;
+      const want = q.op==='+'? String(a+b) : q.op==='−'? String(a-b) : q.op==='×'? String(a*b) : (a%b? `${Math.floor(a/b)} … ${a%b}` : String(a/b));
+      assert.strictEqual(q.answer, want, `${si+1}회 답 틀림 ${JSON.stringify(q)}`);
+      assert.ok(q.options.length===5 && new Set(q.options).size===5 && q.options.includes(q.answer), `${si+1}회 보기 ${JSON.stringify(q)}`);
+      assert.strictEqual(q.layout, ['m11','d_ex','d_rem','d_mix'].includes(q.form)?'h': ['d_long2','d_long3'].includes(q.form)?'long':'v');
+    });
+  });
+  g.state.userName = '지한';
+  g.startTest('set2'); const first = g.state.test.qs.map(q=>q.top+q.op+q.bottom+q.options.join());
+  assert.ok(g.state.test.qs.every(q=>q.budget>0 && q.tier!==undefined), '세트 문제에 목표 시간 없음');
+  g.cancelTest();
+  g.startTest('set2'); assert.deepStrictEqual(g.state.test.qs.map(q=>q.top+q.op+q.bottom+q.options.join()), first, '같은 회차인데 문제가 바뀜');
+  for(let i=0;i<10;i++){ const q=g.state.test.qs[g.state.test.idx]; g.pickTest(q.answer); }
+  g.submitTest();
+  g.state.screen='testIntro'; const v = g.renderVals();
+  assert.strictEqual(v.testSets.length, 5); assert.ok(v.testModes.every(m=>!m.title.includes('문제지')));
+  assert.strictEqual(v.testSets[1].best, '최고 10/130'); assert.strictEqual(v.testSets[1].tries, '1번 풂');
+  assert.strictEqual(v.testSets[0].best, '아직 안 풀었어요');
+}
+
 console.log('OK: generators fuzz passed');
