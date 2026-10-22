@@ -288,8 +288,8 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   // 1~3번 풀기(2번은 틀리게), 각 5초
   for(let i=0;i<3;i++){ const q=T().qs[T().idx]; T().lastAt-=5000; g.pickTest(i===1?wrongOf(q):q.answer); }
   assert.strictEqual(T().idx, 3);
-  // 4번 건너뛰기 → 5번
-  T().lastAt-=2000; g.skipTest(); assert.strictEqual(T().idx, 4); assert.strictEqual(T().picks[3], null);
+  // 4번은 안 풀고 답안지에서 5번으로
+  T().lastAt-=2000; g.jumpTest(g.state.test.idx+1); assert.strictEqual(T().idx, 4); assert.strictEqual(T().picks[3], null);
   // 답안지에서 2번으로 돌아가 답 고치기(3초 더) → 다음 안 푼 문제(4번)로
   g.jumpTest(1); assert.strictEqual(T().idx, 1);
   let v = g.renderVals();
@@ -336,7 +336,7 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
 {
   const g = load('treasure-map-math.dc.html');
   g.state.userName='지한'; g.startTest('mini');
-  g.pickTest(g.state.test.qs[0].answer); g.skipTest(); g.pickTest(g.state.test.qs[2].answer);
+  g.pickTest(g.state.test.qs[0].answer); g.jumpTest(g.state.test.idx+1); g.pickTest(g.state.test.qs[2].answer);
   g.submitTest();
   const v = g.renderVals();
   assert.ok(v.trAnswered===2 && g.state.testResult.items[1].p===null && v.trTierLine.includes('쉬운 문제'));

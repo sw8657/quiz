@@ -372,7 +372,6 @@ button{font-family:inherit;}
         </button>
       </sc-for>
     </div>
-    <button onClick="{{ skipTest }}" style-active="transform:translateY(2px)" style="margin-top:14px;font-family:'Jua';font-size:16px;color:#3a5f86;background:#fff;border:2px dashed #9cc0e6;border-radius:12px;padding:6px 16px;cursor:pointer;">건너뛰기 ▶ (나중에 답안지에서 돌아오기)</button>
   </div>
   </div>
   <sc-if value="{{ showOmrOverlay }}" hint-placeholder-val="{{ false }}">
@@ -1076,7 +1075,6 @@ class Component extends DCLogic {
     nt.idx=i;
     this.setState({test:nt, testNow:now, omrOpen:false});
   }
-  skipTest(){ const t=this.state.test; if(t) this.jumpTest((t.idx+1)%t.qs.length); }
   submitTest(){ if(!window.confirm('지금 제출할까요?\n남은 문제는 안 푼 걸로 처리돼요.')) return; this.finishTest(); }
   finishTest(done){
     let t=done||this.state.test; if(!t || this.state.screen!=='test') return;
@@ -1412,7 +1410,7 @@ class Component extends DCLogic {
         return {testSecRange:`[ ${idxs[0]+1} ~ ${idxs[idxs.length-1]+1} ]`, testSecText:text, testNo:String(T.idx+1)}; })(),
       testOmrEl: T ? this.omrEl(T) : null, isNarrow:!!s.narrow, isWide:!s.narrow,
       showOmrOverlay: !!(T && s.narrow && s.omrOpen),
-      openOmr:()=>this.setState({omrOpen:true}), closeOmr:()=>this.setState({omrOpen:false}), skipTest:()=>this.skipTest(),
+      openOmr:()=>this.setState({omrOpen:true}), closeOmr:()=>this.setState({omrOpen:false}),
       testRevisit: !!(T && T.picks[T.idx]), testRevisitText: T && T.picks[T.idx] ? `${T.idx+1}번은 이미 풀었어요 · 답을 바꾸려면 다른 보기를 눌러요` : '',
       submitTest:()=>this.submitTest(), retryTest:()=>this.retryTest(),
       trTitle: R ? (R.answered>=R.total?'다 풀었어요! 🎉':'시간 끝! ⏰') : '',
