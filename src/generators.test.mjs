@@ -303,7 +303,8 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   const qBlock = (vals,i) => flat(vals.testListEl).find(x=>x && x.p && x.p.key==='q'+i);
   const btns = (vals,i) => flat(qBlock(vals,i)).filter(x=>x && x.t==='button');
   assert.strictEqual(btns(v,1).length, 5);
-  assert.deepStrictEqual(btns(v,1).map((b,k)=>b.p.style.background==='#2f6bb0'?k:-1).filter(k=>k>=0), [T().qs[1].options.indexOf(T().picks[1].v)], '이미 고른 답이 파랗게');
+  assert.ok(btns(v,1).every(b=>b.p.style.border==='none' && b.p.style.background==='transparent'), '보기는 테두리·배경 없이');
+  assert.deepStrictEqual(btns(v,1).map((b,k)=>b.c[0].p.style.background==='#123a66'?k:-1).filter(k=>k>=0), [T().qs[1].options.indexOf(T().picks[1].v)], '고른 답의 번호 원만 칠해짐');
   T().lastAt-=3000; btns(v,1).find((b,k)=>T().qs[1].options[k]===T().qs[1].answer).p.onClick(); // 목록의 보기 버튼으로 답 고치기
   assert.strictEqual(T().idx, 1, '답을 고치면 그 자리');
   assert.strictEqual(T().picks[1].v, T().qs[1].answer);

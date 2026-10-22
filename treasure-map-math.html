@@ -1181,7 +1181,7 @@ class Component extends DCLogic {
   // 문제 목록(실제 온라인 시험처럼 1번부터 끝까지 이어서 스크롤): 유형이 바뀌는 곳마다 '[ 1 ~ 15 ] 덧셈을 연습합니다.',
   // 문제마다 실제 문제지처럼 위아래로: 번호·문제, 그 아래 ①~⑤ 보기. 고른 보기는 파랗게, 지금 문제는 왼쪽에 노란 줄.
   testListEl(t){
-    const h=React.createElement, font="'Jua',sans-serif", marks=['①','②','③','④','⑤'];
+    const h=React.createElement, font="'Jua',sans-serif";
     const TEXT={add:'덧셈을 연습합니다.',sub:'뺄셈을 연습합니다.',mul:'곱셈을 연습합니다.',div:'나눗셈을 연습합니다. (나누어 떨어지지 않으면 나머지를 쓰세요)'};
     this._qEls=this._qEls||[];
     const kids=[];
@@ -1200,11 +1200,14 @@ class Component extends DCLogic {
           h('div',{style:{fontFamily:font,fontSize:'clamp(18px,min(5vw,3.4vh),24px)',color:'#7a8aa0',paddingTop:'2px',minWidth:'1.8em',textAlign:'right'}},String(i+1)),
           this.kumonEl(q,'clamp(22px,min(6.5vw,4.4vh),34px)')),
         // 보기는 문제 아래, 문제와 같은 왼쪽 선에 맞춰 세로로
-        h('div',{style:{display:'flex',flexDirection:'column',gap:'clamp(4px,0.8vh,7px)',width:'min(260px,74vw)',marginLeft:'calc(1.8em + clamp(14px,4vw,32px))'}},
+        h('div',{style:{display:'flex',flexDirection:'column',gap:'clamp(2px,0.4vh,4px)',width:'min(260px,74vw)',marginLeft:'calc(1.8em + clamp(14px,4vw,32px))'}},
           ...q.options.map((v,k)=>{ const on=!!(p && p.v===v);
-            return h('button',{key:k,onClick:()=>this.pickTest(v,i),style:{display:'flex',alignItems:'center',gap:'14px',fontFamily:font,fontSize:'clamp(17px,min(5vw,3vh),23px)',
-              color:on?'#fff':'#123a66',background:on?'#2f6bb0':'#fff',border:`2px solid ${on?'#1f4f86':'#c3d6ec'}`,borderRadius:'12px',padding:'clamp(2px,0.5vh,5px) 14px',cursor:'pointer',textAlign:'left'}},
-              h('span',{style:{fontSize:'.85em',color:on?'#fff':'#2f6bb0'}},marks[k]), h('span',null,v)); }))));
+            // 실제 문제지처럼 테두리·배경 없이 '① 34'. 고른 답은 번호 원을 칠한다(OMR처럼).
+            return h('button',{key:k,onClick:()=>this.pickTest(v,i),style:{display:'flex',alignItems:'center',gap:'12px',fontFamily:font,fontSize:'clamp(17px,min(5vw,3vh),23px)',
+              color:'#123a66',background:'transparent',border:'none',padding:'clamp(3px,0.6vh,6px) 4px',cursor:'pointer',textAlign:'left'}},
+              h('span',{style:{width:'1.25em',height:'1.25em',boxSizing:'border-box',display:'inline-flex',alignItems:'center',justifyContent:'center',borderRadius:'50%',fontSize:'.8em',lineHeight:1,flex:'none',
+                background:on?'#123a66':'transparent',color:on?'#fff':'#5a6b80',border:`1.5px solid ${on?'#123a66':'#7a8aa0'}`}},String(k+1)),
+              h('span',{style:{fontWeight:on?'bold':'normal'}},v)); }))));
     });
     return h('div',null,...kids);
   }
