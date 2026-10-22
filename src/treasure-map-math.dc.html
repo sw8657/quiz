@@ -304,7 +304,7 @@ button{font-family:inherit;}
     <div style="font-family:'Jua';font-size:clamp(20px,5.4vw,30px);color:#123a66;white-space:nowrap;">⚡ 구몬 연습</div>
     <div style="width:clamp(0px,9vw,96px);flex:none;"></div>
   </div>
-  <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,20px);color:#1e4d7a;text-align:center;margin-bottom:16px;line-height:1.4;">실제 시험처럼 세로셈 · 5지선다 · 정답은 끝나고 알려줘요.<br>목표는 한 문제에 {{ targetSecs }}초! 🚀</div>
+  <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.2vw,20px);color:#1e4d7a;text-align:center;margin-bottom:16px;line-height:1.4;">실제 시험 순서·모양 그대로 · 5지선다 · 정답은 끝나고 알려줘요.<br>{{ planLine }} 🚀</div>
   <div style="display:flex;flex-direction:column;gap:12px;width:min(520px,94vw);">
     <sc-for list="{{ testModes }}" as="m" hint-placeholder-count="3">
       <button onClick="{{ m.onClick }}" style-active="transform:translateY(4px)" style="font-family:'Jua';text-align:left;background:#fff;border:5px solid #2f6bb0;border-radius:20px;padding:14px 18px;box-shadow:0 6px 0 #1f4f86;cursor:pointer;color:#123a66;">
@@ -345,6 +345,7 @@ button{font-family:inherit;}
     <button onClick="{{ submitTest }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#fff;background:#d1462f;border:3px solid #a83526;border-radius:14px;padding:8px 12px;box-shadow:0 4px 0 #a83526;cursor:pointer;white-space:nowrap;flex:none;">제출하기</button>
   </div>
   <div style="{{ testPaceStyle }}">{{ testPace }}</div>
+  <div style="{{ testSecGoalStyle }}">{{ testSecGoal }}</div>
   <div style="width:min(760px,96vw);background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:18px 14px 20px;margin-top:10px;display:flex;flex-direction:column;align-items:center;">
     {{ testProblemEl }}
     <div style="display:flex;flex-direction:column;gap:10px;width:min(360px,86vw);margin-top:16px;">
@@ -437,7 +438,7 @@ button{font-family:inherit;}
     <div style="width:clamp(0px,9vw,80px);flex:none;"></div>
   </div>
   <div style="font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:#3a5f86;text-align:center;">{{ shSummary }}</div>
-  <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(13px,3.5vw,15px);color:#3a5f86;text-align:center;margin-top:2px;">⏱️ 막대가 길수록 오래 걸린 문제 · 빨간 시간은 목표({{ targetSecs }}초)보다 느린 문제</div>
+  <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(13px,3.5vw,15px);color:#3a5f86;text-align:center;margin-top:2px;">⏱️ 막대가 길수록 오래 걸린 문제 · 빨간 시간은 목표보다 느린 문제(덧셈·뺄셈 10초 · 곱셈 10초 · 나눗셈 12초)</div>
   <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;justify-content:center;">
     <sc-for list="{{ shFilters }}" as="fl" hint-placeholder-count="3">
       <button onClick="{{ fl.onClick }}" style="{{ fl.style }}">{{ fl.label }}</button>
@@ -484,10 +485,10 @@ button{font-family:inherit;}
     <div style="font-family:'Jua';font-size:clamp(16px,4.4vw,20px);color:#2f6bb0;margin-top:4px;">{{ trPaceLine }}</div>
     <div style="font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:#7a3a2a;margin-top:6px;">{{ trTierLine }}</div>
     <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(16px,4.4vw,20px);color:#3a5f86;margin-top:6px;">{{ trMessage }}</div>
-    <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:4px 6px;margin-top:16px;font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:#123a66;text-align:center;">
-      <div style="color:#3a5f86;">유형</div><div style="color:#3a5f86;">푼 문제</div><div style="color:#3a5f86;">정답</div><div style="color:#3a5f86;">평균</div>
+    <div style="display:grid;grid-template-columns:1.2fr 1.1fr .8fr 1fr .9fr;gap:4px 6px;margin-top:16px;font-family:'Jua';font-size:clamp(13px,3.6vw,17px);color:#123a66;text-align:center;">
+      <div style="color:#3a5f86;">유형</div><div style="color:#3a5f86;">푼 문제</div><div style="color:#3a5f86;">정답</div><div style="color:#3a5f86;">평균</div><div style="color:#3a5f86;">목표</div>
       <sc-for list="{{ trSections }}" as="ts" hint-placeholder-count="4">
-        <div style="{{ ts.cell }}">{{ ts.name }}</div><div style="{{ ts.cell }}">{{ ts.done }}</div><div style="{{ ts.cell }}">{{ ts.right }}</div><div style="{{ ts.paceCell }}">{{ ts.avg }}</div>
+        <div style="{{ ts.cell }}">{{ ts.name }}</div><div style="{{ ts.cell }}">{{ ts.done }}</div><div style="{{ ts.cell }}">{{ ts.right }}</div><div style="{{ ts.paceCell }}">{{ ts.avg }}</div><div style="{{ ts.cell }}color:#7a8aa0;">{{ ts.goal }}</div>
       </sc-for>
     </div>
     <button onClick="{{ openSheet }}" style-active="transform:translateY(4px)" style="font-family:'Jua';font-size:22px;color:#123a66;background:#fff3d8;border:4px solid #b9820f;border-radius:18px;padding:12px;box-shadow:0 6px 0 #b9820f;cursor:pointer;width:100%;margin-top:16px;">📝 채점표 보기 (문제별 시간)</button>
@@ -894,59 +895,134 @@ class Component extends DCLogic {
   }
 
   // ---- ⚡ 구몬 연습 (시험 모드) ----
-  // 구몬 C 진단 테스트 흉내: 덧셈·뺄셈·곱셈·나눗셈 세로셈 5지선다, 전체 제한시간, 중간 채점 없음.
-  // 실전 160문제/30분 = 문제당 약 11초가 목표 페이스.
+  // 구몬 C 진단 테스트를 그대로 흉내 낸다(모의테스트 종이 160문제를 번호별로 분석한 구성).
+  //   덧셈 15 → 뺄셈 15 → 곱셈 47 → 나눗셈 83, 유형 안에서는 아래 구간 순서대로 점점 어려워진다.
+  //   5지선다, 전체 제한시간, 중간 채점 없음.
+  // [유형, 문제 틀, 문항 수] — 문제 틀은 genKumon 참고. 번호는 실제 시험지 번호.
+  kumonPlan(id){
+    const P={
+      full:[ // 1~160번
+        ['add','a22n',2],['add','a22h',3],['add','a22c',2],['add','a32',5],['add','a33',3],          // 1~15
+        ['sub','s22',7],['sub','s32',3],['sub','s32b',2],['sub','s33',3],                             // 16~30
+        ['mul','m11',15],['mul','m21',20],['mul','m31',10],['mul','m41',2],                           // 31~77
+        ['div','d_ex',13],['div','d_rem',13],['div','d_mix',20],['div','d_long2',15],['div','d_long3',22], // 78~160
+      ],
+      mini:[
+        ['add','a22n',1],['add','a22c',1],['add','a32',1],['add','a33',1],
+        ['sub','s22',2],['sub','s32b',1],['sub','s33',1],
+        ['mul','m11',4],['mul','m21',5],['mul','m31',2],['mul','m41',1],
+        ['div','d_ex',3],['div','d_rem',3],['div','d_mix',4],['div','d_long2',4],['div','d_long3',6],
+      ],
+      // 모의테스트에서 시간 안에 닿지 못한 104~160번 구간만.
+      divfocus:[['div','d_mix',10],['div','d_long2',12],['div','d_long3',18]],
+    };
+    return P[id]||[];
+  }
   testModeList(){
     return [
-      {id:'full',  title:'🏁 실전 160문제 · 30분', desc:'덧셈 40 → 뺄셈 40 → 곱셈 40 → 나눗셈 40', plan:[['add',40],['sub',40],['mul',40],['div',40]], limit:1800},
-      {id:'mini',  title:'⏱️ 미니 40문제 · 8분',   desc:'네 유형 10문제씩, 실전과 같은 속도',      plan:[['add',10],['sub',10],['mul',10],['div',10]], limit:480},
-      {id:'muldiv',title:'✖️➗ 곱셈·나눗셈 40문제 · 8분', desc:'뒤쪽 유형만 집중 연습',          plan:[['mul',20],['div',20]], limit:480},
+      {id:'full',    title:'🏁 실전 160문제 · 30분', desc:'덧셈 15 → 뺄셈 15 → 곱셈 47 → 나눗셈 83 (실제 시험 순서)', limit:1800},
+      {id:'mini',    title:'⏱️ 미니 40문제 · 8분',   desc:'실전과 같은 비율·순서·속도로 짧게', limit:480},
+      {id:'divfocus',title:'➗ 나눗셈 집중 40문제 · 8분', desc:'실전 104~160번 구간: 몫 두 자리 · 세로 나눗셈 · 세 자리÷한 자리', limit:480},
     ];
   }
+  // 예전 기록에 남은 모드 이름(지금은 없는 모드).
+  legacyModeName(id){ return {muldiv:'곱셈·나눗셈 40문제 · 8분'}[id]||id; }
+  // 유형별 목표 속도(초/문제). 실전 30분을 덧셈·뺄셈 5분, 곱셈 8분, 나눗셈 17분으로 나눈 값.
+  // 덧셈·뺄셈을 빨리 끝내야 문항이 가장 많은 나눗셈에 시간이 남는다.
+  kumonRate(sec){ return {add:10, sub:10, mul:10.2, div:12.3}[sec]||11.25; }
   // 받아올림 없이 자리마다 더한(뺀) 값 — 가장 흔한 실수를 오답 보기로.
   digitwise(a,b,fn){ const A=String(a), B=String(b).padStart(A.length,'0'); let r=''; for(let i=0;i<A.length;i++) r+=String(fn(+A[i],+B[i])); return +r; }
-  // tier 0~3: 실제 시험처럼 한 유형 안에서 앞쪽은 쉽고 뒤로 갈수록 자릿수가 커진다.
-  //   덧셈·뺄셈: 2자리±1자리 → 2자리±2자리 → 3자리±2자리 → 3자리±3자리
-  //   곱셈: 구구단 → 2자리(작은 수)×1 → 2자리×1 → 3자리×1
-  //   나눗셈: 구구단 거꾸로 → (섞어서) → 2자리÷1자리 나머지 → 나누는 수 6~9
-  genKumon(sec,tier){
-    if(tier==null) tier=this.rand(0,3);
-    let top, op, bottom, ans, label, wrongs;
+  // 문제 틀(form)마다 실제 시험지와 같은 모양·자릿수. form을 안 주면 그 유형에서 아무거나.
+  //   덧셈 a22n 2+2 받아올림 없음 · a22h 결과 세 자리 · a22c 받아올림 두 번 · a32 3+2 · a33 3+3
+  //   뺄셈 s22 2−2(대부분 받아내림) · s32 3−2 · s32b 받아내림 두 번/0 건너기(203−85) · s33 3−3
+  //   곱셈 m11 구구단(가로) · m21 2×1 · m31 3×1 · m41 4×1
+  //   나눗셈 d_ex 구구단 거꾸로(가로) · d_rem 나머지(가로) · d_mix 섞임·몫 두 자리(가로)
+  //          d_long2 세로 나눗셈 2÷1 · d_long3 세로 나눗셈 3÷1(몫에 0이 끼는 문제 많음)
+  genKumon(sec,form){
+    const r=(a,b)=>this.rand(a,b);
+    if(!form) form=this.pick({add:['a22n','a22h','a22c','a32','a33'],sub:['s22','s32','s32b','s33'],mul:['m11','m21','m31','m41'],div:['d_ex','d_rem','d_mix','d_long2','d_long3']}[sec]);
+    let a,b;
     if(sec==='add'){
-      const form=['21','22','32','33'][tier];
-      const a=form[0]==='2'?this.rand(15,89):this.rand(105,899), b=form[1]==='1'?this.rand(3,9):form[1]==='2'?this.rand(12,99):this.rand(105,899);
-      top=a; op='+'; bottom=b; ans=a+b;
-      wrongs=[this.digitwise(a,b,(x,y)=>(x+y)%10), ans+10, ans-10, ans+1, ans-1, ans+100, ans-2];
-    } else if(sec==='sub'){
-      const form=['21','22','32','33'][tier];
-      let a=form[0]==='2'?this.rand(30,99):this.rand(150,999), b=form[1]==='1'?this.rand(3,9):form[1]==='2'?this.rand(12,Math.min(89,a-5)):this.rand(102,a-20);
-      top=a; op='−'; bottom=b; ans=a-b;
-      wrongs=[this.digitwise(a,b,(x,y)=>Math.abs(x-y)), ans+10, ans-10, ans+1, ans-1, ans+100, ans+2];
-    } else if(sec==='mul'){
-      const a=[this.rand(2,9),this.rand(12,49),this.rand(50,99),this.rand(102,499)][tier], b=this.rand(2,9);
-      top=a; op='×'; bottom=b; ans=a*b;
-      wrongs=[ans+b, ans-b, ans+10, ans-10, ans+1, ans+100, ans-1];
-    } else {
-      const b=tier===3?this.rand(6,9):this.rand(2,9);
-      if(tier===0 || (tier===1 && Math.random()<0.5)){ const q=this.rand(2,9), a=b*q; return this.kumonQ('div',a,'÷',b,String(q),String(q),[q+1,q-1,q+2,q-2,q*2,q+10].filter(v=>v>0).map(String)); }
-      const a=this.rand(Math.max(11,b*2),99), q=Math.floor(a/b), r=a%b;
-      const lab=(x,y)=>y?`${x} … ${y}`:`${x}`;
-      const cand=[[q+1,r],[q-1,r],[q,(r+1)%b],[q,r?0:1],[q+1,(r+1)%b],[q,b-r],[q-1,(r+b-1)%b]].filter(([x,y])=>x>0 && y>=0 && y<b);
-      return this.kumonQ('div',a,'÷',b,lab(q,r),lab(q,r),cand.map(([x,y])=>lab(x,y)));
+      if(form==='a22n'){ const t1=r(1,8), t2=r(1,9-t1), o1=r(0,9), o2=r(0,9-o1); a=t1*10+o1; b=t2*10+o2; }
+      else if(form==='a22h'){ const o1=r(0,9), o2=r(0,9-o1), t1=r(2,9), t2=r(Math.max(1,10-t1),9); a=t1*10+o1; b=t2*10+o2; }
+      else if(form==='a22c'){ const o1=r(1,9), o2=r(10-o1,9), t1=r(1,9), t2=r(Math.max(1,9-t1),9); a=t1*10+o1; b=t2*10+o2; }
+      else if(form==='a32'){ a=r(102,899); b=r(12,99); }
+      else { a=r(105,899); b=r(105,899); }
+      const ans=a+b;
+      return this.kumonQ(sec,form,'v',a,'+',b,String(ans),String(ans),[this.digitwise(a,b,(x,y)=>(x+y)%10), ans+10, ans-10, ans+1, ans-1, ans+100, ans-100, ans-2]);
     }
-    return this.kumonQ(sec,top,op,bottom,String(ans),String(ans),wrongs.filter(v=>v>0).map(String));
+    if(sec==='sub'){
+      if(form==='s22'){ a=r(30,99); const ta=Math.floor(a/10), oa=a%10;
+        if(Math.random()<0.8 && oa<9 && ta>=2) b=r(1,ta-1)*10+r(oa+1,9); else b=r(11,a-1); }
+      else if(form==='s32'){ a=r(101,599); b=r(12,99); }
+      else if(form==='s32b'){ const h=r(2,9), t=r(0,4), o=r(0,5); a=h*100+t*10+o; b=r(t+1,9)*10+r(o+1,9); }
+      else { a=Math.random()<0.35 ? r(3,9)*100+r(0,5) : r(300,999); b=r(102,a-10); }
+      const ans=a-b;
+      return this.kumonQ(sec,form,'v',a,'−',b,String(ans),String(ans),[this.digitwise(a,b,(x,y)=>Math.abs(x-y)), ans+10, ans-10, ans+1, ans-1, ans+100, ans-100, ans+2]);
+    }
+    if(sec==='mul'){
+      b=r(2,9);
+      if(form==='m11') a=r(2,9);
+      else if(form==='m21') a=r(12,99);
+      else if(form==='m31') a=Math.random()<0.3 ? r(1,9)*100+r(1,9) : r(101,999);
+      else a=r(1001,9999);
+      const ans=a*b;
+      // 올림을 빼먹은 값: 자리마다 곱의 일의 자리만 적은 수
+      const noCarry=+String(a).split('').map(d=>(+d*b)%10).join('');
+      return this.kumonQ(sec,form,form==='m11'?'h':'v',a,'×',b,String(ans),String(ans),[noCarry, ans+b, ans-b, ans+10, ans-10, ans+1, ans+100, ans-100, ans+1000]);
+    }
+    // 나눗셈
+    b=r(2,9); let q, rem;
+    if(form==='d_ex'){ q=r(1,9); if(q===1) q=r(2,9); rem=0; }
+    else if(form==='d_rem'){
+      if(Math.random()<0.1){ q=r(2,9); rem=0; }
+      else if(Math.random()<0.15 && Math.floor((100-b)/b)>=10){ q=r(10,Math.floor((100-b)/b)); rem=r(1,b-1); } // 56÷5=11…1 처럼 몫이 두 자리
+      else { q=r(1,9); rem=r(1,b-1); }
+    }
+    else if(form==='d_mix' || form==='d_long2'){ a=r(Math.max(11,b*2),99); q=Math.floor(a/b); rem=a%b; }
+    else { // d_long3: 실제 시험지 비율 — 몫에 0이 끼는 것(109, 202, 250…) 약 40%, 몫이 두 자리(310÷5=62, 648÷8=81) 약 절반
+      const roll=Math.random();
+      if(roll>=0.4 && roll<0.85){ b=r(3,9); a=r(100,b*100-1); q=Math.floor(a/b); rem=a%b; }
+      else if(roll<0.4){
+        for(let k=0;k<50;k++){
+          const pat=this.pick(['h0t','ht0','10t']);
+          const d1=r(1,9), d2=r(1,9);
+          q = pat==='h0t'? d1*100+d2 : pat==='ht0'? d1*100+d2*10 : 100+d2;
+          rem = Math.random()<0.6 ? 0 : r(1,b-1);
+          if(q*b+rem>=100 && q*b+rem<=999) break;
+        }
+        if(q*b+rem<100 || q*b+rem>999){ a=r(100,999); q=Math.floor(a/b); rem=a%b; }
+      } else { a=r(100,999); q=Math.floor(a/b); rem=a%b; }
+    }
+    a=q*b+rem;
+    const lab=(x,y)=>y?`${x} … ${y}`:`${x}`;
+    const dropZero=String(q).length>1 && String(q).includes('0') ? +String(q).replace(/0/g,'') : null; // 몫의 0을 빼먹는 실수
+    const valid=([x,y])=>x && x>0 && y>=0 && y<b;
+    const cand=[[q+1,rem],[q-1,rem],[q,(rem+1)%b],[q,rem?0:1],[q+10,rem],[q-10,rem],[q,b-rem],[q+1,(rem+1)%b]].filter(valid);
+    const layout=form==='d_long2'||form==='d_long3'?'long':'h';
+    return this.kumonQ('div',form,layout,a,'÷',b,lab(q,rem),lab(q,rem),[dropZero?lab(dropZero,rem):null].concat(cand.map(([x,y])=>lab(x,y))));
   }
-  kumonQ(sec,top,op,bottom,answer,label,wrongs){
-    const opts=[answer]; this.shuffle(wrongs).forEach(v=>{ if(opts.length<5 && !opts.includes(v)) opts.push(v); });
+  // wrongs[0]은 그 문제 틀의 대표 실수(받아올림 빼먹기·몫의 0 빼먹기)라 항상 보기에 넣고, 나머지는 섞어서 채운다.
+  kumonQ(sec,form,layout,top,op,bottom,answer,label,wrongs){
+    const ok=v=>v!=null && (typeof v!=='number' || v>0);
+    const [first,...rest]=wrongs, opts=[answer];
+    if(ok(first) && String(first)!==answer) opts.push(String(first));
+    this.shuffle(rest.filter(ok).map(String)).forEach(v=>{ if(opts.length<5 && !opts.includes(v)) opts.push(v); });
     for(let k=3; opts.length<5; k++){ const v=String((parseInt(answer,10)||0)+k*11); if(!opts.includes(v)) opts.push(v); }
-    return {sec,top:String(top),op,bottom:String(bottom),answer,answerLabel:label,options:this.shuffle(opts)};
+    return {sec,form,layout,top:String(top),op,bottom:String(bottom),answer,answerLabel:label,options:this.shuffle(opts)};
   }
   openTest(){ this.playClick(); this.setState({screen:'testIntro'}); }
   openSprint(){ this.playClick(); this.setState({screen:'sprintIntro'}); }
   startTest(id){
     const m=this.testModeList().find(x=>x.id===id); if(!m) return;
     this.playClick();
-    const qs=[]; m.plan.forEach(([sec,n])=>{ for(let i=0;i<n;i++){ const tier=Math.min(3,Math.floor(i*4/n)); qs.push(Object.assign(this.genKumon(sec,tier),{tier})); } });
+    const qs=[]; this.kumonPlan(id).forEach(([sec,form,n])=>{ for(let i=0;i<n;i++) qs.push(this.genKumon(sec,form)); });
+    // tier: 유형 안에서의 위치(앞 1/4=0 … 뒤 1/4=3) — 결과의 '쉬운/어려운 문제' 평균에 쓴다.
+    // budget: 이 문제에 쓸 목표 초. 유형별 목표 속도를 이 모드의 제한시간에 맞게 늘이거나 줄인다.
+    const bySec={}; qs.forEach(q=>{ (bySec[q.sec]=bySec[q.sec]||[]).push(q); });
+    Object.values(bySec).forEach(list=>list.forEach((q,i)=>{ q.tier=Math.min(3,Math.floor(i*4/list.length)); }));
+    const scale=m.limit/qs.reduce((t,q)=>t+this.kumonRate(q.sec),0);
+    qs.forEach(q=>{ q.budget=this.kumonRate(q.sec)*scale; });
     const now=Date.now();
     this.setState({screen:'test', test:{mode:m.id, title:m.title, limit:m.limit, qs, idx:0, picks:[], startedAt:now, lastAt:now}, testNow:now});
   }
@@ -1032,10 +1108,14 @@ class Component extends DCLogic {
   }
   retrySprint(){ const r=this.state.sprintResult; if(r) this.startSprint(r.lv); }
   fmtClock(sec){ sec=Math.max(0,Math.ceil(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
-  // 세로셈(나눗셈은 가로) — 자리마다 칸을 맞춘 그리드.
+  // 실제 시험지 모양 그대로: 세로셈(v, 자리마다 칸 맞춤) / 가로식(h, '7 × 8 =') / 세로 나눗셈 기호(long, '3)47').
   kumonEl(q){
-    const h=React.createElement, font="'Jua',sans-serif";
-    if(q.op==='÷') return h('div',{style:{fontFamily:font,fontSize:'clamp(46px,13vw,68px)',color:'#123a66',letterSpacing:'4px'}},`${q.top} ÷ ${q.bottom}`);
+    const h=React.createElement, font="'Jua',sans-serif", size='clamp(46px,13vw,68px)';
+    if(q.layout==='h' || (!q.layout && q.op==='÷')) return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',letterSpacing:'4px'}},`${q.top} ${q.op} ${q.bottom} =`);
+    if(q.layout==='long') return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',display:'flex',alignItems:'flex-end',lineHeight:1.15}},
+      h('span',{style:{marginRight:'2px',lineHeight:1}},q.bottom),
+      h('span',{style:{fontSize:'1.15em',lineHeight:.95,transform:'scaleX(.7)'}},')'),
+      h('span',{style:{borderTop:'5px solid #123a66',padding:'6px 8px 0',letterSpacing:'6px',lineHeight:1}},q.top));
     const w=Math.max(q.top.length,q.bottom.length)+1;
     const row=(str,opCh)=>Array.from({length:w},(_,i)=>{ const pad=str.padStart(w,' '); const ch=i===0&&opCh?opCh:pad[i];
       return h('div',{key:i,style:{width:'0.72em',textAlign:'center',color:i===0&&opCh?'#d1462f':'#123a66'}},ch===' '?' ':ch); });
@@ -1217,19 +1297,33 @@ class Component extends DCLogic {
     // ---- 구몬 연습 화면 값 ----
     const SEC_NAME={add:'덧셈',sub:'뺄셈',mul:'곱셈',div:'나눗셈'};
     const modes=this.testModeList();
-    const target=Math.round(1800/160*10)/10; // 실전 목표: 문제당 초
+    const target=Math.round(1800/160*10)/10; // 실전 전체 평균: 문제당 초
     const T=s.test, TQ=T&&T.qs[T.idx];
     const tUsed=T?((s.testNow||Date.now())-T.startedAt)/1000:0, tRemain=T?T.limit-tUsed:0;
-    const expected=T?Math.floor(tUsed/(T.limit/T.qs.length)):0, ahead=T?T.idx-expected:0;
+    // 목표 페이스: 문제별 목표 초(budget)를 앞에서부터 더해, 지금까지 몇 문제를 끝냈어야 하는지.
+    const budgetOf=q=>q.budget!=null?q.budget:(T?T.limit/T.qs.length:target);
+    let expected=0; if(T){ let acc=0; for(const q of T.qs){ acc+=budgetOf(q); if(acc<=tUsed) expected++; else break; } }
+    const ahead=T?T.idx-expected:0;
+    // 지금 유형의 시간 목표와 쓴 시간
+    let secGoal='', secOver=false;
+    if(TQ){ const list=T.qs.map((q,i)=>({q,i})).filter(x=>x.q.sec===TQ.sec);
+      const goal=list.reduce((t,x)=>t+budgetOf(x.q),0);
+      const spent=list.reduce((t,x)=>t+(T.picks[x.i]?T.picks[x.i].secs:0),0)+Math.max(0,((s.testNow||Date.now())-T.lastAt)/1000);
+      secOver=spent>goal; secGoal=`📍 ${SEC_NAME[TQ.sec]} ${list.length}문제 목표 ${this.fmtClock(goal)} · 지금 ${this.fmtClock(spent)}${secOver?' ⚠️':''}`; }
+    // 실전 기준 유형별 시간 목표(분) — 안내 문구용
+    const planSecs={}; this.kumonPlan('full').forEach(([sec,,n])=>{ planSecs[sec]=(planSecs[sec]||0)+n*this.kumonRate(sec); });
+    const mins=k=>Math.round(planSecs[k]/60);
     const marks=['①','②','③','④','⑤'];
     const myTests=((this.loadUsers()[s.userName]||{}).tests||[]).slice().reverse().slice(0,8);
     const R=s.testResult;
-    const rAvg=R&&R.answered?R.used/R.answered:0;
+    const rAvg=R&&R.answered?R.used/R.answered:0, rTarget=R?Math.round(R.limit/R.total*10)/10:target;
     const testVals={
       openTest:()=>this.openTest(), targetSecs:target,
+      planLine:`실전 시간 배분: 덧셈·뺄셈 ${Math.round((planSecs.add+planSecs.sub)/60)}분 → 곱셈 ${mins('mul')}분 → 나눗셈 ${mins('div')}분`,
+      testSecGoal:secGoal, testSecGoalStyle:`font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:${secOver?'#d1462f':'#1e4d7a'};margin-top:4px;`,
       testModes:modes.map(m=>({title:m.title, desc:m.desc, onClick:()=>this.startTest(m.id)})),
       testRecs:myTests.map(r=>{ const m=modes.find(x=>x.id===r.mode); return {
-        left:`${fmtDate(r.date)} · ${m?m.title.replace(/^\S+\s/,''):r.mode}`,
+        left:`${fmtDate(r.date)} · ${m?m.title.replace(/^\S+\s/,''):this.legacyModeName(r.mode)}`,
         right:`${r.answered}/${r.total}문제 · 정답 ${r.correct} · ${r.answered?(r.used/r.answered).toFixed(1):'-'}초${r.items?' 📝':''}`,
         onClick:()=>{ if(r.items) this.openSheet(r,'testIntro'); }, onDelete:()=>this.deleteTest(r.date)}; }),
       clearTests:()=>this.clearTests(), clearSprints:()=>this.clearSprints(), cancelTest:()=>this.cancelTest(),
@@ -1240,7 +1334,7 @@ class Component extends DCLogic {
       testSection:TQ?`${SEC_NAME[TQ.sec]}`:'',
       testPos:T?`${Math.min(T.idx+1,T.qs.length)} / ${T.qs.length}`:'',
       testPct:T?Math.round(T.idx/T.qs.length*100):0,
-      testPace: !T||tUsed<20 ? '목표: 한 문제 '+target+'초 🚀' : ahead>=0 ? `목표보다 ${ahead}문제 앞서요! 🚀` : `목표보다 ${-ahead}문제 늦어요 🐢 조금 더 빨리!`,
+      testPace: !T||tUsed<20 ? '덧셈·뺄셈은 빠르게, 나눗셈에 시간을 남겨요 🚀' : ahead>=0 ? `목표보다 ${ahead}문제 앞서요! 🚀` : `목표보다 ${-ahead}문제 늦어요 🐢 조금 더 빨리!`,
       testPaceStyle:`font-family:'Jua';font-size:clamp(15px,4vw,19px);color:${!T||tUsed<20||ahead>=0?'#2f8f4e':'#d1462f'};`,
       testProblemEl: TQ?this.kumonEl(TQ):null,
       testOptions: TQ?TQ.options.map((v,i)=>({mark:marks[i], label:v, onClick:()=>this.pickTest(v)})):[],
@@ -1248,19 +1342,19 @@ class Component extends DCLogic {
       trTitle: R ? (R.answered>=R.total?'다 풀었어요! 🎉':'시간 끝! ⏰') : '',
       trEmoji: R ? (R.answered>=R.total && R.correct>=R.answered*0.9 ? '🏆' : R.correct>=R.answered*0.9 ? '🚀' : '💪') : '',
       trAnswered: R?R.answered:0, trTotal: R?R.total:0, trCorrect: R?R.correct:0,
-      trPaceLine: R ? `걸린 시간 ${this.fmtSecs(R.used)} · 한 문제 평균 ${rAvg.toFixed(1)}초 (목표 ${target}초)` : '',
+      trPaceLine: R ? `걸린 시간 ${this.fmtSecs(R.used)} · 한 문제 평균 ${rAvg.toFixed(1)}초 (목표 ${rTarget}초)` : '',
       trMessage: !R ? '' : !R.answered ? '다음엔 한 문제라도 풀어 보자!' :
         R.correct<R.answered*0.9 ? '조금 천천히, 정확하게 푸는 연습부터 해요 🙂' :
-        rAvg<=target ? '정확하고 빨라요! 실전도 문제없어요 🏅' : `정확해요! 이제 속도만 올리면 돼요. 한 문제에 ${(rAvg-target).toFixed(1)}초만 줄여 봐요 💨`,
-      trSections: R ? Object.keys(SEC_NAME).filter(k=>R.secs[k]).map(k=>{ const x=R.secs[k], avg=x.n?x.t/x.n:0, slow=x.n&&avg>target;
+        rAvg<=rTarget ? '정확하고 빨라요! 실전도 문제없어요 🏅' : `정확해요! 이제 속도만 올리면 돼요. 한 문제에 ${(rAvg-rTarget).toFixed(1)}초만 줄여 봐요 💨`,
+      trSections: R ? Object.keys(SEC_NAME).filter(k=>R.secs[k]).map(k=>{ const x=R.secs[k], avg=x.n?x.t/x.n:0, goal=this.kumonRate(k), slow=x.n&&avg>goal;
         const cell='padding:4px 0;border-top:2px solid #d6e4f4;';
-        return {name:SEC_NAME[k], done:`${x.n}/${x.total}`, right:x.n?`${x.c}`:'-', avg:x.n?avg.toFixed(1)+'초':'-', cell,
+        return {name:SEC_NAME[k], done:`${x.n}/${x.total}`, right:x.n?`${x.c}`:'-', avg:x.n?avg.toFixed(1)+'초':'-', goal:goal.toFixed(0)+'초', cell,
           paceCell:cell+(slow?'color:#d1462f;':'color:#2f8f4e;')}; }) : [],
       isTestIntro:s.screen==='testIntro', isTest:s.screen==='test', isTestResult:s.screen==='testResult',
       isSheet:s.screen==='testSheet', openSheet:()=>this.openSheet(), closeSheet:()=>this.closeSheet(),
       ...(()=>{ const sh=s.sheet; if(!sh||!sh.rec||!sh.rec.items) return {shRows:[], shFilters:[], shSummary:'', shEmpty:false};
         const rec=sh.rec, items=rec.items, done=items.filter(x=>x.p!=null);
-        const slow=x=>x.s!=null && x.s>target, wrong=x=>x.p!=null && x.p!==x.a;
+        const slow=x=>x.s!=null && x.s>this.kumonRate(x.sec), wrong=x=>x.p!=null && x.p!==x.a;
         const keep=x=>sh.filter==='wrong'?wrong(x):sh.filter==='slow'?slow(x):true;
         const rows=[]; let last=null;
         items.forEach((x,i)=>{
