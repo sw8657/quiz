@@ -285,7 +285,7 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   delete window.speechSynthesis;
 }
 
-// 📋 OMR 답안지: 번호로 되돌아가기·답 바꾸기·건너뛰기, 문제별 시간은 다시 본 시간까지 합산
+// 📋 OMR 답안지 + 문제 목록(1번부터 이어서 스크롤): 번호로 이동·답 바꾸기, 문제별 시간 = 앞 답부터 이 답까지
 {
   const g = load('treasure-map-math.dc.html');
   g.state.userName = '지한';
@@ -296,16 +296,23 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   assert.strictEqual(T().idx, 3);
   // 4번은 안 풀고 답안지에서 5번으로
   T().lastAt-=2000; g.jumpTest(g.state.test.idx+1); assert.strictEqual(T().idx, 4); assert.strictEqual(T().picks[3], null);
-  // 답안지에서 2번으로 돌아가 답 고치기(3초 더) → 다음 안 푼 문제(4번)로
+  // 답안지에서 2번으로 돌아가 답 고치기(3초 더) → 답을 고칠 때는 그 자리에 둔다
   g.jumpTest(1); assert.strictEqual(T().idx, 1);
   let v = g.renderVals();
-  assert.ok(v.testRevisit && v.testOptions.some(o=>o.style.includes('#2f6bb0;border')), '이미 고른 답 표시');
-  T().lastAt-=3000; g.pickTest(T().qs[1].answer);
-  assert.strictEqual(T().idx, 3, '답을 고치면 다음 안 푼 문제로');
-  assert.ok(T().spent[1]>=8 && T().spent[3]>=2, `다시 본 시간 합산: ${T().spent[1]}, ${T().spent[3]}`);
+  const flat = n => n==null ? [] : typeof n!=='object' ? [String(n)] : Array.isArray(n) ? n.flatMap(flat) : [n, ...flat(n.c)];
+  const qBlock = (vals,i) => flat(vals.testListEl).find(x=>x && x.p && x.p.key==='q'+i);
+  const btns = (vals,i) => flat(qBlock(vals,i)).filter(x=>x && x.t==='button');
+  assert.strictEqual(btns(v,1).length, 5);
+  assert.deepStrictEqual(btns(v,1).map((b,k)=>b.p.style.background==='#2f6bb0'?k:-1).filter(k=>k>=0), [T().qs[1].options.indexOf(T().picks[1].v)], '이미 고른 답이 파랗게');
+  T().lastAt-=3000; btns(v,1).find((b,k)=>T().qs[1].options[k]===T().qs[1].answer).p.onClick(); // 목록의 보기 버튼으로 답 고치기
+  assert.strictEqual(T().idx, 1, '답을 고치면 그 자리');
+  assert.strictEqual(T().picks[1].v, T().qs[1].answer);
+  assert.ok(T().spent[1]>=10 && T().spent[3]===0, `시간은 답을 고른 문제에 쌓임: ${T().spent[1]}, ${T().spent[3]}`);
+  // 문제 목록: 1~40번이 순서대로 모두, 유형 머리글은 유형이 바뀌는 곳마다
+  { const qk=flat(v.testListEl).filter(x=>x && x.p && /^q\d+$/.test(String(x.p.key))).map(x=>x.p.key);
+    assert.deepStrictEqual(qk, Array.from({length:40},(_,i)=>'q'+i), '문제 1~40번이 이어서'); }
   // OMR: 1번부터 40번까지 한 줄씩 이어짐(묶음 없음), 2번 줄에 고른 답 하나만 칠해짐
   v = g.renderVals();
-  const flat = n => n==null ? [] : typeof n!=='object' ? [String(n)] : Array.isArray(n) ? n.flatMap(flat) : [n, ...flat(n.c)];
   const nodes = flat(v.testOmrEl).filter(x=>typeof x==='object');
   const texts = flat(v.testOmrEl).filter(x=>typeof x==='string');
   assert.ok(texts.includes('Q') && texts.includes('정답') && !texts.some(t=>/~\d+ \(/.test(t)), 'Q·정답 머리, 묶음 없이 이어짐');
@@ -319,12 +326,25 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   // 지금 문제 줄 ref: 문제가 바뀔 때만 스크롤
   let scrolled=0; const el={ scrollIntoView(){ scrolled++; } };
   rows[T().idx].p.ref(el); rows[T().idx].p.ref(el); assert.strictEqual(scrolled, 1, '같은 문제에서 다시 그려도 스크롤 한 번');
-  // 문제 머리글·번호: 실제 화면처럼 '[ 1 ~ 4 ] 덧셈을 연습합니다.' + 문제 번호
-  { const g2=load('treasure-map-math.dc.html'); g2.startTest('full'); let w=g2.renderVals();
-    assert.ok(w.testSecRange==='[ 1 ~ 15 ]' && w.testSecText==='덧셈을 연습합니다.' && w.testNo==='1', `${w.testSecRange} ${w.testSecText} ${w.testNo}`);
-    g2.jumpTest(66); w=g2.renderVals();
-    assert.ok(w.testSecRange==='[ 67 ~ 130 ]' && w.testSecText.startsWith('나눗셈을 연습합니다.') && w.testNo==='67');
-    g2.jumpTest(30); w=g2.renderVals(); assert.ok(w.testSecRange==='[ 31 ~ 66 ]' && w.testSecText==='곱셈을 연습합니다.'); }
+  // 문제 목록의 유형 머리글(실제 화면처럼 '[ 1 ~ 15 ] 덧셈을 연습합니다.')과 문제 번호
+  { const g2=load('treasure-map-math.dc.html'); g2.startTest('full');
+    const t2=flat(g2.renderVals().testListEl).filter(x=>typeof x==='string');
+    const heads=t2.filter(x=>/^\[ \d+ ~ \d+ \]$/.test(x));
+    assert.deepStrictEqual(heads, ['[ 1 ~ 15 ]','[ 16 ~ 30 ]','[ 31 ~ 66 ]','[ 67 ~ 130 ]'], heads.join(','));
+    assert.ok(t2.includes('덧셈을 연습합니다.') && t2.includes('곱셈을 연습합니다.') && t2.some(x=>x.startsWith('나눗셈을 연습합니다. (나누어')));
+    assert.ok(t2.includes('1') && t2.includes('130'), '문제 번호'); }
+  // 처음 푸는 문제에 답하면 다음 문제로 스크롤(그리고 나서 componentDidUpdate가 스크롤 실행)
+  { const g3=load('treasure-map-math.dc.html'); g3.startTest('mini');
+    let to=null; const box={ scrollHeight:5000, clientHeight:500, scrollTop:0, parentElement:null, getBoundingClientRect:()=>({top:100}), scrollTo(o){ to=o.top; } };
+    globalThis.getComputedStyle = () => ({ overflowY:'auto' });
+    const els=Array.from({length:40},(_,i)=>({ parentElement:box, getBoundingClientRect:()=>({top:100+i*250}) }));
+    flat(g3.renderVals().testListEl).filter(x=>x && x.p && /^q\d+$/.test(String(x.p.key))).forEach((x,i)=>x.p.ref(els[i]));
+    g3.pickTest(g3.state.test.qs[0].answer, 0); g3.componentDidUpdate();
+    assert.strictEqual(to, 250-6, '2번 문제가 목록 위쪽에');
+    to=null; g3.pickTest(g3.state.test.qs[0].options.find(o=>o!==g3.state.test.qs[0].answer), 0); g3.componentDidUpdate();
+    assert.strictEqual(to, null, '답을 고칠 때는 스크롤 안 함');
+    g3.jumpTest(30); g3.componentDidUpdate(); assert.strictEqual(to, 30*250-6, '답안지 번호 → 그 문제로 스크롤');
+    delete globalThis.getComputedStyle; }
   // 줄을 누르면 그 문제로
   rows[25].p.onClick(); assert.strictEqual(T().idx, 25);
   // 스크롤 칸이 있으면: 지금 줄이 칸 위에서 1/3 지점에 오게 scrollTo
@@ -339,8 +359,8 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   // 좁은 화면: 📋 → 답안지 창, 번호 누르면 닫힘
   g.state.narrow = true; g.renderVals().openOmr(); assert.ok(g.renderVals().showOmrOverlay);
   g.jumpTest(0); assert.ok(!g.renderVals().showOmrOverlay);
-  // 끝: 나머지 다 풀면 자동 제출, 문제별 시간 = 본 시간 합
-  while(g.state.screen==='test'){ const q=T().qs[T().idx]; T().lastAt-=1000; g.pickTest(q.answer); }
+  // 끝: 나머지 다 풀면 자동 제출
+  while(g.state.screen==='test'){ const i=T().picks.findIndex(p=>!p); T().lastAt-=1000; g.pickTest(T().qs[i].answer, i); }
   const R = g.state.testResult;
   assert.strictEqual(R.answered, 40); assert.strictEqual(R.correct, 40, '고친 답으로 채점');
   assert.ok(R.items[1].s>=8, `2번 시간 ${R.items[1].s}`);

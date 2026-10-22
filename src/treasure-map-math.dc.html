@@ -334,12 +334,12 @@ button{font-family:inherit;}
 
 <!-- ================= TEST ================= -->
 <sc-if value="{{ isTest }}" hint-placeholder-val="{{ false }}">
-<div style="min-height:100vh;display:flex;justify-content:center;gap:16px;padding:12px 12px 22px;background:#f4f9ff;">
+<div style="height:100vh;height:100dvh;display:flex;justify-content:center;gap:16px;padding:12px;background:#f4f9ff;box-sizing:border-box;overflow:hidden;">
   <sc-if value="{{ isWide }}" hint-placeholder-val="{{ true }}">
-    <div style="width:230px;flex:none;position:sticky;top:12px;align-self:flex-start;max-height:calc(100vh - 24px);overflow:auto;border-radius:14px;">{{ testOmrEl }}</div>
+    <div style="width:230px;flex:none;align-self:stretch;min-height:0;overflow:auto;border-radius:14px;">{{ testOmrEl }}</div>
   </sc-if>
-  <div style="flex:1;min-width:0;max-width:760px;display:flex;flex-direction:column;align-items:center;">
-  <div style="width:100%;display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+  <div style="flex:1;min-width:0;max-width:760px;display:flex;flex-direction:column;align-items:center;min-height:0;">
+  <div style="width:100%;display:flex;align-items:center;gap:10px;margin-bottom:8px;flex:none;">
     <button onClick="{{ cancelTest }}" aria-label="그만하기" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#5e3d1c;background:#fff3d8;border:3px solid #b9820f;border-radius:14px;padding:8px 10px;box-shadow:0 4px 0 #b9820f;cursor:pointer;white-space:nowrap;flex:none;">✕ 그만</button>
     <sc-if value="{{ isNarrow }}" hint-placeholder-val="{{ false }}">
       <button onClick="{{ openOmr }}" aria-label="답안지" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:16px;color:#123a66;background:#e3f0ff;border:3px solid #2f6bb0;border-radius:14px;padding:8px 9px;box-shadow:0 4px 0 #1f4f86;cursor:pointer;white-space:nowrap;flex:none;">📋</button>
@@ -351,26 +351,9 @@ button{font-family:inherit;}
     </div>
     <button onClick="{{ submitTest }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#fff;background:#d1462f;border:3px solid #a83526;border-radius:14px;padding:8px 12px;box-shadow:0 4px 0 #a83526;cursor:pointer;white-space:nowrap;flex:none;">제출하기</button>
   </div>
-  <!-- 아이패드 가로(키보드 붙이면 세로가 더 좁음)에서도 한 화면에: 넓으면 문제와 보기를 나란히, 크기는 화면 높이(vh)에도 맞춘다. -->
-  <div style="width:100%;background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:clamp(10px,2vh,18px) 14px clamp(12px,2.4vh,20px);margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:clamp(20px,5vw,56px);row-gap:clamp(8px,1.6vh,14px);">
-    <sc-if value="{{ testRevisit }}" hint-placeholder-val="{{ false }}">
-      <div style="flex-basis:100%;text-align:center;font-family:'Gaegu';font-weight:700;font-size:15px;color:#7a3a2a;"><span style="background:#fff3d8;border-radius:10px;padding:3px 12px;">{{ testRevisitText }}</span></div>
-    </sc-if>
-    <div style="flex-basis:100%;font-family:'Jua';color:#123a66;margin-left:6px;line-height:1.3;">
-      <div style="font-size:clamp(14px,min(4vw,2.4vh),19px);">{{ testSecRange }}</div>
-      <div style="font-size:clamp(15px,min(4.4vw,2.7vh),21px);">{{ testSecText }}</div>
-    </div>
-    <div style="display:flex;align-items:flex-start;gap:clamp(10px,3vw,24px);">
-      <div style="font-family:'Jua';font-size:clamp(20px,min(5.5vw,4vh),28px);color:#7a8aa0;padding-top:4px;min-width:1.6em;text-align:right;">{{ testNo }}</div>
-      {{ testProblemEl }}
-    </div>
-    <div style="display:flex;flex-direction:column;gap:clamp(5px,1vh,9px);width:min(320px,86vw);">
-      <sc-for list="{{ testOptions }}" as="o" hint-placeholder-count="5">
-        <button onClick="{{ o.onClick }}" style-active="transform:translateY(3px)" style="{{ o.style }}">
-          <span style="{{ o.markStyle }}">{{ o.mark }}</span><span>{{ o.label }}</span>
-        </button>
-      </sc-for>
-    </div>
+  <!-- 문제 목록: 실제 온라인 시험처럼 1번부터 끝까지 이어서 스크롤. 넓으면 문제와 보기를 나란히, 크기는 화면 높이(vh)에도 맞춘다. -->
+  <div style="width:100%;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;border:4px solid #2f6bb0;border-radius:18px;">
+    {{ testListEl }}
   </div>
   </div>
   <sc-if value="{{ showOmrOverlay }}" hint-placeholder-val="{{ false }}">
@@ -1055,32 +1038,39 @@ class Component extends DCLogic {
     this.setState({screen:'test', test:{mode:m.id, title:m.title, limit:m.limit, qs, idx:0, picks:qs.map(()=>null), spent:qs.map(()=>0), startedAt:now, lastAt:now}, testNow:now, omrOpen:false});
   }
   testTick(){ const t=this.state.test; if(!t) return; const now=Date.now(); if((now-t.startedAt)/1000>=t.limit) this.finishTest(); else this.setState({testNow:now}); }
-  // 지금 보던 문제에 머문 시간을 더한 test 사본
-  testLeave(t,now){ const spent=t.spent.slice(); spent[t.idx]+=Math.max(0,(now-t.lastAt)/1000); return Object.assign({},t,{spent,lastAt:now}); }
   testAnswered(t){ return t.picks.filter(Boolean).length; }
-  // 답 고르기 → 다음 안 푼 문제로(뒤에 없으면 앞에서 찾음). 다 풀면 끝.
-  pickTest(v){
+  // 답 고르기(문제 i, 기본은 지금 문제). 문제별 시간 = 앞 답을 고른 뒤부터 이 답을 고를 때까지.
+  // 처음 푸는 문제면 다음 안 푼 문제로 스크롤, 이미 푼 문제의 답을 바꾸면 그 자리에 둔다. 다 풀면 끝.
+  pickTest(v,i){
     const t=this.state.test; if(!t || this.state.screen!=='test') return;
+    if(i==null) i=t.idx;
     this.playClick();
-    const now=Date.now(), nt=this.testLeave(t,now), picks=t.picks.slice(); picks[t.idx]={v};
-    nt.picks=picks;
-    const n=picks.length, next=[...Array(n).keys()].map(k=>(t.idx+1+k)%n).find(i=>!picks[i]);
+    const now=Date.now(), picks=t.picks.slice(), spent=t.spent.slice(), was=!!picks[i];
+    spent[i]+=Math.max(0,(now-t.lastAt)/1000); picks[i]={v};
+    const nt=Object.assign({},t,{picks,spent,lastAt:now,idx:i});
+    const n=picks.length, next=[...Array(n).keys()].map(k=>(i+1+k)%n).find(k=>!picks[k]);
     if(next==null){ this.finishTest(nt); return; }
-    nt.idx=next;
+    if(!was){ nt.idx=next; this._pendingScroll=next; }
     this.setState({test:nt, testNow:now});
   }
-  // OMR 답안지에서 번호를 눌러 그 문제로(이미 푼 문제면 답을 바꿀 수 있음)
+  // OMR 답안지에서 번호를 눌러 그 문제로 스크롤(이미 푼 문제면 답을 바꿀 수 있음)
   jumpTest(i){
     const t=this.state.test; if(!t || i<0 || i>=t.qs.length) return;
-    if(i===t.idx){ this.setState({omrOpen:false}); return; }
-    this.playClick(); const now=Date.now(), nt=this.testLeave(t,now);
-    nt.idx=i;
-    this.setState({test:nt, testNow:now, omrOpen:false});
+    this.playClick(); this._pendingScroll=i;
+    this.setState({test:Object.assign({},t,{idx:i}), omrOpen:false});
+  }
+  componentDidUpdate(){ if(this._pendingScroll!=null){ const i=this._pendingScroll; this._pendingScroll=null; this.scrollToQ(i); } }
+  scrollBox(el){ let box=el&&el.parentElement; while(box && !(box.scrollHeight>box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box=box.parentElement; return box; }
+  // 문제 목록에서 문제 i가 위쪽에 오게 부드럽게 스크롤
+  scrollToQ(i){
+    try{ const el=this._qEls&&this._qEls[i]; if(!el) return; const box=this.scrollBox(el);
+      if(!box){ el.scrollIntoView({block:'start',behavior:'smooth'}); return; }
+      box.scrollTo({top:Math.max(0, box.scrollTop+(el.getBoundingClientRect().top-box.getBoundingClientRect().top)-6), behavior:'smooth'});
+    }catch(e){}
   }
   submitTest(){ if(!window.confirm('지금 제출할까요?\n남은 문제는 안 푼 걸로 처리돼요.')) return; this.finishTest(); }
   finishTest(done){
-    let t=done||this.state.test; if(!t || this.state.screen!=='test') return;
-    if(!done) t=this.testLeave(t,Date.now());
+    const t=done||this.state.test; if(!t || this.state.screen!=='test') return;
     const used=Math.min(t.limit, Math.round((Date.now()-t.startedAt)/1000));
     const secs={}; let correct=0;
     const picks=t.picks.map((p,i)=>p?{v:p.v, secs:t.spent[i]}:null); // 걸린 시간 = 그 문제를 본 시간 합
@@ -1158,8 +1148,7 @@ class Component extends DCLogic {
   // 지금 문제 줄이 답안지 스크롤 칸의 위에서 1/3 지점에 오게(다음 번호들이 아래에 보이도록).
   omrScrollTo(el){
     try{
-      let box=el.parentElement;
-      while(box && !(box.scrollHeight>box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box=box.parentElement;
+      const box=this.scrollBox(el);
       if(!box){ el.scrollIntoView({block:'nearest'}); return; }
       const top=box.scrollTop + (el.getBoundingClientRect().top - box.getBoundingClientRect().top) - box.clientHeight/3;
       box.scrollTo({top:Math.max(0,top), behavior:'smooth'});
@@ -1183,9 +1172,38 @@ class Component extends DCLogic {
     });
     return h('div',{style:{width:'100%',background:'#fff',border:'2px solid #2f6bb0',borderRadius:'10px'}},...rows);
   }
+  // 문제 목록(실제 온라인 시험처럼 1번부터 끝까지 이어서 스크롤): 유형이 바뀌는 곳마다 '[ 1 ~ 15 ] 덧셈을 연습합니다.',
+  // 문제마다 번호 · 문제 · ①~⑤ 보기. 고른 보기는 파랗게, 지금 문제는 왼쪽에 노란 줄.
+  testListEl(t){
+    const h=React.createElement, font="'Jua',sans-serif", marks=['①','②','③','④','⑤'];
+    const TEXT={add:'덧셈을 연습합니다.',sub:'뺄셈을 연습합니다.',mul:'곱셈을 연습합니다.',div:'나눗셈을 연습합니다. (나누어 떨어지지 않으면 나머지를 쓰세요)'};
+    this._qEls=this._qEls||[];
+    const kids=[];
+    t.qs.forEach((q,i)=>{
+      if(i===0 || t.qs[i-1].sec!==q.sec){
+        let last=i; while(last+1<t.qs.length && t.qs[last+1].sec===q.sec) last++;
+        kids.push(h('div',{key:'h'+i,style:{fontFamily:font,color:'#123a66',padding:'14px 16px 4px',lineHeight:1.35,borderTop:i?'3px solid #2f6bb0':'none',background:'#f4f9ff'}},
+          h('div',{style:{fontSize:'clamp(14px,min(4vw,2.4vh),19px)'}},`[ ${i+1} ~ ${last+1} ]`),
+          h('div',{style:{fontSize:'clamp(15px,min(4.4vw,2.7vh),21px)'}},TEXT[q.sec])));
+      }
+      const p=t.picks[i], cur=i===t.idx;
+      kids.push(h('div',{key:'q'+i, ref:el=>{ this._qEls[i]=el; },
+        style:{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'center',columnGap:'clamp(20px,5vw,56px)',rowGap:'10px',
+          padding:'clamp(10px,2vh,18px) 12px',borderBottom:'1px solid #dfe7f1',boxShadow:cur?'inset 5px 0 0 #f2b21c':'none',background:cur?'#fffdf5':'#fff'}},
+        h('div',{style:{display:'flex',alignItems:'flex-start',gap:'clamp(10px,3vw,24px)'}},
+          h('div',{style:{fontFamily:font,fontSize:'clamp(20px,min(5.5vw,4vh),28px)',color:'#7a8aa0',paddingTop:'4px',minWidth:'1.8em',textAlign:'right'}},String(i+1)),
+          this.kumonEl(q,'clamp(30px,min(10vw,7vh),56px)')),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:'clamp(4px,0.8vh,7px)',width:'min(300px,84vw)'}},
+          ...q.options.map((v,k)=>{ const on=!!(p && p.v===v);
+            return h('button',{key:k,onClick:()=>this.pickTest(v,i),style:{display:'flex',alignItems:'center',gap:'14px',fontFamily:font,fontSize:'clamp(18px,min(5.6vw,3.3vh),26px)',
+              color:on?'#fff':'#123a66',background:on?'#2f6bb0':'#fff',border:`3px solid ${on?'#1f4f86':'#9cc0e6'}`,borderRadius:'14px',padding:'clamp(2px,0.6vh,6px) 16px',cursor:'pointer',textAlign:'left'}},
+              h('span',{style:{fontSize:'.85em',color:on?'#fff':'#2f6bb0'}},marks[k]), h('span',null,v)); }))));
+    });
+    return h('div',null,...kids);
+  }
   // 실제 시험지 모양 그대로: 세로셈(v, 자리마다 칸 맞춤) / 가로식(h, '7 × 8 =') / 세로 나눗셈 기호(long, '3)47').
-  kumonEl(q){
-    const h=React.createElement, font="'Jua',sans-serif", size='clamp(34px,min(12vw,8.5vh),64px)';
+  kumonEl(q,size){
+    const h=React.createElement, font="'Jua',sans-serif"; size=size||'clamp(34px,min(12vw,8.5vh),64px)';
     if(q.layout==='h' || (!q.layout && q.op==='÷')) return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',letterSpacing:'4px'}},`${q.top} ${q.op} ${q.bottom} =`);
     if(q.layout==='long') return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',display:'flex',alignItems:'flex-end',lineHeight:1.15}},
       h('span',{style:{marginRight:'2px',lineHeight:1}},q.bottom),
@@ -1390,7 +1408,6 @@ class Component extends DCLogic {
     const planSecs={}; this.kumonPlan('full').forEach(([sec,,n])=>{ planSecs[sec]=(planSecs[sec]||0)+n*this.kumonRate(sec); });
     { const fullLimit=(modes.find(m=>m.id==='full')||{limit:1800}).limit, tot=Object.values(planSecs).reduce((a,b)=>a+b,0); Object.keys(planSecs).forEach(k=>{ planSecs[k]*=fullLimit/tot; }); }
     const mins=k=>Math.round(planSecs[k]/60);
-    const marks=['①','②','③','④','⑤'];
     const myTests=((this.loadUsers()[s.userName]||{}).tests||[]).slice().reverse().slice(0,8);
     const R=s.testResult;
     const rAvg=R&&R.answered?R.used/R.answered:0, rTarget=R?Math.round(R.limit/R.total*10)/10:target;
@@ -1415,19 +1432,10 @@ class Component extends DCLogic {
       // 오른쪽 끝: 목표 페이스보다 앞섬(🚀 +2)/늦음(🐢 -3). 시작 20초 동안은 안 보임.
       testPace: !T||tUsed<20 ? '' : ahead>=0 ? ` · 🚀 +${ahead}` : ` · 🐢 ${ahead}`,
       testPaceStyle:`color:${ahead>=0?'#2f8f4e':'#d1462f'};`,
-      testProblemEl: TQ?this.kumonEl(TQ):null,
-      testOptions: TQ?TQ.options.map((v,i)=>{ const on=!!(T.picks[T.idx] && T.picks[T.idx].v===v);
-        return {mark:marks[i], label:v, onClick:()=>this.pickTest(v),
-          style:`display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(19px,min(6vw,3.6vh),28px);color:${on?'#fff':'#123a66'};background:${on?'#2f6bb0':'#fff'};border:3px solid ${on?'#1f4f86':'#9cc0e6'};border-radius:14px;padding:clamp(3px,0.8vh,7px) 16px;cursor:pointer;text-align:left;`,
-          markStyle:`font-size:.85em;color:${on?'#fff':'#2f6bb0'};`}; }):[],
-      ...(()=>{ if(!TQ) return {testSecRange:'', testSecText:'', testNo:''};
-        const idxs=T.qs.map((q,i)=>q.sec===TQ.sec?i:-1).filter(i=>i>=0);
-        const text={add:'덧셈을 연습합니다.',sub:'뺄셈을 연습합니다.',mul:'곱셈을 연습합니다.',div:'나눗셈을 연습합니다. (나누어 떨어지지 않으면 나머지를 쓰세요)'}[TQ.sec];
-        return {testSecRange:`[ ${idxs[0]+1} ~ ${idxs[idxs.length-1]+1} ]`, testSecText:text, testNo:String(T.idx+1)}; })(),
+      testListEl: T ? this.testListEl(T) : null,
       testOmrEl: T ? this.omrEl(T) : null, isNarrow:!!s.narrow, isWide:!s.narrow,
       showOmrOverlay: !!(T && s.narrow && s.omrOpen),
       openOmr:()=>this.setState({omrOpen:true}), closeOmr:()=>this.setState({omrOpen:false}),
-      testRevisit: !!(T && T.picks[T.idx]), testRevisitText: T && T.picks[T.idx] ? `${T.idx+1}번은 이미 풀었어요 · 답을 바꾸려면 다른 보기를 눌러요` : '',
       submitTest:()=>this.submitTest(), retryTest:()=>this.retryTest(),
       trTitle: R ? (R.answered>=R.total?'다 풀었어요! 🎉':'시간 끝! ⏰') : '',
       trEmoji: R ? (R.answered>=R.total && R.correct>=R.answered*0.9 ? '🏆' : R.correct>=R.answered*0.9 ? '🚀' : '💪') : '',
