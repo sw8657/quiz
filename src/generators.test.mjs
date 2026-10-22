@@ -302,15 +302,23 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   const flat = n => n==null ? [] : typeof n!=='object' ? [String(n)] : Array.isArray(n) ? n.flatMap(flat) : [n, ...flat(n.c)];
   const nodes = flat(v.testOmrEl).filter(x=>typeof x==='object');
   const texts = flat(v.testOmrEl).filter(x=>typeof x==='string');
-  assert.ok(texts.includes('📋 답안지 · 3/40') && !texts.some(t=>/~\d+ \(/.test(t)), '묶음 머리 없이 이어짐');
+  assert.ok(texts.includes('Q') && texts.includes('정답') && !texts.some(t=>/~\d+ \(/.test(t)), 'Q·정답 머리, 묶음 없이 이어짐');
   const rows = nodes.filter(x=>x.p && String(x.p.key||'').startsWith('r'));
   assert.deepStrictEqual(rows.map(x=>x.p.key), Array.from({length:40},(_,i)=>'r'+i), '1~40번 줄이 순서대로 모두');
-  const row2 = rows[1]; const filled = row2.c.flat().filter(x=>x && x.p && x.p.style && x.p.style.background==='#123a66');
-  assert.strictEqual(filled.length, 1, '고른 답 하나만 칠해짐');
+  const marks2 = flat(rows[1]).filter(x=>typeof x==='object' && x.p && x.p.key!=null && typeof x.p.key==='number');
+  assert.strictEqual(marks2.length, 5, '①~⑤ 다섯 칸');
+  const filledIdx = marks2.map((x,k)=>x.p.style.background==='#123a66'?k:-1).filter(k=>k>=0);
+  assert.deepStrictEqual(filledIdx, [T().qs[1].options.indexOf(T().picks[1].v)], '고른 번호 하나만 칠해짐');
   assert.ok(rows[T().idx].p.ref && !rows[0].p.ref, '지금 문제 줄에만 스크롤 ref');
   // 지금 문제 줄 ref: 문제가 바뀔 때만 스크롤
   let scrolled=0; const el={ scrollIntoView(){ scrolled++; } };
   rows[T().idx].p.ref(el); rows[T().idx].p.ref(el); assert.strictEqual(scrolled, 1, '같은 문제에서 다시 그려도 스크롤 한 번');
+  // 문제 머리글·번호: 실제 화면처럼 '[ 1 ~ 4 ] 덧셈을 연습합니다.' + 문제 번호
+  { const g2=load('treasure-map-math.dc.html'); g2.startTest('full'); let w=g2.renderVals();
+    assert.ok(w.testSecRange==='[ 1 ~ 15 ]' && w.testSecText==='덧셈을 연습합니다.' && w.testNo==='1', `${w.testSecRange} ${w.testSecText} ${w.testNo}`);
+    g2.jumpTest(77); w=g2.renderVals();
+    assert.ok(w.testSecRange==='[ 78 ~ 160 ]' && w.testSecText.startsWith('나눗셈을 연습합니다.') && w.testNo==='78');
+    g2.jumpTest(30); w=g2.renderVals(); assert.ok(w.testSecRange==='[ 31 ~ 77 ]' && w.testSecText==='곱셈을 연습합니다.'); }
   // 줄을 누르면 그 문제로
   rows[25].p.onClick(); assert.strictEqual(T().idx, 25);
   flat(g.renderVals().testOmrEl).find(x=>x && x.p && x.p.key==='r25').p.ref(el); assert.strictEqual(scrolled, 2, '문제가 바뀌면 스크롤');

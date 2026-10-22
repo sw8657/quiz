@@ -357,7 +357,14 @@ button{font-family:inherit;}
     <sc-if value="{{ testRevisit }}" hint-placeholder-val="{{ false }}">
       <div style="font-family:'Gaegu';font-weight:700;font-size:16px;color:#7a3a2a;background:#fff3d8;border-radius:10px;padding:4px 12px;margin-bottom:8px;">{{ testRevisitText }}</div>
     </sc-if>
-    {{ testProblemEl }}
+    <div style="align-self:flex-start;font-family:'Jua';color:#123a66;margin:0 0 10px 6px;line-height:1.35;">
+      <div style="font-size:clamp(16px,4.2vw,20px);">{{ testSecRange }}</div>
+      <div style="font-size:clamp(17px,4.6vw,22px);">{{ testSecText }}</div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:clamp(12px,4vw,28px);">
+      <div style="font-family:'Jua';font-size:clamp(22px,6vw,30px);color:#7a8aa0;padding-top:6px;min-width:1.6em;text-align:right;">{{ testNo }}</div>
+      {{ testProblemEl }}
+    </div>
     <div style="display:flex;flex-direction:column;gap:10px;width:min(360px,86vw);margin-top:16px;">
       <sc-for list="{{ testOptions }}" as="o" hint-placeholder-count="5">
         <button onClick="{{ o.onClick }}" style-active="transform:translateY(3px)" style="{{ o.style }}">
@@ -1149,19 +1156,22 @@ class Component extends DCLogic {
   // OMR 답안지(실제 온라인 시험 왼쪽 패널처럼): 1번부터 끝까지 한 줄씩 이어서, 번호 + ①~⑤, 고른 답은 칠해짐.
   // 줄을 누르면 그 문제로 간다. 지금 문제가 바뀔 때만 그 줄이 보이게 스크롤(1초마다 다시 그려도 아이가 스크롤한 위치는 그대로).
   omrEl(t){
-    const h=React.createElement, font="'Jua',sans-serif", marks=[1,2,3,4,5];
-    const rows=[h('div',{key:'hd',style:{position:'sticky',top:0,zIndex:1,fontFamily:font,fontSize:'17px',color:'#123a66',padding:'8px 10px',borderBottom:'3px solid #2f6bb0',background:'#e3f0ff'}},`📋 답안지 · ${this.testAnswered(t)}/${t.qs.length}`)];
+    const h=React.createElement, font="'Jua',sans-serif";
+    const cell={padding:'6px 4px',borderRight:'1px solid #c9d6e6',textAlign:'center'};
+    const rows=[h('div',{key:'hd',style:{position:'sticky',top:0,zIndex:1,display:'flex',fontFamily:font,fontSize:'15px',color:'#123a66',background:'#e3f0ff',borderBottom:'2px solid #2f6bb0'}},
+      h('div',{style:Object.assign({width:'2.8em',flex:'none'},cell)},'Q'), h('div',{style:{flex:1,padding:'6px 4px',textAlign:'center'}},'정답'))];
     t.qs.forEach((q,i)=>{
       const p=t.picks[i], cur=i===t.idx, pickIdx=p?q.options.indexOf(p.v):-1;
       rows.push(h('div',{key:'r'+i,onClick:()=>this.jumpTest(i),
         ref:cur?(el=>{ if(el && this._omrShown!==t.idx+'/'+t.startedAt){ this._omrShown=t.idx+'/'+t.startedAt; try{ el.scrollIntoView({block:'nearest'}); }catch(e){} } }):undefined,
-        style:{display:'flex',alignItems:'center',gap:'3px',cursor:'pointer',padding:'4px 8px',fontFamily:font,fontSize:'15px',
-          background:cur?'#fff3d8':'#fff',borderLeft:cur?'5px solid #f2b21c':'5px solid transparent',borderBottom:'1px solid #eef3f9'}},
-        h('span',{style:{width:'2.4em',color:'#7a8aa0',fontSize:'13px'}},String(i+1)),
-        ...marks.map((m,k)=>h('span',{key:k,style:{width:'1.45em',height:'1.45em',display:'inline-flex',alignItems:'center',justifyContent:'center',borderRadius:'50%',fontSize:'14px',
-          background:k===pickIdx?'#123a66':'transparent',color:k===pickIdx?'#fff':'#7a8aa0',border:k===pickIdx?'none':'1.5px solid #b8c6d8'}},String(m)))));
+        style:{display:'flex',alignItems:'stretch',cursor:'pointer',fontFamily:font,background:cur?'#fff3d8':'#fff',boxShadow:cur?'inset 4px 0 0 #f2b21c':'none',borderBottom:'1px solid #dfe7f1'}},
+        h('div',{style:Object.assign({width:'2.8em',flex:'none',color:'#7a8aa0',fontSize:'15px',display:'flex',alignItems:'center',justifyContent:'center'},cell)},String(i+1)),
+        // ①~⑤ 원: 고른 답은 칠한 원(글리프 ❶은 글꼴마다 크기가 달라 원을 직접 그린다)
+        h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',padding:'6px 4px'}},
+          ...[1,2,3,4,5].map((m,k)=>h('span',{key:k,style:{width:'22px',height:'22px',boxSizing:'border-box',display:'inline-flex',alignItems:'center',justifyContent:'center',borderRadius:'50%',fontSize:'13px',lineHeight:1,
+            background:k===pickIdx?'#123a66':'#fff',color:k===pickIdx?'#fff':'#7a8aa0',border:k===pickIdx?'1.5px solid #123a66':'1.5px solid #9aa8bb'}},String(m))))));
     });
-    return h('div',{style:{width:'100%',background:'#fff',border:'3px solid #2f6bb0',borderRadius:'14px'}},...rows);
+    return h('div',{style:{width:'100%',background:'#fff',border:'2px solid #2f6bb0',borderRadius:'10px'}},...rows);
   }
   // 실제 시험지 모양 그대로: 세로셈(v, 자리마다 칸 맞춤) / 가로식(h, '7 × 8 =') / 세로 나눗셈 기호(long, '3)47').
   kumonEl(q){
@@ -1396,6 +1406,10 @@ class Component extends DCLogic {
         return {mark:marks[i], label:v, onClick:()=>this.pickTest(v),
           style:`display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(24px,6.6vw,32px);color:${on?'#fff':'#123a66'};background:${on?'#2f6bb0':'#fff'};border:4px solid ${on?'#1f4f86':'#9cc0e6'};border-radius:16px;padding:8px 18px;cursor:pointer;text-align:left;`,
           markStyle:`font-size:.85em;color:${on?'#fff':'#2f6bb0'};`}; }):[],
+      ...(()=>{ if(!TQ) return {testSecRange:'', testSecText:'', testNo:''};
+        const idxs=T.qs.map((q,i)=>q.sec===TQ.sec?i:-1).filter(i=>i>=0);
+        const text={add:'덧셈을 연습합니다.',sub:'뺄셈을 연습합니다.',mul:'곱셈을 연습합니다.',div:'나눗셈을 연습합니다. (나누어 떨어지지 않으면 나머지를 쓰세요)'}[TQ.sec];
+        return {testSecRange:`[ ${idxs[0]+1} ~ ${idxs[idxs.length-1]+1} ]`, testSecText:text, testNo:String(T.idx+1)}; })(),
       testOmrEl: T ? this.omrEl(T) : null, isNarrow:!!s.narrow, isWide:!s.narrow,
       showOmrOverlay: !!(T && s.narrow && s.omrOpen),
       openOmr:()=>this.setState({omrOpen:true}), closeOmr:()=>this.setState({omrOpen:false}), skipTest:()=>this.skipTest(),
