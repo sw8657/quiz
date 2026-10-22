@@ -84,7 +84,7 @@ for(let i=0;i<5000;i++){
 {
   const g = load('treasure-map-math.dc.html');
   g.state.userName = '지한';
-  for(const mode of ['full','mini','muldiv']){
+  for(const mode of ['full','mini','divfocus']){
     g.startTest(mode); g.renderVals();
     const n = g.state.test.qs.length;
     for(let i=0;i<Math.min(n,25);i++){ const q=g.state.test.qs[g.state.test.idx]; g.pickTest(i%7===0 ? q.options.find(o=>o!==q.answer) : q.answer); g.renderVals(); }
@@ -98,17 +98,59 @@ for(let i=0;i<5000;i++){
   g.state.screen='testIntro'; assert.strictEqual(g.renderVals().testRecs.length, 3);
 }
 
-// 구몬 연습: 유형 안에서 앞쪽은 쉽게(자릿수 작게), 뒤로 갈수록 어렵게
+// 구몬 연습: 실제 시험지(모의테스트 160문제) 구성 그대로 — 유형 순서·문항 수·문제 틀·모양
 {
   const g = load('treasure-map-math.dc.html');
   g.startTest('full');
-  const qs = g.state.test.qs, size = q => q.top.length + q.bottom.length;
-  for(const start of [0,40,80,120]){
-    const sec = qs.slice(start, start+40);
-    assert.ok(sec.every(q=>q.sec===sec[0].sec), '유형이 섞임');
-    assert.ok(sec.slice(0,10).every(q=>q.tier===0) && sec.slice(30).every(q=>q.tier===3), '난이도 순서 이상');
-    if(sec[0].sec!=='div') assert.ok(Math.max(...sec.slice(0,10).map(size)) <= Math.min(...sec.slice(30).map(size)), `${sec[0].sec}: 앞쪽이 더 어려움`);
+  const qs = g.state.test.qs;
+  assert.strictEqual(qs.length, 160);
+  const count = sec => qs.filter(q=>q.sec===sec).length;
+  assert.deepStrictEqual(['add','sub','mul','div'].map(count), [15,15,47,83], '유형별 문항 수');
+  assert.deepStrictEqual([...new Set(qs.map(q=>q.sec))], ['add','sub','mul','div'], '유형 순서');
+  const at = n => qs[n-1]; // 시험지 번호로
+  assert.ok(at(1).form==='a22n' && at(13).form==='a33' && at(16).form==='s22' && at(26).form==='s32b');
+  assert.ok(at(31).form==='m11' && at(31).layout==='h' && at(46).form==='m21' && at(66).form==='m31' && at(76).form==='m41');
+  assert.ok(at(78).form==='d_ex' && at(91).form==='d_rem' && at(104).form==='d_mix' && at(124).layout==='long' && at(139).form==='d_long3');
+  // 시간 목표: 문제별 budget 합이 제한시간, 덧셈·뺄셈 약 5분·곱셈 약 8분·나눗셈 약 17분
+  const sum = sec => qs.filter(q=>!sec||q.sec===sec).reduce((t,q)=>t+q.budget,0);
+  assert.ok(Math.abs(sum()-1800)<1e-6);
+  assert.ok(Math.abs(sum('add')+sum('sub')-300)<5 && Math.abs(sum('mul')-480)<5 && Math.abs(sum('div')-1020)<5, '유형별 시간 배분');
+  // 결과의 쉬운/어려운 구분: 유형 안 앞쪽 tier 0, 뒤쪽 tier 3
+  for(const sec of ['add','sub','mul','div']){ const l=qs.filter(q=>q.sec===sec); assert.ok(l[0].tier===0 && l[l.length-1].tier===3); }
+  // 미니·나눗셈 집중
+  g.startTest('mini'); assert.deepStrictEqual(['add','sub','mul','div'].map(sec=>g.state.test.qs.filter(q=>q.sec===sec).length), [4,4,12,20]);
+  g.startTest('divfocus'); assert.ok(g.state.test.qs.length===40 && g.state.test.qs.every(q=>q.sec==='div'));
+  assert.strictEqual(g.state.test.qs.filter(q=>q.form==='d_long3').length, 18);
+}
+// 문제 틀별 범위: 실제 시험지와 같은 자릿수·받아올림/받아내림 조건
+{
+  const g = load('treasure-map-math.dc.html');
+  const dig = n => String(n).length, carry = (a,b,p) => Math.floor(a/p)%10 + Math.floor(b/p)%10 >= 10;
+  let zeroQ=0, twoDigitQ=0;
+  for(let i=0;i<3000;i++){
+    let q=g.genKumon('add','a22n'); assert.ok(!carry(+q.top,+q.bottom,1) && !carry(+q.top,+q.bottom,10) && dig(q.top)===2, `a22n ${q.top}+${q.bottom}`);
+    q=g.genKumon('add','a22h'); assert.ok(!carry(+q.top,+q.bottom,1) && +q.answer>=100, `a22h ${q.top}+${q.bottom}`);
+    q=g.genKumon('add','a22c'); assert.ok(carry(+q.top,+q.bottom,1) && +q.answer>=100, `a22c ${q.top}+${q.bottom}`);
+    q=g.genKumon('sub','s32b'); assert.ok(dig(q.top)===3 && dig(q.bottom)===2 && (+q.top%10)<(+q.bottom%10) && Math.floor(+q.top/10)%10<Math.floor(+q.bottom/10)%10, `s32b ${q.top}-${q.bottom}`);
+    q=g.genKumon('mul','m41'); assert.ok(dig(q.top)===4 && q.layout==='v');
+    q=g.genKumon('mul','m11'); assert.ok(dig(q.top)===1 && q.layout==='h');
+    q=g.genKumon('div','d_long3'); assert.ok(dig(q.top)===3 && q.layout==='long', `d_long3 ${q.top}÷${q.bottom}`);
+    const quo=q.answer.split(' … ')[0]; if(quo.length>1 && quo.includes('0')){ zeroQ++; assert.ok(q.options.includes(quo.replace(/0/g,'')) || q.options.some(o=>o.startsWith(quo.replace(/0/g,'')+' ')), `몫 0 빼먹은 오답 없음: ${q.top}÷${q.bottom}=${q.answer} ${q.options}`); }
+    q=g.genKumon('div','d_rem'); assert.ok(+q.top<100 && q.layout==='h'); if(q.answer.split(' … ')[0].length===2) twoDigitQ++;
+    q=g.genKumon('div','d_ex'); assert.ok(!q.answer.includes('…') && +q.top<=81);
   }
+  assert.ok(zeroQ>600, `몫에 0이 끼는 세 자리 나눗셈이 너무 적음: ${zeroQ}`);
+  assert.ok(twoDigitQ>50, `몫이 두 자리인 나머지 나눗셈이 너무 적음: ${twoDigitQ}`);
+}
+// 진행 중 목표 페이스·유형 시간 목표 표시
+{
+  const g = load('treasure-map-math.dc.html');
+  g.startTest('full'); g.state.test.startedAt -= 60000; g.state.testNow = Date.now();
+  let v = g.renderVals();
+  assert.ok(v.testPace.includes('늦어요') && v.testSecGoal.includes('덧셈 15문제 목표 2:30'), `${v.testPace} / ${v.testSecGoal}`);
+  for(let i=0;i<10;i++) g.pickTest(g.state.test.qs[g.state.test.idx].answer);
+  v = g.renderVals(); assert.ok(v.testPace.includes('앞서요'), v.testPace);
+  assert.ok(v.planLine.includes('덧셈·뺄셈 5분') && v.planLine.includes('곱셈 8분') && v.planLine.includes('나눗셈 17분'), v.planLine);
 }
 // 🔥 암산 스프린트: 정답 계산·자연수, 흐름(맞힘→다음, 틀림→지우기, 시간 끝→기록 저장)
 {
