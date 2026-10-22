@@ -1152,6 +1152,16 @@ class Component extends DCLogic {
   fmtClock(sec){ sec=Math.max(0,Math.ceil(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
   // OMR 답안지(실제 온라인 시험 왼쪽 패널처럼): 1번부터 끝까지 한 줄씩 이어서, 번호 + ①~⑤, 고른 답은 칠해짐.
   // 줄을 누르면 그 문제로 간다. 지금 문제가 바뀔 때만 그 줄이 보이게 스크롤(1초마다 다시 그려도 아이가 스크롤한 위치는 그대로).
+  // 지금 문제 줄이 답안지 스크롤 칸의 위에서 1/3 지점에 오게(다음 번호들이 아래에 보이도록).
+  omrScrollTo(el){
+    try{
+      let box=el.parentElement;
+      while(box && !(box.scrollHeight>box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box=box.parentElement;
+      if(!box){ el.scrollIntoView({block:'nearest'}); return; }
+      const top=box.scrollTop + (el.getBoundingClientRect().top - box.getBoundingClientRect().top) - box.clientHeight/3;
+      box.scrollTo({top:Math.max(0,top), behavior:'smooth'});
+    }catch(e){}
+  }
   omrEl(t){
     const h=React.createElement, font="'Jua',sans-serif";
     const cell={padding:'6px 4px',borderRight:'1px solid #c9d6e6',textAlign:'center'};
@@ -1160,7 +1170,7 @@ class Component extends DCLogic {
     t.qs.forEach((q,i)=>{
       const p=t.picks[i], cur=i===t.idx, pickIdx=p?q.options.indexOf(p.v):-1;
       rows.push(h('div',{key:'r'+i,onClick:()=>this.jumpTest(i),
-        ref:cur?(el=>{ if(el && this._omrShown!==t.idx+'/'+t.startedAt){ this._omrShown=t.idx+'/'+t.startedAt; try{ el.scrollIntoView({block:'nearest'}); }catch(e){} } }):undefined,
+        ref:cur?(el=>{ if(el && this._omrShown!==t.idx+'/'+t.startedAt){ this._omrShown=t.idx+'/'+t.startedAt; this.omrScrollTo(el); } }):undefined,
         style:{display:'flex',alignItems:'stretch',cursor:'pointer',fontFamily:font,background:cur?'#fff3d8':'#fff',boxShadow:cur?'inset 4px 0 0 #f2b21c':'none',borderBottom:'1px solid #dfe7f1'}},
         h('div',{style:Object.assign({width:'2.8em',flex:'none',color:'#7a8aa0',fontSize:'15px',display:'flex',alignItems:'center',justifyContent:'center'},cell)},String(i+1)),
         // ①~⑤ 원: 고른 답은 칠한 원(글리프 ❶은 글꼴마다 크기가 달라 원을 직접 그린다)

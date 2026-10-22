@@ -323,6 +323,14 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
     g2.jumpTest(30); w=g2.renderVals(); assert.ok(w.testSecRange==='[ 31 ~ 77 ]' && w.testSecText==='곱셈을 연습합니다.'); }
   // 줄을 누르면 그 문제로
   rows[25].p.onClick(); assert.strictEqual(T().idx, 25);
+  // 스크롤 칸이 있으면: 지금 줄이 칸 위에서 1/3 지점에 오게 scrollTo
+  { let to=null; const box={ scrollHeight:2000, clientHeight:600, scrollTop:100, parentElement:null,
+      getBoundingClientRect:()=>({top:50}), scrollTo(o){ to=o.top; } };
+    globalThis.getComputedStyle = () => ({ overflowY:'auto' });
+    const row={ parentElement:{ scrollHeight:10, clientHeight:10, parentElement:box }, getBoundingClientRect:()=>({top:850}), scrollIntoView(){ throw new Error('칸이 있으면 쓰지 않음'); } };
+    g.omrScrollTo(row);
+    assert.strictEqual(to, 100+(850-50)-200, '줄 위치가 칸 높이의 1/3 지점');
+    delete globalThis.getComputedStyle; }
   flat(g.renderVals().testOmrEl).find(x=>x && x.p && x.p.key==='r25').p.ref(el); assert.strictEqual(scrolled, 2, '문제가 바뀌면 스크롤');
   // 좁은 화면: 📋 → 답안지 창, 번호 누르면 닫힘
   g.state.narrow = true; g.renderVals().openOmr(); assert.ok(g.renderVals().showOmrOverlay);
