@@ -147,9 +147,11 @@ for(let i=0;i<5000;i++){
   const g = load('treasure-map-math.dc.html');
   g.startTest('full'); g.state.test.startedAt -= 60000; g.state.testNow = Date.now();
   let v = g.renderVals();
-  assert.ok(v.testPace.includes('늦어요') && v.testSecGoal.includes('덧셈 15문제 목표 2:30'), `${v.testPace} / ${v.testSecGoal}`);
+  assert.ok(v.testPace.includes('🐢 -') && v.testSection==='덧셈 0:00 / 2:30' && v.testPos==='1번 · 0/160', `${v.testPace} / ${v.testSection} / ${v.testPos}`);
   for(let i=0;i<10;i++) g.pickTest(g.state.test.qs[g.state.test.idx].answer);
-  v = g.renderVals(); assert.ok(v.testPace.includes('앞서요'), v.testPace);
+  v = g.renderVals(); assert.ok(v.testPace.includes('🚀 +'), v.testPace);
+  g.state.test.lastAt -= 200000; g.state.testNow = Date.now(); v = g.renderVals();
+  assert.ok(v.testSectionStyle.includes('#d1462f'), '유형 목표 시간을 넘으면 빨강');
   assert.ok(v.planLine.includes('덧셈·뺄셈 5분') && v.planLine.includes('곱셈 8분') && v.planLine.includes('나눗셈 17분'), v.planLine);
 }
 // 🔥 암산 스프린트: 정답 계산·자연수, 흐름(맞힘→다음, 틀림→지우기, 시간 끝→기록 저장)
