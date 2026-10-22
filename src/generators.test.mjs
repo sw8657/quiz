@@ -279,4 +279,55 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   delete window.speechSynthesis;
 }
 
+// 📋 OMR 답안지: 번호로 되돌아가기·답 바꾸기·건너뛰기, 문제별 시간은 다시 본 시간까지 합산
+{
+  const g = load('treasure-map-math.dc.html');
+  g.state.userName = '지한';
+  g.startTest('mini');
+  const T = () => g.state.test, wrongOf = q => q.options.find(o=>o!==q.answer);
+  // 1~3번 풀기(2번은 틀리게), 각 5초
+  for(let i=0;i<3;i++){ const q=T().qs[T().idx]; T().lastAt-=5000; g.pickTest(i===1?wrongOf(q):q.answer); }
+  assert.strictEqual(T().idx, 3);
+  // 4번 건너뛰기 → 5번
+  T().lastAt-=2000; g.skipTest(); assert.strictEqual(T().idx, 4); assert.strictEqual(T().picks[3], null);
+  // 답안지에서 2번으로 돌아가 답 고치기(3초 더) → 다음 안 푼 문제(4번)로
+  g.jumpTest(1); assert.strictEqual(T().idx, 1);
+  let v = g.renderVals();
+  assert.ok(v.testRevisit && v.testOptions.some(o=>o.style.includes('#2f6bb0;border')), '이미 고른 답 표시');
+  T().lastAt-=3000; g.pickTest(T().qs[1].answer);
+  assert.strictEqual(T().idx, 3, '답을 고치면 다음 안 푼 문제로');
+  assert.ok(T().spent[1]>=8 && T().spent[3]>=2, `다시 본 시간 합산: ${T().spent[1]}, ${T().spent[3]}`);
+  // OMR: 펼친 묶음(1~10)에 10줄, 2번 줄에 고른 답이 칠해짐, 묶음 머리 '1~10 (3/10)'
+  v = g.renderVals();
+  const flat = n => n==null ? [] : typeof n!=='object' ? [String(n)] : Array.isArray(n) ? n.flatMap(flat) : [n, ...flat(n.c)];
+  const nodes = flat(v.testOmrEl).filter(x=>typeof x==='object');
+  const texts = flat(v.testOmrEl).filter(x=>typeof x==='string');
+  assert.ok(texts.includes('1~10 (3/10)') && texts.includes('📋 답안지 · 3/40'), texts.slice(0,6).join('|'));
+  assert.strictEqual(nodes.filter(x=>x.p && x.p.key && String(x.p.key).startsWith('r')).length, 10, '펼친 묶음 10줄');
+  const row2 = nodes.find(x=>x.p && x.p.key==='r1'); const filled = row2.c.flat().filter(x=>x && x.p && x.p.style && x.p.style.background==='#123a66');
+  assert.strictEqual(filled.length, 1, '고른 답 하나만 칠해짐');
+  // 다른 묶음 머리를 누르면 펼침, 그 줄을 누르면 그 문제로
+  nodes.find(x=>x.p && x.p.key==='g2').p.onClick(); assert.strictEqual(T().openGroup, 2);
+  const nodes2 = flat(g.renderVals().testOmrEl).filter(x=>typeof x==='object');
+  nodes2.find(x=>x.p && x.p.key==='r25').p.onClick(); assert.strictEqual(T().idx, 25);
+  // 좁은 화면: 📋 → 답안지 창, 번호 누르면 닫힘
+  g.state.narrow = true; g.renderVals().openOmr(); assert.ok(g.renderVals().showOmrOverlay);
+  g.jumpTest(0); assert.ok(!g.renderVals().showOmrOverlay);
+  // 끝: 나머지 다 풀면 자동 제출, 문제별 시간 = 본 시간 합
+  while(g.state.screen==='test'){ const q=T().qs[T().idx]; T().lastAt-=1000; g.pickTest(q.answer); }
+  const R = g.state.testResult;
+  assert.strictEqual(R.answered, 40); assert.strictEqual(R.correct, 40, '고친 답으로 채점');
+  assert.ok(R.items[1].s>=8, `2번 시간 ${R.items[1].s}`);
+  g.renderVals(); // 결과 화면 값 계산(쉬운/어려운 평균 등) 예외 없이
+}
+// 시간 끝·제출 시 안 푼 문제가 섞여 있어도 결과가 깨지지 않음
+{
+  const g = load('treasure-map-math.dc.html');
+  g.state.userName='지한'; g.startTest('mini');
+  g.pickTest(g.state.test.qs[0].answer); g.skipTest(); g.pickTest(g.state.test.qs[2].answer);
+  g.submitTest();
+  const v = g.renderVals();
+  assert.ok(v.trAnswered===2 && g.state.testResult.items[1].p===null && v.trTierLine.includes('쉬운 문제'));
+}
+
 console.log('OK: generators fuzz passed');

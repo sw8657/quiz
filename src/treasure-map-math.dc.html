@@ -334,9 +334,16 @@ button{font-family:inherit;}
 
 <!-- ================= TEST ================= -->
 <sc-if value="{{ isTest }}" hint-placeholder-val="{{ false }}">
-<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 22px;background:#f4f9ff;">
-  <div style="width:min(760px,96vw);display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+<div style="min-height:100vh;display:flex;justify-content:center;gap:16px;padding:12px 12px 22px;background:#f4f9ff;">
+  <sc-if value="{{ isWide }}" hint-placeholder-val="{{ true }}">
+    <div style="width:230px;flex:none;position:sticky;top:12px;align-self:flex-start;max-height:calc(100vh - 24px);overflow:auto;border-radius:14px;">{{ testOmrEl }}</div>
+  </sc-if>
+  <div style="flex:1;min-width:0;max-width:760px;display:flex;flex-direction:column;align-items:center;">
+  <div style="width:100%;display:flex;align-items:center;gap:10px;margin-bottom:8px;">
     <button onClick="{{ cancelTest }}" aria-label="그만하기" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#5e3d1c;background:#fff3d8;border:3px solid #b9820f;border-radius:14px;padding:8px 10px;box-shadow:0 4px 0 #b9820f;cursor:pointer;white-space:nowrap;flex:none;">✕ 그만</button>
+    <sc-if value="{{ isNarrow }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ openOmr }}" aria-label="답안지" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:16px;color:#123a66;background:#e3f0ff;border:3px solid #2f6bb0;border-radius:14px;padding:8px 9px;box-shadow:0 4px 0 #1f4f86;cursor:pointer;white-space:nowrap;flex:none;">📋</button>
+    </sc-if>
     <div style="{{ testClockStyle }}">⏱️ {{ testRemain }}</div>
     <div style="flex:1;min-width:0;">
       <div style="display:flex;justify-content:space-between;font-family:'Jua';font-size:clamp(13px,3.4vw,16px);color:#1e4d7a;margin-bottom:3px;"><span>{{ testSection }}</span><span>{{ testPos }}</span></div>
@@ -346,16 +353,28 @@ button{font-family:inherit;}
   </div>
   <div style="{{ testPaceStyle }}">{{ testPace }}</div>
   <div style="{{ testSecGoalStyle }}">{{ testSecGoal }}</div>
-  <div style="width:min(760px,96vw);background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:18px 14px 20px;margin-top:10px;display:flex;flex-direction:column;align-items:center;">
+  <div style="width:100%;background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:18px 14px 20px;margin-top:10px;display:flex;flex-direction:column;align-items:center;">
+    <sc-if value="{{ testRevisit }}" hint-placeholder-val="{{ false }}">
+      <div style="font-family:'Gaegu';font-weight:700;font-size:16px;color:#7a3a2a;background:#fff3d8;border-radius:10px;padding:4px 12px;margin-bottom:8px;">{{ testRevisitText }}</div>
+    </sc-if>
     {{ testProblemEl }}
     <div style="display:flex;flex-direction:column;gap:10px;width:min(360px,86vw);margin-top:16px;">
       <sc-for list="{{ testOptions }}" as="o" hint-placeholder-count="5">
-        <button onClick="{{ o.onClick }}" style-active="transform:translateY(3px);background:#dcecff" style="display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(24px,6.6vw,32px);color:#123a66;background:#fff;border:4px solid #9cc0e6;border-radius:16px;padding:8px 18px;cursor:pointer;text-align:left;">
-          <span style="font-size:.85em;color:#2f6bb0;">{{ o.mark }}</span><span>{{ o.label }}</span>
+        <button onClick="{{ o.onClick }}" style-active="transform:translateY(3px)" style="{{ o.style }}">
+          <span style="{{ o.markStyle }}">{{ o.mark }}</span><span>{{ o.label }}</span>
         </button>
       </sc-for>
     </div>
+    <button onClick="{{ skipTest }}" style-active="transform:translateY(2px)" style="margin-top:14px;font-family:'Jua';font-size:16px;color:#3a5f86;background:#fff;border:2px dashed #9cc0e6;border-radius:12px;padding:6px 16px;cursor:pointer;">건너뛰기 ▶ (나중에 답안지에서 돌아오기)</button>
   </div>
+  </div>
+  <sc-if value="{{ showOmrOverlay }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeOmr }}" style="position:fixed;inset:0;background:rgba(18,58,102,.45);z-index:50;"></div>
+    <div style="position:fixed;left:0;top:0;bottom:0;width:min(280px,82vw);background:#f4f9ff;z-index:51;overflow:auto;padding:10px;box-shadow:4px 0 18px rgba(0,0,0,.25);">
+      <button onClick="{{ closeOmr }}" style="font-family:'Jua';font-size:16px;color:#123a66;background:#fff;border:3px solid #2f6bb0;border-radius:12px;padding:6px 12px;margin-bottom:8px;cursor:pointer;">✕ 닫기</button>
+      {{ testOmrEl }}
+    </div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -1024,32 +1043,52 @@ class Component extends DCLogic {
     const scale=m.limit/qs.reduce((t,q)=>t+this.kumonRate(q.sec),0);
     qs.forEach(q=>{ q.budget=this.kumonRate(q.sec)*scale; });
     const now=Date.now();
-    this.setState({screen:'test', test:{mode:m.id, title:m.title, limit:m.limit, qs, idx:0, picks:[], startedAt:now, lastAt:now}, testNow:now});
+    // picks[i]=고른 답(번호별, 안 풀면 null), spent[i]=그 문제를 보고 있던 시간 합(되돌아와 다시 본 시간 포함)
+    this.setState({screen:'test', test:{mode:m.id, title:m.title, limit:m.limit, qs, idx:0, picks:qs.map(()=>null), spent:qs.map(()=>0), openGroup:0, startedAt:now, lastAt:now}, testNow:now, omrOpen:false});
   }
   testTick(){ const t=this.state.test; if(!t) return; const now=Date.now(); if((now-t.startedAt)/1000>=t.limit) this.finishTest(); else this.setState({testNow:now}); }
+  // 지금 보던 문제에 머문 시간을 더한 test 사본
+  testLeave(t,now){ const spent=t.spent.slice(); spent[t.idx]+=Math.max(0,(now-t.lastAt)/1000); return Object.assign({},t,{spent,lastAt:now}); }
+  testAnswered(t){ return t.picks.filter(Boolean).length; }
+  // 답 고르기 → 다음 안 푼 문제로(뒤에 없으면 앞에서 찾음). 다 풀면 끝.
   pickTest(v){
-    const t=this.state.test; if(!t || t.idx>=t.qs.length) return;
+    const t=this.state.test; if(!t || this.state.screen!=='test') return;
     this.playClick();
-    const now=Date.now(), picks=t.picks.concat([{v, secs:(now-t.lastAt)/1000}]), idx=t.idx+1;
-    const nt=Object.assign({},t,{picks, idx, lastAt:now});
-    if(idx>=t.qs.length){ this.finishTest(nt); return; }
+    const now=Date.now(), nt=this.testLeave(t,now), picks=t.picks.slice(); picks[t.idx]={v};
+    nt.picks=picks;
+    const n=picks.length, next=[...Array(n).keys()].map(k=>(t.idx+1+k)%n).find(i=>!picks[i]);
+    if(next==null){ this.finishTest(nt); return; }
+    nt.idx=next; nt.openGroup=Math.floor(next/10);
     this.setState({test:nt, testNow:now});
   }
+  // OMR 답안지에서 번호를 눌러 그 문제로(이미 푼 문제면 답을 바꿀 수 있음)
+  jumpTest(i){
+    const t=this.state.test; if(!t || i<0 || i>=t.qs.length) return;
+    if(i===t.idx){ this.setState({omrOpen:false}); return; }
+    this.playClick(); const now=Date.now(), nt=this.testLeave(t,now);
+    nt.idx=i; nt.openGroup=Math.floor(i/10);
+    this.setState({test:nt, testNow:now, omrOpen:false});
+  }
+  skipTest(){ const t=this.state.test; if(t) this.jumpTest((t.idx+1)%t.qs.length); }
+  toggleOmrGroup(g){ const t=this.state.test; if(t) this.setState({test:Object.assign({},t,{openGroup:t.openGroup===g?-1:g})}); }
   submitTest(){ if(!window.confirm('지금 제출할까요?\n남은 문제는 안 푼 걸로 처리돼요.')) return; this.finishTest(); }
   finishTest(done){
-    const t=done||this.state.test; if(!t || this.state.screen!=='test') return;
+    let t=done||this.state.test; if(!t || this.state.screen!=='test') return;
+    if(!done) t=this.testLeave(t,Date.now());
     const used=Math.min(t.limit, Math.round((Date.now()-t.startedAt)/1000));
     const secs={}; let correct=0;
-    t.picks.forEach((p,i)=>{ const q=t.qs[i], ok=p.v===q.answer; if(ok) correct++;
+    const picks=t.picks.map((p,i)=>p?{v:p.v, secs:t.spent[i]}:null); // 걸린 시간 = 그 문제를 본 시간 합
+    picks.forEach((p,i)=>{ if(!p) return; const q=t.qs[i], ok=p.v===q.answer; if(ok) correct++;
       const sc=secs[q.sec]||(secs[q.sec]={n:0,c:0,t:0,total:0}); sc.n++; sc.t+=p.secs; if(ok) sc.c++; });
     t.qs.forEach(q=>{ (secs[q.sec]||(secs[q.sec]={n:0,c:0,t:0,total:0})).total++; });
     // 채점표용 문제별 기록(지난 연습도 다시 볼 수 있게 저장): 문제·정답·고른 답·걸린 초·유형
-    const items=t.qs.map((q,i)=>{ const p=t.picks[i]; return {t:`${q.top} ${q.op} ${q.bottom}`, a:q.answerLabel, p:p?p.v:null, s:p?Math.round(p.secs*10)/10:null, sec:q.sec}; });
-    const rec={date:Date.now(), mode:t.mode, total:t.qs.length, limit:t.limit, answered:t.picks.length, correct, used, secs, items};
+    const items=t.qs.map((q,i)=>{ const p=picks[i]; return {t:`${q.top} ${q.op} ${q.bottom}`, a:q.answerLabel, p:p?p.v:null, s:p?Math.round(p.secs*10)/10:null, sec:q.sec}; });
+    const answered=picks.filter(Boolean).length;
+    const rec={date:Date.now(), mode:t.mode, total:t.qs.length, limit:t.limit, answered, correct, used, secs, items};
     const nm=this.state.userName;
     if(nm){ const users=this.loadUsers(); const u=users[nm]||{progress:{},history:[]}; u.tests=(u.tests||[]).concat([rec]).slice(-50); users[nm]=u; this.saveUsers(users); }
-    if(t.picks.length && correct/t.picks.length>=0.9) this.playFanfare();
-    this.setState({screen:'testResult', testResult:Object.assign({},rec,{qs:t.qs, picks:t.picks})});
+    if(answered && correct/answered>=0.9) this.playFanfare();
+    this.setState({screen:'testResult', testResult:Object.assign({},rec,{qs:t.qs, picks})});
   }
   retryTest(){ const r=this.state.testResult; if(r) this.startTest(r.mode); }
   // 중간에 그만두기: 기록을 남기지 않고 연습 고르기 화면으로.
@@ -1108,6 +1147,29 @@ class Component extends DCLogic {
   }
   retrySprint(){ const r=this.state.sprintResult; if(r) this.startSprint(r.lv); }
   fmtClock(sec){ sec=Math.max(0,Math.ceil(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
+  // OMR 답안지(실제 온라인 시험 왼쪽 패널처럼): 10문제씩 묶음, 펼친 묶음은 번호 + ①~⑤, 고른 답은 칠해짐.
+  // 번호(줄)를 누르면 그 문제로 간다. 묶음 머리를 누르면 펼치기/접기.
+  omrEl(t){
+    const h=React.createElement, font="'Jua',sans-serif", n=t.qs.length, groups=Math.ceil(n/10);
+    const SEC={add:'덧셈',sub:'뺄셈',mul:'곱셈',div:'나눗셈'}, marks=['①','②','③','④','⑤'];
+    const kids=[h('div',{key:'hd',style:{fontFamily:font,fontSize:'17px',color:'#123a66',padding:'8px 10px',borderBottom:'3px solid #2f6bb0',background:'#e3f0ff'}},`📋 답안지 · ${this.testAnswered(t)}/${n}`)];
+    for(let g=0;g<groups;g++){
+      const a=g*10, b=Math.min(n,a+10), done=t.picks.slice(a,b).filter(Boolean).length, open=t.openGroup===g, here=t.idx>=a&&t.idx<b;
+      kids.push(h('div',{key:'g'+g,onClick:()=>this.toggleOmrGroup(g),style:{display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer',fontFamily:font,fontSize:'15px',padding:'6px 10px',
+        background:open?'#2f8f4e':here?'#d6f0dc':'#fff',color:open?'#fff':'#123a66',borderBottom:'1px solid #d6e4f4'}},
+        h('span',null,`${a+1}~${b} (${done}/${b-a})`), h('span',{style:{fontSize:'12px',opacity:.8}},`${[...new Set(t.qs.slice(a,b).map(q=>SEC[q.sec]))].join('·')} ${open?'▲':'▼'}`)));
+      if(!open) continue;
+      for(let i=a;i<b;i++){
+        const q=t.qs[i], p=t.picks[i], cur=i===t.idx, pickIdx=p?q.options.indexOf(p.v):-1;
+        kids.push(h('div',{key:'r'+i,onClick:()=>this.jumpTest(i),style:{display:'flex',alignItems:'center',gap:'3px',cursor:'pointer',padding:'4px 8px',fontFamily:font,fontSize:'15px',
+          background:cur?'#fff3d8':'#fff',borderLeft:cur?'5px solid #f2b21c':'5px solid transparent',borderBottom:'1px solid #eef3f9'}},
+          h('span',{style:{width:'2.2em',color:'#7a8aa0',fontSize:'13px'}},String(i+1)),
+          ...marks.map((m,k)=>h('span',{key:k,style:{width:'1.45em',height:'1.45em',display:'inline-flex',alignItems:'center',justifyContent:'center',borderRadius:'50%',fontSize:'14px',
+            background:k===pickIdx?'#123a66':'transparent',color:k===pickIdx?'#fff':'#7a8aa0',border:k===pickIdx?'none':'1.5px solid #b8c6d8'}},String(k+1)))));
+      }
+    }
+    return h('div',{style:{width:'100%',background:'#fff',border:'3px solid #2f6bb0',borderRadius:'14px',overflow:'hidden'}},...kids);
+  }
   // 실제 시험지 모양 그대로: 세로셈(v, 자리마다 칸 맞춤) / 가로식(h, '7 × 8 =') / 세로 나눗셈 기호(long, '3)47').
   kumonEl(q){
     const h=React.createElement, font="'Jua',sans-serif", size='clamp(46px,13vw,68px)';
@@ -1303,12 +1365,12 @@ class Component extends DCLogic {
     // 목표 페이스: 문제별 목표 초(budget)를 앞에서부터 더해, 지금까지 몇 문제를 끝냈어야 하는지.
     const budgetOf=q=>q.budget!=null?q.budget:(T?T.limit/T.qs.length:target);
     let expected=0; if(T){ let acc=0; for(const q of T.qs){ acc+=budgetOf(q); if(acc<=tUsed) expected++; else break; } }
-    const ahead=T?T.idx-expected:0;
+    const tDone=T?this.testAnswered(T):0, ahead=T?tDone-expected:0;
     // 지금 유형의 시간 목표와 쓴 시간
     let secGoal='', secOver=false;
     if(TQ){ const list=T.qs.map((q,i)=>({q,i})).filter(x=>x.q.sec===TQ.sec);
       const goal=list.reduce((t,x)=>t+budgetOf(x.q),0);
-      const spent=list.reduce((t,x)=>t+(T.picks[x.i]?T.picks[x.i].secs:0),0)+Math.max(0,((s.testNow||Date.now())-T.lastAt)/1000);
+      const spent=list.reduce((t,x)=>t+T.spent[x.i],0)+Math.max(0,((s.testNow||Date.now())-T.lastAt)/1000);
       secOver=spent>goal; secGoal=`📍 ${SEC_NAME[TQ.sec]} ${list.length}문제 목표 ${this.fmtClock(goal)} · 지금 ${this.fmtClock(spent)}${secOver?' ⚠️':''}`; }
     // 실전 기준 유형별 시간 목표(분) — 안내 문구용
     const planSecs={}; this.kumonPlan('full').forEach(([sec,,n])=>{ planSecs[sec]=(planSecs[sec]||0)+n*this.kumonRate(sec); });
@@ -1332,12 +1394,19 @@ class Component extends DCLogic {
       testRemain:this.fmtClock(tRemain),
       testClockStyle:`font-family:'Jua';font-size:clamp(18px,5vw,24px);color:${tRemain<=60?'#d1462f':'#123a66'};background:${tRemain<=60?'#fbe0da':'#e3f0ff'};border:3px solid ${tRemain<=60?'#d1462f':'#2f6bb0'};border-radius:14px;padding:6px 10px;white-space:nowrap;flex:none;`,
       testSection:TQ?`${SEC_NAME[TQ.sec]}`:'',
-      testPos:T?`${Math.min(T.idx+1,T.qs.length)} / ${T.qs.length}`:'',
-      testPct:T?Math.round(T.idx/T.qs.length*100):0,
+      testPos:T?`${T.idx+1}번 · 푼 문제 ${tDone}/${T.qs.length}`:'',
+      testPct:T?Math.round(tDone/T.qs.length*100):0,
       testPace: !T||tUsed<20 ? '덧셈·뺄셈은 빠르게, 나눗셈에 시간을 남겨요 🚀' : ahead>=0 ? `목표보다 ${ahead}문제 앞서요! 🚀` : `목표보다 ${-ahead}문제 늦어요 🐢 조금 더 빨리!`,
       testPaceStyle:`font-family:'Jua';font-size:clamp(15px,4vw,19px);color:${!T||tUsed<20||ahead>=0?'#2f8f4e':'#d1462f'};`,
       testProblemEl: TQ?this.kumonEl(TQ):null,
-      testOptions: TQ?TQ.options.map((v,i)=>({mark:marks[i], label:v, onClick:()=>this.pickTest(v)})):[],
+      testOptions: TQ?TQ.options.map((v,i)=>{ const on=!!(T.picks[T.idx] && T.picks[T.idx].v===v);
+        return {mark:marks[i], label:v, onClick:()=>this.pickTest(v),
+          style:`display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(24px,6.6vw,32px);color:${on?'#fff':'#123a66'};background:${on?'#2f6bb0':'#fff'};border:4px solid ${on?'#1f4f86':'#9cc0e6'};border-radius:16px;padding:8px 18px;cursor:pointer;text-align:left;`,
+          markStyle:`font-size:.85em;color:${on?'#fff':'#2f6bb0'};`}; }):[],
+      testOmrEl: T ? this.omrEl(T) : null, isNarrow:!!s.narrow, isWide:!s.narrow,
+      showOmrOverlay: !!(T && s.narrow && s.omrOpen),
+      openOmr:()=>this.setState({omrOpen:true}), closeOmr:()=>this.setState({omrOpen:false}), skipTest:()=>this.skipTest(),
+      testRevisit: !!(T && T.picks[T.idx]), testRevisitText: T && T.picks[T.idx] ? `${T.idx+1}번은 이미 풀었어요 · 답을 바꾸려면 다른 보기를 눌러요` : '',
       submitTest:()=>this.submitTest(), retryTest:()=>this.retryTest(),
       trTitle: R ? (R.answered>=R.total?'다 풀었어요! 🎉':'시간 끝! ⏰') : '',
       trEmoji: R ? (R.answered>=R.total && R.correct>=R.answered*0.9 ? '🏆' : R.correct>=R.answered*0.9 ? '🚀' : '💪') : '',
@@ -1378,7 +1447,7 @@ class Component extends DCLogic {
           shFilters:[fBtn('all','전체'), fBtn('wrong',`❌ 틀린 문제 ${nWrong}`), fBtn('slow',`🐢 느린 문제 ${nSlow}`)],
           shRows:rows, shEmpty:rows.length===0,
         }; })(),
-      trTierLine: (()=>{ if(!R) return ''; const easy=[], hard=[]; R.picks.forEach((p,i)=>{ const q=R.qs[i]; if(q.tier==null) return; (q.tier<2?easy:hard).push(p.secs); });
+      trTierLine: (()=>{ if(!R) return ''; const easy=[], hard=[]; R.picks.forEach((p,i)=>{ const q=R.qs[i]; if(!p || q.tier==null) return; (q.tier<2?easy:hard).push(p.secs); });
         const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
         return easy.length && hard.length ? `쉬운 문제 평균 ${avg(easy).toFixed(1)}초 · 어려운 문제 평균 ${avg(hard).toFixed(1)}초` : easy.length ? `쉬운 문제 평균 ${avg(easy).toFixed(1)}초` : ''; })(),
       sprintLevels:this.sprintLevelList().map(x=>{ const b=this.sprintBest(x.lv); return {title:x.title, desc:x.desc, best:b?`🏅 최고 ${b}개`:'아직 기록 없음', onClick:()=>this.startSprint(x.lv)}; }),
