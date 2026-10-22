@@ -1026,7 +1026,11 @@ class Component extends DCLogic {
   startTest(id){
     const m=this.testModeList().find(x=>x.id===id); if(!m) return;
     this.playClick();
-    const qs=[]; this.kumonPlan(id).forEach(([sec,form,n])=>{ for(let i=0;i<n;i++) qs.push(this.genKumon(sec,form)); });
+    // 한 시험 안에서 같은 문제(예: 18×8이 두 번)는 다시 뽑는다.
+    const qs=[], seen=new Set();
+    this.kumonPlan(id).forEach(([sec,form,n])=>{ for(let i=0;i<n;i++){
+      let q; for(let k=0;k<30;k++){ q=this.genKumon(sec,form); if(!seen.has(q.top+q.op+q.bottom)) break; }
+      seen.add(q.top+q.op+q.bottom); qs.push(q); } });
     // tier: 유형 안에서의 위치(앞 1/4=0 … 뒤 1/4=3) — 결과의 '쉬운/어려운 문제' 평균에 쓴다.
     // budget: 이 문제에 쓸 목표 초. 유형별 목표 속도를 이 모드의 제한시간에 맞게 늘이거나 줄인다.
     const bySec={}; qs.forEach(q=>{ (bySec[q.sec]=bySec[q.sec]||[]).push(q); });
@@ -1192,7 +1196,7 @@ class Component extends DCLogic {
           padding:'clamp(12px,2.4vh,22px) 16px clamp(16px,3vh,28px)',borderBottom:'1px solid #dfe7f1',boxShadow:cur?'inset 5px 0 0 #f2b21c':'none',background:cur?'#fffdf5':'#fff'}},
         h('div',{style:{display:'flex',alignItems:'flex-start',gap:'clamp(14px,4vw,32px)'}},
           h('div',{style:{fontFamily:font,fontSize:'clamp(18px,min(5vw,3.4vh),24px)',color:'#7a8aa0',paddingTop:'2px',minWidth:'1.8em',textAlign:'right'}},String(i+1)),
-          this.kumonEl(q,'clamp(28px,min(9vw,6vh),48px)')),
+          this.kumonEl(q,'clamp(22px,min(6.5vw,4.4vh),34px)')),
         // 보기는 문제 아래, 문제와 같은 왼쪽 선에 맞춰 세로로
         h('div',{style:{display:'flex',flexDirection:'column',gap:'clamp(4px,0.8vh,7px)',width:'min(260px,74vw)',marginLeft:'calc(1.8em + clamp(14px,4vw,32px))'}},
           ...q.options.map((v,k)=>{ const on=!!(p && p.v===v);
@@ -1209,13 +1213,13 @@ class Component extends DCLogic {
     if(q.layout==='long') return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',display:'flex',alignItems:'flex-end',lineHeight:1.15}},
       h('span',{style:{marginRight:'2px',lineHeight:1}},q.bottom),
       h('span',{style:{fontSize:'1.15em',lineHeight:.95,transform:'scaleX(.7)'}},')'),
-      h('span',{style:{borderTop:'5px solid #123a66',padding:'6px 8px 0',letterSpacing:'6px',lineHeight:1}},q.top));
+      h('span',{style:{borderTop:'max(2px,0.08em) solid #123a66',padding:'0.1em 0.15em 0',letterSpacing:'0.1em',lineHeight:1}},q.top));
     const w=Math.max(q.top.length,q.bottom.length)+1;
     const row=(str,opCh)=>Array.from({length:w},(_,i)=>{ const pad=str.padStart(w,' '); const ch=i===0&&opCh?opCh:pad[i];
       return h('div',{key:i,style:{width:'0.72em',textAlign:'center',color:i===0&&opCh?'#d1462f':'#123a66'}},ch===' '?' ':ch); });
-    return h('div',{style:{fontFamily:font,fontSize:'clamp(46px,13vw,68px)',lineHeight:1.15}},
+    return h('div',{style:{fontFamily:font,fontSize:size,lineHeight:1.15}},
       h('div',{style:{display:'flex'}},row(q.top,null)),
-      h('div',{style:{display:'flex',borderBottom:'5px solid #123a66',paddingBottom:'4px'}},row(q.bottom,q.op)));
+      h('div',{style:{display:'flex',borderBottom:'max(2px,0.08em) solid #123a66',paddingBottom:'0.06em'}},row(q.bottom,q.op)));
   }
 
   // ---- flow ----

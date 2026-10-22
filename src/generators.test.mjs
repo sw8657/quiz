@@ -377,4 +377,22 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   assert.ok(v.trAnswered===2 && g.state.testResult.items[1].p===null && v.trTierLine.includes('쉬운 문제'));
 }
 
+// 문제 글자 크기: 세로셈·가로식·세로 나눗셈 모두 넘겨준 크기를 쓴다(세로셈만 고정 크기였던 버그)
+{
+  const g = load('treasure-map-math.dc.html');
+  for(const [sec,form] of [['add','a33'],['mul','m11'],['div','d_long3']]){
+    const el = g.kumonEl(g.genKumon(sec,form), '30px');
+    assert.strictEqual(el.p.style.fontSize, '30px', `${form} 글자 크기`);
+  }
+}
+
+// 한 시험 안에 같은 문제가 두 번 나오지 않음
+{
+  const g = load('treasure-map-math.dc.html');
+  for(let k=0;k<200;k++) for(const mode of ['full','mini','divfocus']){
+    g.startTest(mode); const keys=g.state.test.qs.map(q=>q.top+q.op+q.bottom);
+    assert.strictEqual(new Set(keys).size, keys.length, `${mode}: 같은 문제 중복 ${keys.filter((x,i)=>keys.indexOf(x)!==i)}`);
+  }
+}
+
 console.log('OK: generators fuzz passed');
