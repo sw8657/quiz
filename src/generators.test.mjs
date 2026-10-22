@@ -98,23 +98,26 @@ for(let i=0;i<5000;i++){
   g.state.screen='testIntro'; assert.strictEqual(g.renderVals().testRecs.length, 3);
 }
 
-// 구몬 연습: 실제 시험지(모의테스트 160문제) 구성 그대로 — 유형 순서·문항 수·문제 틀·모양
+// 구몬 연습: 실제 C등급 시험 130문제 — 모의테스트 시험지 구성을 같은 비율로 줄인 것. 유형 순서·문항 수·문제 틀·모양
 {
   const g = load('treasure-map-math.dc.html');
   g.startTest('full');
   const qs = g.state.test.qs;
-  assert.strictEqual(qs.length, 160);
+  assert.strictEqual(qs.length, 130);
   const count = sec => qs.filter(q=>q.sec===sec).length;
-  assert.deepStrictEqual(['add','sub','mul','div'].map(count), [15,15,47,83], '유형별 문항 수');
+  assert.deepStrictEqual(['add','sub','mul','div'].map(count), [12,12,38,68], '유형별 문항 수');
   assert.deepStrictEqual([...new Set(qs.map(q=>q.sec))], ['add','sub','mul','div'], '유형 순서');
   const at = n => qs[n-1]; // 시험지 번호로
-  assert.ok(at(1).form==='a22n' && at(13).form==='a33' && at(16).form==='s22' && at(26).form==='s32b');
-  assert.ok(at(31).form==='m11' && at(31).layout==='h' && at(46).form==='m21' && at(66).form==='m31' && at(76).form==='m41');
-  assert.ok(at(78).form==='d_ex' && at(91).form==='d_rem' && at(104).form==='d_mix' && at(124).layout==='long' && at(139).form==='d_long3');
+  assert.ok(at(1).form==='a22n' && at(11).form==='a33' && at(13).form==='s22' && at(21).form==='s32b');
+  assert.ok(at(25).form==='m11' && at(25).layout==='h' && at(37).form==='m21' && at(53).form==='m31' && at(61).form==='m41');
+  assert.ok(at(63).form==='d_ex' && at(74).form==='d_rem' && at(85).form==='d_mix' && at(101).layout==='long' && at(113).form==='d_long3' && at(130).form==='d_long3');
+  // 160문제 모의테스트의 구간별 비율을 유지(구간마다 ±1문제 안)
+  const ORIG={a22n:2,a22h:3,a22c:2,a32:5,a33:3,s22:7,s32:3,s32b:2,s33:3,m11:15,m21:20,m31:10,m41:2,d_ex:13,d_rem:13,d_mix:20,d_long2:15,d_long3:22};
+  for(const [form,n] of Object.entries(ORIG)){ const got=qs.filter(q=>q.form===form).length; assert.ok(Math.abs(got-n*130/160)<=1, `${form} ${got} vs ${n*130/160}`); }
   // 시간 목표: 문제별 budget 합이 제한시간, 덧셈·뺄셈 약 5분·곱셈 약 8분·나눗셈 약 17분
   const sum = sec => qs.filter(q=>!sec||q.sec===sec).reduce((t,q)=>t+q.budget,0);
   assert.ok(Math.abs(sum()-1800)<1e-6);
-  assert.ok(Math.abs(sum('add')+sum('sub')-300)<5 && Math.abs(sum('mul')-480)<5 && Math.abs(sum('div')-1020)<5, '유형별 시간 배분');
+  assert.ok(Math.abs(sum('add')+sum('sub')-300)<10 && Math.abs(sum('mul')-480)<10 && Math.abs(sum('div')-1020)<15, `유형별 시간 배분 ${sum('add')+sum('sub')} ${sum('mul')} ${sum('div')}`);
   // 결과의 쉬운/어려운 구분: 유형 안 앞쪽 tier 0, 뒤쪽 tier 3
   for(const sec of ['add','sub','mul','div']){ const l=qs.filter(q=>q.sec===sec); assert.ok(l[0].tier===0 && l[l.length-1].tier===3); }
   // 미니·나눗셈 집중
@@ -147,7 +150,7 @@ for(let i=0;i<5000;i++){
   const g = load('treasure-map-math.dc.html');
   g.startTest('full'); g.state.test.startedAt -= 60000; g.state.testNow = Date.now();
   let v = g.renderVals();
-  assert.ok(v.testPace.includes('🐢 -') && v.testSection==='덧셈 0:00 / 2:30' && v.testPos==='1번 · 0/160', `${v.testPace} / ${v.testSection} / ${v.testPos}`);
+  assert.ok(v.testPace.includes('🐢 -') && v.testSection==='덧셈 0:00 / 2:28' && v.testPos==='1번 · 0/130', `${v.testPace} / ${v.testSection} / ${v.testPos}`);
   for(let i=0;i<10;i++) g.pickTest(g.state.test.qs[g.state.test.idx].answer);
   v = g.renderVals(); assert.ok(v.testPace.includes('🚀 +'), v.testPace);
   g.state.test.lastAt -= 200000; g.state.testNow = Date.now(); v = g.renderVals();
@@ -317,10 +320,10 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   rows[T().idx].p.ref(el); rows[T().idx].p.ref(el); assert.strictEqual(scrolled, 1, '같은 문제에서 다시 그려도 스크롤 한 번');
   // 문제 머리글·번호: 실제 화면처럼 '[ 1 ~ 4 ] 덧셈을 연습합니다.' + 문제 번호
   { const g2=load('treasure-map-math.dc.html'); g2.startTest('full'); let w=g2.renderVals();
-    assert.ok(w.testSecRange==='[ 1 ~ 15 ]' && w.testSecText==='덧셈을 연습합니다.' && w.testNo==='1', `${w.testSecRange} ${w.testSecText} ${w.testNo}`);
-    g2.jumpTest(77); w=g2.renderVals();
-    assert.ok(w.testSecRange==='[ 78 ~ 160 ]' && w.testSecText.startsWith('나눗셈을 연습합니다.') && w.testNo==='78');
-    g2.jumpTest(30); w=g2.renderVals(); assert.ok(w.testSecRange==='[ 31 ~ 77 ]' && w.testSecText==='곱셈을 연습합니다.'); }
+    assert.ok(w.testSecRange==='[ 1 ~ 12 ]' && w.testSecText==='덧셈을 연습합니다.' && w.testNo==='1', `${w.testSecRange} ${w.testSecText} ${w.testNo}`);
+    g2.jumpTest(62); w=g2.renderVals();
+    assert.ok(w.testSecRange==='[ 63 ~ 130 ]' && w.testSecText.startsWith('나눗셈을 연습합니다.') && w.testNo==='63');
+    g2.jumpTest(24); w=g2.renderVals(); assert.ok(w.testSecRange==='[ 25 ~ 62 ]' && w.testSecText==='곱셈을 연습합니다.'); }
   // 줄을 누르면 그 문제로
   rows[25].p.onClick(); assert.strictEqual(T().idx, 25);
   // 스크롤 칸이 있으면: 지금 줄이 칸 위에서 1/3 지점에 오게 scrollTo

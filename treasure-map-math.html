@@ -921,17 +921,18 @@ class Component extends DCLogic {
   }
 
   // ---- ⚡ 구몬 연습 (시험 모드) ----
-  // 구몬 C 진단 테스트를 그대로 흉내 낸다(모의테스트 종이 160문제를 번호별로 분석한 구성).
-  //   덧셈 15 → 뺄셈 15 → 곱셈 47 → 나눗셈 83, 유형 안에서는 아래 구간 순서대로 점점 어려워진다.
+  // 구몬 C 진단 테스트를 그대로 흉내 낸다. 모의테스트 종이(160문제)를 번호별로 분석한 구성을
+  // 실제 C등급 시험 문항 수(130문제)에 맞춰 구간마다 같은 비율로 줄였다(130문제 시험지는 아직 못 봄).
+  //   덧셈 12 → 뺄셈 12 → 곱셈 38 → 나눗셈 68, 유형 안에서는 아래 구간 순서대로 점점 어려워진다.
   //   5지선다, 전체 제한시간, 중간 채점 없음.
   // [유형, 문제 틀, 문항 수] — 문제 틀은 genKumon 참고. 번호는 실제 시험지 번호.
   kumonPlan(id){
     const P={
-      full:[ // 1~160번
-        ['add','a22n',2],['add','a22h',3],['add','a22c',2],['add','a32',5],['add','a33',3],          // 1~15
-        ['sub','s22',7],['sub','s32',3],['sub','s32b',2],['sub','s33',3],                             // 16~30
-        ['mul','m11',15],['mul','m21',20],['mul','m31',10],['mul','m41',2],                           // 31~77
-        ['div','d_ex',13],['div','d_rem',13],['div','d_mix',20],['div','d_long2',15],['div','d_long3',22], // 78~160
+      full:[ // 1~130번 (괄호는 160문제 모의테스트에서의 문항 수)
+        ['add','a22n',2],['add','a22h',2],['add','a22c',2],['add','a32',4],['add','a33',2],          // 1~12   (2·3·2·5·3)
+        ['sub','s22',6],['sub','s32',2],['sub','s32b',2],['sub','s33',2],                             // 13~24  (7·3·2·3)
+        ['mul','m11',12],['mul','m21',16],['mul','m31',8],['mul','m41',2],                            // 25~62  (15·20·10·2)
+        ['div','d_ex',11],['div','d_rem',11],['div','d_mix',16],['div','d_long2',12],['div','d_long3',18], // 63~130 (13·13·20·15·22)
       ],
       mini:[
         ['add','a22n',1],['add','a22c',1],['add','a32',1],['add','a33',1],
@@ -939,21 +940,22 @@ class Component extends DCLogic {
         ['mul','m11',4],['mul','m21',5],['mul','m31',2],['mul','m41',1],
         ['div','d_ex',3],['div','d_rem',3],['div','d_mix',4],['div','d_long2',4],['div','d_long3',6],
       ],
-      // 모의테스트에서 시간 안에 닿지 못한 104~160번 구간만.
+      // 모의테스트에서 시간 안에 닿지 못한 뒤쪽 나눗셈 구간(섞임·세로 나눗셈)만.
       divfocus:[['div','d_mix',10],['div','d_long2',12],['div','d_long3',18]],
     };
     return P[id]||[];
   }
   testModeList(){
     return [
-      {id:'full',    title:'🏁 실전 160문제 · 30분', desc:'덧셈 15 → 뺄셈 15 → 곱셈 47 → 나눗셈 83 (실제 시험 순서)', limit:1800},
+      {id:'full',    title:'🏁 실전 130문제 · 30분', desc:'덧셈 12 → 뺄셈 12 → 곱셈 38 → 나눗셈 68 (실제 시험 순서)', limit:1800},
       {id:'mini',    title:'⏱️ 미니 40문제 · 8분',   desc:'실전과 같은 비율·순서·속도로 짧게', limit:480},
-      {id:'divfocus',title:'➗ 나눗셈 집중 40문제 · 8분', desc:'실전 104~160번 구간: 몫 두 자리 · 세로 나눗셈 · 세 자리÷한 자리', limit:480},
+      {id:'divfocus',title:'➗ 나눗셈 집중 40문제 · 8분', desc:'실전 85~130번 구간: 몫 두 자리 · 세로 나눗셈 · 세 자리÷한 자리', limit:480},
     ];
   }
   // 예전 기록에 남은 모드 이름(지금은 없는 모드).
   legacyModeName(id){ return {muldiv:'곱셈·나눗셈 40문제 · 8분'}[id]||id; }
-  // 유형별 목표 속도(초/문제). 실전 30분을 덧셈·뺄셈 5분, 곱셈 8분, 나눗셈 17분으로 나눈 값.
+  // 유형별 목표 속도의 비율(초/문제). 모드의 제한시간에 맞춰 늘이거나 줄여 쓴다(startTest의 scale).
+  // 실전(130문제/30분)이면 덧셈·뺄셈 약 5분, 곱셈 약 8분, 나눗셈 약 17분.
   // 덧셈·뺄셈을 빨리 끝내야 문항이 가장 많은 나눗셈에 시간이 남는다.
   kumonRate(sec){ return {add:10, sub:10, mul:10.2, div:12.3}[sec]||11.25; }
   // 받아올림 없이 자리마다 더한(뺀) 값 — 가장 흔한 실수를 오답 보기로.
@@ -1371,7 +1373,8 @@ class Component extends DCLogic {
     // ---- 구몬 연습 화면 값 ----
     const SEC_NAME={add:'덧셈',sub:'뺄셈',mul:'곱셈',div:'나눗셈'};
     const modes=this.testModeList();
-    const target=Math.round(1800/160*10)/10; // 실전 전체 평균: 문제당 초
+    const fullPlanN=this.kumonPlan('full').reduce((t,[, ,n])=>t+n,0);
+    const target=Math.round(1800/fullPlanN*10)/10; // 실전 전체 평균: 문제당 초
     const T=s.test, TQ=T&&T.qs[T.idx];
     const tUsed=T?((s.testNow||Date.now())-T.startedAt)/1000:0, tRemain=T?T.limit-tUsed:0;
     // 목표 페이스: 문제별 목표 초(budget)를 앞에서부터 더해, 지금까지 몇 문제를 끝냈어야 하는지.
@@ -1386,6 +1389,7 @@ class Component extends DCLogic {
       secOver=spent>goal; secGoal=`${SEC_NAME[TQ.sec]} ${this.fmtClock(spent)} / ${this.fmtClock(goal)}`; }
     // 실전 기준 유형별 시간 목표(분) — 안내 문구용
     const planSecs={}; this.kumonPlan('full').forEach(([sec,,n])=>{ planSecs[sec]=(planSecs[sec]||0)+n*this.kumonRate(sec); });
+    { const fullLimit=(modes.find(m=>m.id==='full')||{limit:1800}).limit, tot=Object.values(planSecs).reduce((a,b)=>a+b,0); Object.keys(planSecs).forEach(k=>{ planSecs[k]*=fullLimit/tot; }); }
     const mins=k=>Math.round(planSecs[k]/60);
     const marks=['①','②','③','④','⑤'];
     const myTests=((this.loadUsers()[s.userName]||{}).tests||[]).slice().reverse().slice(0,8);
