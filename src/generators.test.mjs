@@ -297,19 +297,23 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   T().lastAt-=3000; g.pickTest(T().qs[1].answer);
   assert.strictEqual(T().idx, 3, '답을 고치면 다음 안 푼 문제로');
   assert.ok(T().spent[1]>=8 && T().spent[3]>=2, `다시 본 시간 합산: ${T().spent[1]}, ${T().spent[3]}`);
-  // OMR: 펼친 묶음(1~10)에 10줄, 2번 줄에 고른 답이 칠해짐, 묶음 머리 '1~10 (3/10)'
+  // OMR: 1번부터 40번까지 한 줄씩 이어짐(묶음 없음), 2번 줄에 고른 답 하나만 칠해짐
   v = g.renderVals();
   const flat = n => n==null ? [] : typeof n!=='object' ? [String(n)] : Array.isArray(n) ? n.flatMap(flat) : [n, ...flat(n.c)];
   const nodes = flat(v.testOmrEl).filter(x=>typeof x==='object');
   const texts = flat(v.testOmrEl).filter(x=>typeof x==='string');
-  assert.ok(texts.includes('1~10 (3/10)') && texts.includes('📋 답안지 · 3/40'), texts.slice(0,6).join('|'));
-  assert.strictEqual(nodes.filter(x=>x.p && x.p.key && String(x.p.key).startsWith('r')).length, 10, '펼친 묶음 10줄');
-  const row2 = nodes.find(x=>x.p && x.p.key==='r1'); const filled = row2.c.flat().filter(x=>x && x.p && x.p.style && x.p.style.background==='#123a66');
+  assert.ok(texts.includes('📋 답안지 · 3/40') && !texts.some(t=>/~\d+ \(/.test(t)), '묶음 머리 없이 이어짐');
+  const rows = nodes.filter(x=>x.p && String(x.p.key||'').startsWith('r'));
+  assert.deepStrictEqual(rows.map(x=>x.p.key), Array.from({length:40},(_,i)=>'r'+i), '1~40번 줄이 순서대로 모두');
+  const row2 = rows[1]; const filled = row2.c.flat().filter(x=>x && x.p && x.p.style && x.p.style.background==='#123a66');
   assert.strictEqual(filled.length, 1, '고른 답 하나만 칠해짐');
-  // 다른 묶음 머리를 누르면 펼침, 그 줄을 누르면 그 문제로
-  nodes.find(x=>x.p && x.p.key==='g2').p.onClick(); assert.strictEqual(T().openGroup, 2);
-  const nodes2 = flat(g.renderVals().testOmrEl).filter(x=>typeof x==='object');
-  nodes2.find(x=>x.p && x.p.key==='r25').p.onClick(); assert.strictEqual(T().idx, 25);
+  assert.ok(rows[T().idx].p.ref && !rows[0].p.ref, '지금 문제 줄에만 스크롤 ref');
+  // 지금 문제 줄 ref: 문제가 바뀔 때만 스크롤
+  let scrolled=0; const el={ scrollIntoView(){ scrolled++; } };
+  rows[T().idx].p.ref(el); rows[T().idx].p.ref(el); assert.strictEqual(scrolled, 1, '같은 문제에서 다시 그려도 스크롤 한 번');
+  // 줄을 누르면 그 문제로
+  rows[25].p.onClick(); assert.strictEqual(T().idx, 25);
+  flat(g.renderVals().testOmrEl).find(x=>x && x.p && x.p.key==='r25').p.ref(el); assert.strictEqual(scrolled, 2, '문제가 바뀌면 스크롤');
   // 좁은 화면: 📋 → 답안지 창, 번호 누르면 닫힘
   g.state.narrow = true; g.renderVals().openOmr(); assert.ok(g.renderVals().showOmrOverlay);
   g.jumpTest(0); assert.ok(!g.renderVals().showOmrOverlay);

@@ -1044,7 +1044,7 @@ class Component extends DCLogic {
     qs.forEach(q=>{ q.budget=this.kumonRate(q.sec)*scale; });
     const now=Date.now();
     // picks[i]=고른 답(번호별, 안 풀면 null), spent[i]=그 문제를 보고 있던 시간 합(되돌아와 다시 본 시간 포함)
-    this.setState({screen:'test', test:{mode:m.id, title:m.title, limit:m.limit, qs, idx:0, picks:qs.map(()=>null), spent:qs.map(()=>0), openGroup:0, startedAt:now, lastAt:now}, testNow:now, omrOpen:false});
+    this.setState({screen:'test', test:{mode:m.id, title:m.title, limit:m.limit, qs, idx:0, picks:qs.map(()=>null), spent:qs.map(()=>0), startedAt:now, lastAt:now}, testNow:now, omrOpen:false});
   }
   testTick(){ const t=this.state.test; if(!t) return; const now=Date.now(); if((now-t.startedAt)/1000>=t.limit) this.finishTest(); else this.setState({testNow:now}); }
   // 지금 보던 문제에 머문 시간을 더한 test 사본
@@ -1058,7 +1058,7 @@ class Component extends DCLogic {
     nt.picks=picks;
     const n=picks.length, next=[...Array(n).keys()].map(k=>(t.idx+1+k)%n).find(i=>!picks[i]);
     if(next==null){ this.finishTest(nt); return; }
-    nt.idx=next; nt.openGroup=Math.floor(next/10);
+    nt.idx=next;
     this.setState({test:nt, testNow:now});
   }
   // OMR 답안지에서 번호를 눌러 그 문제로(이미 푼 문제면 답을 바꿀 수 있음)
@@ -1066,11 +1066,10 @@ class Component extends DCLogic {
     const t=this.state.test; if(!t || i<0 || i>=t.qs.length) return;
     if(i===t.idx){ this.setState({omrOpen:false}); return; }
     this.playClick(); const now=Date.now(), nt=this.testLeave(t,now);
-    nt.idx=i; nt.openGroup=Math.floor(i/10);
+    nt.idx=i;
     this.setState({test:nt, testNow:now, omrOpen:false});
   }
   skipTest(){ const t=this.state.test; if(t) this.jumpTest((t.idx+1)%t.qs.length); }
-  toggleOmrGroup(g){ const t=this.state.test; if(t) this.setState({test:Object.assign({},t,{openGroup:t.openGroup===g?-1:g})}); }
   submitTest(){ if(!window.confirm('지금 제출할까요?\n남은 문제는 안 푼 걸로 처리돼요.')) return; this.finishTest(); }
   finishTest(done){
     let t=done||this.state.test; if(!t || this.state.screen!=='test') return;
@@ -1147,28 +1146,22 @@ class Component extends DCLogic {
   }
   retrySprint(){ const r=this.state.sprintResult; if(r) this.startSprint(r.lv); }
   fmtClock(sec){ sec=Math.max(0,Math.ceil(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
-  // OMR 답안지(실제 온라인 시험 왼쪽 패널처럼): 10문제씩 묶음, 펼친 묶음은 번호 + ①~⑤, 고른 답은 칠해짐.
-  // 번호(줄)를 누르면 그 문제로 간다. 묶음 머리를 누르면 펼치기/접기.
+  // OMR 답안지(실제 온라인 시험 왼쪽 패널처럼): 1번부터 끝까지 한 줄씩 이어서, 번호 + ①~⑤, 고른 답은 칠해짐.
+  // 줄을 누르면 그 문제로 간다. 지금 문제가 바뀔 때만 그 줄이 보이게 스크롤(1초마다 다시 그려도 아이가 스크롤한 위치는 그대로).
   omrEl(t){
-    const h=React.createElement, font="'Jua',sans-serif", n=t.qs.length, groups=Math.ceil(n/10);
-    const SEC={add:'덧셈',sub:'뺄셈',mul:'곱셈',div:'나눗셈'}, marks=['①','②','③','④','⑤'];
-    const kids=[h('div',{key:'hd',style:{fontFamily:font,fontSize:'17px',color:'#123a66',padding:'8px 10px',borderBottom:'3px solid #2f6bb0',background:'#e3f0ff'}},`📋 답안지 · ${this.testAnswered(t)}/${n}`)];
-    for(let g=0;g<groups;g++){
-      const a=g*10, b=Math.min(n,a+10), done=t.picks.slice(a,b).filter(Boolean).length, open=t.openGroup===g, here=t.idx>=a&&t.idx<b;
-      kids.push(h('div',{key:'g'+g,onClick:()=>this.toggleOmrGroup(g),style:{display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer',fontFamily:font,fontSize:'15px',padding:'6px 10px',
-        background:open?'#2f8f4e':here?'#d6f0dc':'#fff',color:open?'#fff':'#123a66',borderBottom:'1px solid #d6e4f4'}},
-        h('span',null,`${a+1}~${b} (${done}/${b-a})`), h('span',{style:{fontSize:'12px',opacity:.8}},`${[...new Set(t.qs.slice(a,b).map(q=>SEC[q.sec]))].join('·')} ${open?'▲':'▼'}`)));
-      if(!open) continue;
-      for(let i=a;i<b;i++){
-        const q=t.qs[i], p=t.picks[i], cur=i===t.idx, pickIdx=p?q.options.indexOf(p.v):-1;
-        kids.push(h('div',{key:'r'+i,onClick:()=>this.jumpTest(i),style:{display:'flex',alignItems:'center',gap:'3px',cursor:'pointer',padding:'4px 8px',fontFamily:font,fontSize:'15px',
+    const h=React.createElement, font="'Jua',sans-serif", marks=[1,2,3,4,5];
+    const rows=[h('div',{key:'hd',style:{position:'sticky',top:0,zIndex:1,fontFamily:font,fontSize:'17px',color:'#123a66',padding:'8px 10px',borderBottom:'3px solid #2f6bb0',background:'#e3f0ff'}},`📋 답안지 · ${this.testAnswered(t)}/${t.qs.length}`)];
+    t.qs.forEach((q,i)=>{
+      const p=t.picks[i], cur=i===t.idx, pickIdx=p?q.options.indexOf(p.v):-1;
+      rows.push(h('div',{key:'r'+i,onClick:()=>this.jumpTest(i),
+        ref:cur?(el=>{ if(el && this._omrShown!==t.idx+'/'+t.startedAt){ this._omrShown=t.idx+'/'+t.startedAt; try{ el.scrollIntoView({block:'nearest'}); }catch(e){} } }):undefined,
+        style:{display:'flex',alignItems:'center',gap:'3px',cursor:'pointer',padding:'4px 8px',fontFamily:font,fontSize:'15px',
           background:cur?'#fff3d8':'#fff',borderLeft:cur?'5px solid #f2b21c':'5px solid transparent',borderBottom:'1px solid #eef3f9'}},
-          h('span',{style:{width:'2.2em',color:'#7a8aa0',fontSize:'13px'}},String(i+1)),
-          ...marks.map((m,k)=>h('span',{key:k,style:{width:'1.45em',height:'1.45em',display:'inline-flex',alignItems:'center',justifyContent:'center',borderRadius:'50%',fontSize:'14px',
-            background:k===pickIdx?'#123a66':'transparent',color:k===pickIdx?'#fff':'#7a8aa0',border:k===pickIdx?'none':'1.5px solid #b8c6d8'}},String(k+1)))));
-      }
-    }
-    return h('div',{style:{width:'100%',background:'#fff',border:'3px solid #2f6bb0',borderRadius:'14px',overflow:'hidden'}},...kids);
+        h('span',{style:{width:'2.4em',color:'#7a8aa0',fontSize:'13px'}},String(i+1)),
+        ...marks.map((m,k)=>h('span',{key:k,style:{width:'1.45em',height:'1.45em',display:'inline-flex',alignItems:'center',justifyContent:'center',borderRadius:'50%',fontSize:'14px',
+          background:k===pickIdx?'#123a66':'transparent',color:k===pickIdx?'#fff':'#7a8aa0',border:k===pickIdx?'none':'1.5px solid #b8c6d8'}},String(m)))));
+    });
+    return h('div',{style:{width:'100%',background:'#fff',border:'3px solid #2f6bb0',borderRadius:'14px'}},...rows);
   }
   // 실제 시험지 모양 그대로: 세로셈(v, 자리마다 칸 맞춤) / 가로식(h, '7 × 8 =') / 세로 나눗셈 기호(long, '3)47').
   kumonEl(q){
