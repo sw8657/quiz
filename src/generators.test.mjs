@@ -147,9 +147,11 @@ for(let i=0;i<5000;i++){
   const g = load('treasure-map-math.dc.html');
   g.startTest('full'); g.state.test.startedAt -= 60000; g.state.testNow = Date.now();
   let v = g.renderVals();
-  assert.ok(v.testPace.includes('늦어요') && v.testSecGoal.includes('덧셈 15문제 목표 2:30'), `${v.testPace} / ${v.testSecGoal}`);
+  assert.ok(v.testPace.includes('🐢 -') && v.testSection==='덧셈 0:00 / 2:30' && v.testPos==='1번 · 0/160', `${v.testPace} / ${v.testSection} / ${v.testPos}`);
   for(let i=0;i<10;i++) g.pickTest(g.state.test.qs[g.state.test.idx].answer);
-  v = g.renderVals(); assert.ok(v.testPace.includes('앞서요'), v.testPace);
+  v = g.renderVals(); assert.ok(v.testPace.includes('🚀 +'), v.testPace);
+  g.state.test.lastAt -= 200000; g.state.testNow = Date.now(); v = g.renderVals();
+  assert.ok(v.testSectionStyle.includes('#d1462f'), '유형 목표 시간을 넘으면 빨강');
   assert.ok(v.planLine.includes('덧셈·뺄셈 5분') && v.planLine.includes('곱셈 8분') && v.planLine.includes('나눗셈 17분'), v.planLine);
 }
 // 🔥 암산 스프린트: 정답 계산·자연수, 흐름(맞힘→다음, 틀림→지우기, 시간 끝→기록 저장)
@@ -321,6 +323,14 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
     g2.jumpTest(30); w=g2.renderVals(); assert.ok(w.testSecRange==='[ 31 ~ 77 ]' && w.testSecText==='곱셈을 연습합니다.'); }
   // 줄을 누르면 그 문제로
   rows[25].p.onClick(); assert.strictEqual(T().idx, 25);
+  // 스크롤 칸이 있으면: 지금 줄이 칸 위에서 1/3 지점에 오게 scrollTo
+  { let to=null; const box={ scrollHeight:2000, clientHeight:600, scrollTop:100, parentElement:null,
+      getBoundingClientRect:()=>({top:50}), scrollTo(o){ to=o.top; } };
+    globalThis.getComputedStyle = () => ({ overflowY:'auto' });
+    const row={ parentElement:{ scrollHeight:10, clientHeight:10, parentElement:box }, getBoundingClientRect:()=>({top:850}), scrollIntoView(){ throw new Error('칸이 있으면 쓰지 않음'); } };
+    g.omrScrollTo(row);
+    assert.strictEqual(to, 100+(850-50)-200, '줄 위치가 칸 높이의 1/3 지점');
+    delete globalThis.getComputedStyle; }
   flat(g.renderVals().testOmrEl).find(x=>x && x.p && x.p.key==='r25').p.ref(el); assert.strictEqual(scrolled, 2, '문제가 바뀌면 스크롤');
   // 좁은 화면: 📋 → 답안지 창, 번호 누르면 닫힘
   g.state.narrow = true; g.renderVals().openOmr(); assert.ok(g.renderVals().showOmrOverlay);

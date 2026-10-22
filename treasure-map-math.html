@@ -348,26 +348,25 @@ button{font-family:inherit;}
     </sc-if>
     <div style="{{ testClockStyle }}">⏱️ {{ testRemain }}</div>
     <div style="flex:1;min-width:0;">
-      <div style="display:flex;justify-content:space-between;font-family:'Jua';font-size:clamp(13px,3.4vw,16px);color:#1e4d7a;margin-bottom:3px;"><span>{{ testSection }}</span><span>{{ testPos }}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;font-family:'Jua';font-size:clamp(13px,3.4vw,16px);color:#1e4d7a;margin-bottom:3px;white-space:nowrap;"><span style="{{ testSectionStyle }}">{{ testSection }}</span><span>{{ testPos }}<span style="{{ testPaceStyle }}">{{ testPace }}</span></span></div>
       <div style="height:12px;background:#d6e4f4;border:2px solid #2f6bb0;border-radius:8px;overflow:hidden;"><div style="height:100%;width:{{ testPct }}%;background:#2f6bb0;"></div></div>
     </div>
     <button onClick="{{ submitTest }}" style-active="transform:translateY(3px)" style="font-family:'Jua';font-size:clamp(14px,3.6vw,17px);color:#fff;background:#d1462f;border:3px solid #a83526;border-radius:14px;padding:8px 12px;box-shadow:0 4px 0 #a83526;cursor:pointer;white-space:nowrap;flex:none;">제출하기</button>
   </div>
-  <div style="{{ testPaceStyle }}">{{ testPace }}</div>
-  <div style="{{ testSecGoalStyle }}">{{ testSecGoal }}</div>
-  <div style="width:100%;background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:18px 14px 20px;margin-top:10px;display:flex;flex-direction:column;align-items:center;">
+  <!-- 아이패드 가로(키보드 붙이면 세로가 더 좁음)에서도 한 화면에: 넓으면 문제와 보기를 나란히, 크기는 화면 높이(vh)에도 맞춘다. -->
+  <div style="width:100%;background:#fff;border:5px solid #2f6bb0;border-radius:22px;padding:clamp(10px,2vh,18px) 14px clamp(12px,2.4vh,20px);margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:clamp(20px,5vw,56px);row-gap:clamp(8px,1.6vh,14px);">
     <sc-if value="{{ testRevisit }}" hint-placeholder-val="{{ false }}">
-      <div style="font-family:'Gaegu';font-weight:700;font-size:16px;color:#7a3a2a;background:#fff3d8;border-radius:10px;padding:4px 12px;margin-bottom:8px;">{{ testRevisitText }}</div>
+      <div style="flex-basis:100%;text-align:center;font-family:'Gaegu';font-weight:700;font-size:15px;color:#7a3a2a;"><span style="background:#fff3d8;border-radius:10px;padding:3px 12px;">{{ testRevisitText }}</span></div>
     </sc-if>
-    <div style="align-self:flex-start;font-family:'Jua';color:#123a66;margin:0 0 10px 6px;line-height:1.35;">
-      <div style="font-size:clamp(16px,4.2vw,20px);">{{ testSecRange }}</div>
-      <div style="font-size:clamp(17px,4.6vw,22px);">{{ testSecText }}</div>
+    <div style="flex-basis:100%;font-family:'Jua';color:#123a66;margin-left:6px;line-height:1.3;">
+      <div style="font-size:clamp(14px,min(4vw,2.4vh),19px);">{{ testSecRange }}</div>
+      <div style="font-size:clamp(15px,min(4.4vw,2.7vh),21px);">{{ testSecText }}</div>
     </div>
-    <div style="display:flex;align-items:flex-start;gap:clamp(12px,4vw,28px);">
-      <div style="font-family:'Jua';font-size:clamp(22px,6vw,30px);color:#7a8aa0;padding-top:6px;min-width:1.6em;text-align:right;">{{ testNo }}</div>
+    <div style="display:flex;align-items:flex-start;gap:clamp(10px,3vw,24px);">
+      <div style="font-family:'Jua';font-size:clamp(20px,min(5.5vw,4vh),28px);color:#7a8aa0;padding-top:4px;min-width:1.6em;text-align:right;">{{ testNo }}</div>
       {{ testProblemEl }}
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px;width:min(360px,86vw);margin-top:16px;">
+    <div style="display:flex;flex-direction:column;gap:clamp(5px,1vh,9px);width:min(320px,86vw);">
       <sc-for list="{{ testOptions }}" as="o" hint-placeholder-count="5">
         <button onClick="{{ o.onClick }}" style-active="transform:translateY(3px)" style="{{ o.style }}">
           <span style="{{ o.markStyle }}">{{ o.mark }}</span><span>{{ o.label }}</span>
@@ -1155,6 +1154,16 @@ class Component extends DCLogic {
   fmtClock(sec){ sec=Math.max(0,Math.ceil(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
   // OMR 답안지(실제 온라인 시험 왼쪽 패널처럼): 1번부터 끝까지 한 줄씩 이어서, 번호 + ①~⑤, 고른 답은 칠해짐.
   // 줄을 누르면 그 문제로 간다. 지금 문제가 바뀔 때만 그 줄이 보이게 스크롤(1초마다 다시 그려도 아이가 스크롤한 위치는 그대로).
+  // 지금 문제 줄이 답안지 스크롤 칸의 위에서 1/3 지점에 오게(다음 번호들이 아래에 보이도록).
+  omrScrollTo(el){
+    try{
+      let box=el.parentElement;
+      while(box && !(box.scrollHeight>box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box=box.parentElement;
+      if(!box){ el.scrollIntoView({block:'nearest'}); return; }
+      const top=box.scrollTop + (el.getBoundingClientRect().top - box.getBoundingClientRect().top) - box.clientHeight/3;
+      box.scrollTo({top:Math.max(0,top), behavior:'smooth'});
+    }catch(e){}
+  }
   omrEl(t){
     const h=React.createElement, font="'Jua',sans-serif";
     const cell={padding:'6px 4px',borderRight:'1px solid #c9d6e6',textAlign:'center'};
@@ -1163,7 +1172,7 @@ class Component extends DCLogic {
     t.qs.forEach((q,i)=>{
       const p=t.picks[i], cur=i===t.idx, pickIdx=p?q.options.indexOf(p.v):-1;
       rows.push(h('div',{key:'r'+i,onClick:()=>this.jumpTest(i),
-        ref:cur?(el=>{ if(el && this._omrShown!==t.idx+'/'+t.startedAt){ this._omrShown=t.idx+'/'+t.startedAt; try{ el.scrollIntoView({block:'nearest'}); }catch(e){} } }):undefined,
+        ref:cur?(el=>{ if(el && this._omrShown!==t.idx+'/'+t.startedAt){ this._omrShown=t.idx+'/'+t.startedAt; this.omrScrollTo(el); } }):undefined,
         style:{display:'flex',alignItems:'stretch',cursor:'pointer',fontFamily:font,background:cur?'#fff3d8':'#fff',boxShadow:cur?'inset 4px 0 0 #f2b21c':'none',borderBottom:'1px solid #dfe7f1'}},
         h('div',{style:Object.assign({width:'2.8em',flex:'none',color:'#7a8aa0',fontSize:'15px',display:'flex',alignItems:'center',justifyContent:'center'},cell)},String(i+1)),
         // ①~⑤ 원: 고른 답은 칠한 원(글리프 ❶은 글꼴마다 크기가 달라 원을 직접 그린다)
@@ -1175,7 +1184,7 @@ class Component extends DCLogic {
   }
   // 실제 시험지 모양 그대로: 세로셈(v, 자리마다 칸 맞춤) / 가로식(h, '7 × 8 =') / 세로 나눗셈 기호(long, '3)47').
   kumonEl(q){
-    const h=React.createElement, font="'Jua',sans-serif", size='clamp(46px,13vw,68px)';
+    const h=React.createElement, font="'Jua',sans-serif", size='clamp(34px,min(12vw,8.5vh),64px)';
     if(q.layout==='h' || (!q.layout && q.op==='÷')) return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',letterSpacing:'4px'}},`${q.top} ${q.op} ${q.bottom} =`);
     if(q.layout==='long') return h('div',{style:{fontFamily:font,fontSize:size,color:'#123a66',display:'flex',alignItems:'flex-end',lineHeight:1.15}},
       h('span',{style:{marginRight:'2px',lineHeight:1}},q.bottom),
@@ -1374,7 +1383,7 @@ class Component extends DCLogic {
     if(TQ){ const list=T.qs.map((q,i)=>({q,i})).filter(x=>x.q.sec===TQ.sec);
       const goal=list.reduce((t,x)=>t+budgetOf(x.q),0);
       const spent=list.reduce((t,x)=>t+T.spent[x.i],0)+Math.max(0,((s.testNow||Date.now())-T.lastAt)/1000);
-      secOver=spent>goal; secGoal=`📍 ${SEC_NAME[TQ.sec]} ${list.length}문제 목표 ${this.fmtClock(goal)} · 지금 ${this.fmtClock(spent)}${secOver?' ⚠️':''}`; }
+      secOver=spent>goal; secGoal=`${SEC_NAME[TQ.sec]} ${this.fmtClock(spent)} / ${this.fmtClock(goal)}`; }
     // 실전 기준 유형별 시간 목표(분) — 안내 문구용
     const planSecs={}; this.kumonPlan('full').forEach(([sec,,n])=>{ planSecs[sec]=(planSecs[sec]||0)+n*this.kumonRate(sec); });
     const mins=k=>Math.round(planSecs[k]/60);
@@ -1385,7 +1394,7 @@ class Component extends DCLogic {
     const testVals={
       openTest:()=>this.openTest(), targetSecs:target,
       planLine:`실전 시간 배분: 덧셈·뺄셈 ${Math.round((planSecs.add+planSecs.sub)/60)}분 → 곱셈 ${mins('mul')}분 → 나눗셈 ${mins('div')}분`,
-      testSecGoal:secGoal, testSecGoalStyle:`font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:${secOver?'#d1462f':'#1e4d7a'};margin-top:4px;`,
+      testSecGoal:secGoal,
       testModes:modes.map(m=>({title:m.title, desc:m.desc, onClick:()=>this.startTest(m.id)})),
       testRecs:myTests.map(r=>{ const m=modes.find(x=>x.id===r.mode); return {
         left:`${fmtDate(r.date)} · ${m?m.title.replace(/^\S+\s/,''):this.legacyModeName(r.mode)}`,
@@ -1396,15 +1405,17 @@ class Component extends DCLogic {
       hasTestRecs:myTests.length>0,
       testRemain:this.fmtClock(tRemain),
       testClockStyle:`font-family:'Jua';font-size:clamp(18px,5vw,24px);color:${tRemain<=60?'#d1462f':'#123a66'};background:${tRemain<=60?'#fbe0da':'#e3f0ff'};border:3px solid ${tRemain<=60?'#d1462f':'#2f6bb0'};border-radius:14px;padding:6px 10px;white-space:nowrap;flex:none;`,
-      testSection:TQ?`${SEC_NAME[TQ.sec]}`:'',
-      testPos:T?`${T.idx+1}번 · 푼 문제 ${tDone}/${T.qs.length}`:'',
+      // 진행 막대 위 한 줄: 왼쪽 '덧셈 0:35 / 2:30'(이 유형에 쓴 시간 / 목표), 넘으면 빨강
+      testSection:secGoal, testSectionStyle:secOver?'color:#d1462f;':'',
+      testPos:T?`${T.idx+1}번 · ${tDone}/${T.qs.length}`:'',
       testPct:T?Math.round(tDone/T.qs.length*100):0,
-      testPace: !T||tUsed<20 ? '덧셈·뺄셈은 빠르게, 나눗셈에 시간을 남겨요 🚀' : ahead>=0 ? `목표보다 ${ahead}문제 앞서요! 🚀` : `목표보다 ${-ahead}문제 늦어요 🐢 조금 더 빨리!`,
-      testPaceStyle:`font-family:'Jua';font-size:clamp(15px,4vw,19px);color:${!T||tUsed<20||ahead>=0?'#2f8f4e':'#d1462f'};`,
+      // 오른쪽 끝: 목표 페이스보다 앞섬(🚀 +2)/늦음(🐢 -3). 시작 20초 동안은 안 보임.
+      testPace: !T||tUsed<20 ? '' : ahead>=0 ? ` · 🚀 +${ahead}` : ` · 🐢 ${ahead}`,
+      testPaceStyle:`color:${ahead>=0?'#2f8f4e':'#d1462f'};`,
       testProblemEl: TQ?this.kumonEl(TQ):null,
       testOptions: TQ?TQ.options.map((v,i)=>{ const on=!!(T.picks[T.idx] && T.picks[T.idx].v===v);
         return {mark:marks[i], label:v, onClick:()=>this.pickTest(v),
-          style:`display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(24px,6.6vw,32px);color:${on?'#fff':'#123a66'};background:${on?'#2f6bb0':'#fff'};border:4px solid ${on?'#1f4f86':'#9cc0e6'};border-radius:16px;padding:8px 18px;cursor:pointer;text-align:left;`,
+          style:`display:flex;align-items:center;gap:14px;font-family:'Jua';font-size:clamp(19px,min(6vw,3.6vh),28px);color:${on?'#fff':'#123a66'};background:${on?'#2f6bb0':'#fff'};border:3px solid ${on?'#1f4f86':'#9cc0e6'};border-radius:14px;padding:clamp(3px,0.8vh,7px) 16px;cursor:pointer;text-align:left;`,
           markStyle:`font-size:.85em;color:${on?'#fff':'#2f6bb0'};`}; }):[],
       ...(()=>{ if(!TQ) return {testSecRange:'', testSecText:'', testNo:''};
         const idxs=T.qs.map((q,i)=>q.sec===TQ.sec?i:-1).filter(i=>i>=0);
