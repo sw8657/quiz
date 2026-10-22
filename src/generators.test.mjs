@@ -279,4 +279,67 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
   delete window.speechSynthesis;
 }
 
+// 📋 OMR 답안지: 번호로 되돌아가기·답 바꾸기·건너뛰기, 문제별 시간은 다시 본 시간까지 합산
+{
+  const g = load('treasure-map-math.dc.html');
+  g.state.userName = '지한';
+  g.startTest('mini');
+  const T = () => g.state.test, wrongOf = q => q.options.find(o=>o!==q.answer);
+  // 1~3번 풀기(2번은 틀리게), 각 5초
+  for(let i=0;i<3;i++){ const q=T().qs[T().idx]; T().lastAt-=5000; g.pickTest(i===1?wrongOf(q):q.answer); }
+  assert.strictEqual(T().idx, 3);
+  // 4번 건너뛰기 → 5번
+  T().lastAt-=2000; g.skipTest(); assert.strictEqual(T().idx, 4); assert.strictEqual(T().picks[3], null);
+  // 답안지에서 2번으로 돌아가 답 고치기(3초 더) → 다음 안 푼 문제(4번)로
+  g.jumpTest(1); assert.strictEqual(T().idx, 1);
+  let v = g.renderVals();
+  assert.ok(v.testRevisit && v.testOptions.some(o=>o.style.includes('#2f6bb0;border')), '이미 고른 답 표시');
+  T().lastAt-=3000; g.pickTest(T().qs[1].answer);
+  assert.strictEqual(T().idx, 3, '답을 고치면 다음 안 푼 문제로');
+  assert.ok(T().spent[1]>=8 && T().spent[3]>=2, `다시 본 시간 합산: ${T().spent[1]}, ${T().spent[3]}`);
+  // OMR: 1번부터 40번까지 한 줄씩 이어짐(묶음 없음), 2번 줄에 고른 답 하나만 칠해짐
+  v = g.renderVals();
+  const flat = n => n==null ? [] : typeof n!=='object' ? [String(n)] : Array.isArray(n) ? n.flatMap(flat) : [n, ...flat(n.c)];
+  const nodes = flat(v.testOmrEl).filter(x=>typeof x==='object');
+  const texts = flat(v.testOmrEl).filter(x=>typeof x==='string');
+  assert.ok(texts.includes('Q') && texts.includes('정답') && !texts.some(t=>/~\d+ \(/.test(t)), 'Q·정답 머리, 묶음 없이 이어짐');
+  const rows = nodes.filter(x=>x.p && String(x.p.key||'').startsWith('r'));
+  assert.deepStrictEqual(rows.map(x=>x.p.key), Array.from({length:40},(_,i)=>'r'+i), '1~40번 줄이 순서대로 모두');
+  const marks2 = flat(rows[1]).filter(x=>typeof x==='object' && x.p && x.p.key!=null && typeof x.p.key==='number');
+  assert.strictEqual(marks2.length, 5, '①~⑤ 다섯 칸');
+  const filledIdx = marks2.map((x,k)=>x.p.style.background==='#123a66'?k:-1).filter(k=>k>=0);
+  assert.deepStrictEqual(filledIdx, [T().qs[1].options.indexOf(T().picks[1].v)], '고른 번호 하나만 칠해짐');
+  assert.ok(rows[T().idx].p.ref && !rows[0].p.ref, '지금 문제 줄에만 스크롤 ref');
+  // 지금 문제 줄 ref: 문제가 바뀔 때만 스크롤
+  let scrolled=0; const el={ scrollIntoView(){ scrolled++; } };
+  rows[T().idx].p.ref(el); rows[T().idx].p.ref(el); assert.strictEqual(scrolled, 1, '같은 문제에서 다시 그려도 스크롤 한 번');
+  // 문제 머리글·번호: 실제 화면처럼 '[ 1 ~ 4 ] 덧셈을 연습합니다.' + 문제 번호
+  { const g2=load('treasure-map-math.dc.html'); g2.startTest('full'); let w=g2.renderVals();
+    assert.ok(w.testSecRange==='[ 1 ~ 15 ]' && w.testSecText==='덧셈을 연습합니다.' && w.testNo==='1', `${w.testSecRange} ${w.testSecText} ${w.testNo}`);
+    g2.jumpTest(77); w=g2.renderVals();
+    assert.ok(w.testSecRange==='[ 78 ~ 160 ]' && w.testSecText.startsWith('나눗셈을 연습합니다.') && w.testNo==='78');
+    g2.jumpTest(30); w=g2.renderVals(); assert.ok(w.testSecRange==='[ 31 ~ 77 ]' && w.testSecText==='곱셈을 연습합니다.'); }
+  // 줄을 누르면 그 문제로
+  rows[25].p.onClick(); assert.strictEqual(T().idx, 25);
+  flat(g.renderVals().testOmrEl).find(x=>x && x.p && x.p.key==='r25').p.ref(el); assert.strictEqual(scrolled, 2, '문제가 바뀌면 스크롤');
+  // 좁은 화면: 📋 → 답안지 창, 번호 누르면 닫힘
+  g.state.narrow = true; g.renderVals().openOmr(); assert.ok(g.renderVals().showOmrOverlay);
+  g.jumpTest(0); assert.ok(!g.renderVals().showOmrOverlay);
+  // 끝: 나머지 다 풀면 자동 제출, 문제별 시간 = 본 시간 합
+  while(g.state.screen==='test'){ const q=T().qs[T().idx]; T().lastAt-=1000; g.pickTest(q.answer); }
+  const R = g.state.testResult;
+  assert.strictEqual(R.answered, 40); assert.strictEqual(R.correct, 40, '고친 답으로 채점');
+  assert.ok(R.items[1].s>=8, `2번 시간 ${R.items[1].s}`);
+  g.renderVals(); // 결과 화면 값 계산(쉬운/어려운 평균 등) 예외 없이
+}
+// 시간 끝·제출 시 안 푼 문제가 섞여 있어도 결과가 깨지지 않음
+{
+  const g = load('treasure-map-math.dc.html');
+  g.state.userName='지한'; g.startTest('mini');
+  g.pickTest(g.state.test.qs[0].answer); g.skipTest(); g.pickTest(g.state.test.qs[2].answer);
+  g.submitTest();
+  const v = g.renderVals();
+  assert.ok(v.trAnswered===2 && g.state.testResult.items[1].p===null && v.trTierLine.includes('쉬운 문제'));
+}
+
 console.log('OK: generators fuzz passed');
