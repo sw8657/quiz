@@ -195,6 +195,16 @@ for(let i=0;i<5000;i++){
   g.openSheet();
   let v = g.renderVals();
   assert.strictEqual(v.shRows.filter(r=>r.isRow).length, 40);
+  // 머리줄: 시작 시간 / 걸린·남은 시간 / 문제 수·정답·오답·못 푼 문제·평균
+  assert.ok(/^시작 시간 \d+월 \d+일 \d\d:\d\d$/.test(v.shStart), v.shStart);
+  assert.ok(rec.start>0 && rec.start<=rec.date, '시작 시각 저장');
+  assert.strictEqual(v.shTime, `걸린 시간 ${g.fmtSecs(rec.used)} · 남은 시간 ${g.fmtSecs(480-rec.used)}`);
+  assert.strictEqual(v.shCount, `40문제 · 정답 11 · 오답 1 · 못 푼 문제 28 · 평균 ${(rec.used/12).toFixed(1)}초`);
+  { const keep=g.state.sheet, old={...rec, mode:'set1', start:undefined, limit:undefined, used:1105, date:new Date(2026,9,23,7,34,25).getTime()};
+    g.state.sheet={...keep, rec:old}; const o=g.renderVals();
+    assert.strictEqual(o.shStart, '시작 시간 10월 23일 07:16', '예전 기록은 끝난 시각 - 걸린 시간');
+    assert.strictEqual(o.shTime, '걸린 시간 18분 25초 · 남은 시간 11분 35초', '예전 기록은 모드의 제한시간으로');
+    g.state.sheet=keep; }
   assert.strictEqual(v.shRows.filter(r=>r.isHead).length, 4, '유형 머리줄 4개');
   g.setSheetFilter('wrong'); v = g.renderVals();
   assert.ok(v.shRows.filter(r=>r.isRow).length===1 && v.shRows.find(r=>r.isRow).showAns, '틀린 문제 필터');
