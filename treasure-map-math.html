@@ -459,7 +459,11 @@ button{font-family:inherit;}
     <div style="font-family:'Jua';font-size:clamp(20px,5.4vw,28px);color:#123a66;white-space:nowrap;">📝 채점표</div>
     <div style="width:clamp(0px,9vw,80px);flex:none;"></div>
   </div>
-  <div style="font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:#3a5f86;text-align:center;">{{ shSummary }}</div>
+  <div style="font-family:'Jua';font-size:clamp(14px,3.8vw,17px);color:#3a5f86;text-align:center;line-height:1.5;">
+    <div>{{ shStart }}</div>
+    <div>{{ shTime }}</div>
+    <div style="color:#123a66;">{{ shCount }}</div>
+  </div>
   <div style="font-family:'Gaegu';font-weight:700;font-size:clamp(13px,3.5vw,15px);color:#3a5f86;text-align:center;margin-top:2px;">⏱️ 막대가 길수록 오래 걸린 문제 · 빨간 시간은 목표보다 느린 문제(덧셈·뺄셈 10초 · 곱셈 10초 · 나눗셈 12초)</div>
   <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;justify-content:center;">
     <sc-for list="{{ shFilters }}" as="fl" hint-placeholder-count="3">
@@ -1100,12 +1104,20 @@ class Component extends DCLogic {
   }
   componentDidUpdate(){ if(this._pendingScroll!=null){ const i=this._pendingScroll; this._pendingScroll=null; this.scrollToQ(i); } }
   scrollBox(el){ let box=el&&el.parentElement; while(box && !(box.scrollHeight>box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box=box.parentElement; return box; }
-  // 문제 목록에서 문제 i가 위쪽에 오게 부드럽게 스크롤
+  // 문제 목록에서 문제 i가 위쪽에 오게 빠르게 스크롤(브라우저 smooth는 멀리 갈수록 느려서 0.15초짜리로 직접)
   scrollToQ(i){
     try{ const el=this._qEls&&this._qEls[i]; if(!el) return; const box=this.scrollBox(el);
-      if(!box){ el.scrollIntoView({block:'start',behavior:'smooth'}); return; }
-      box.scrollTo({top:Math.max(0, box.scrollTop+(el.getBoundingClientRect().top-box.getBoundingClientRect().top)-6), behavior:'smooth'});
+      if(!box){ el.scrollIntoView({block:'start'}); return; }
+      this.fastScroll(box, Math.max(0, box.scrollTop+(el.getBoundingClientRect().top-box.getBoundingClientRect().top)-6));
     }catch(e){}
+  }
+  fastScroll(box, top){
+    const raf=window.requestAnimationFrame, from=box.scrollTop, run=this._scrollRun=(this._scrollRun||0)+1;
+    if(!raf || Math.abs(top-from)<4){ box.scrollTo({top}); return; }
+    const t0=Date.now(), dur=150;
+    const step=()=>{ if(run!==this._scrollRun) return; const k=Math.min(1,(Date.now()-t0)/dur), e=1-Math.pow(1-k,3);
+      box.scrollTop=from+(top-from)*e; if(k<1) raf(step); };
+    raf(step);
   }
   submitTest(){ if(!window.confirm('지금 제출할까요?\n남은 문제는 안 푼 걸로 처리돼요.')) return; this.finishTest(); }
   finishTest(done){
@@ -1119,7 +1131,7 @@ class Component extends DCLogic {
     // 채점표용 문제별 기록(지난 연습도 다시 볼 수 있게 저장): 문제·정답·고른 답·걸린 초·유형
     const items=t.qs.map((q,i)=>{ const p=picks[i]; return {t:`${q.top} ${q.op} ${q.bottom}`, a:q.answerLabel, p:p?p.v:null, s:p?Math.round(p.secs*10)/10:null, sec:q.sec}; });
     const answered=picks.filter(Boolean).length;
-    const rec={date:Date.now(), mode:t.mode, total:t.qs.length, limit:t.limit, answered, correct, used, secs, items};
+    const rec={date:Date.now(), start:t.startedAt, mode:t.mode, total:t.qs.length, limit:t.limit, answered, correct, used, secs, items};
     const nm=this.state.userName;
     if(nm){ const users=this.loadUsers(); const u=users[nm]||{progress:{},history:[]}; u.tests=(u.tests||[]).concat([rec]).slice(-50); users[nm]=u; this.saveUsers(users); }
     if(answered && correct/answered>=0.9) this.playFanfare();
@@ -1496,7 +1508,7 @@ class Component extends DCLogic {
           paceCell:cell+(slow?'color:#d1462f;':'color:#2f8f4e;')}; }) : [],
       isTestIntro:s.screen==='testIntro', isTest:s.screen==='test', isTestResult:s.screen==='testResult',
       isSheet:s.screen==='testSheet', openSheet:()=>this.openSheet(), closeSheet:()=>this.closeSheet(),
-      ...(()=>{ const sh=s.sheet; if(!sh||!sh.rec||!sh.rec.items) return {shRows:[], shFilters:[], shSummary:'', shEmpty:false};
+      ...(()=>{ const sh=s.sheet; if(!sh||!sh.rec||!sh.rec.items) return {shRows:[], shFilters:[], shStart:'', shTime:'', shCount:'', shEmpty:false};
         const rec=sh.rec, items=rec.items, done=items.filter(x=>x.p!=null);
         const slow=x=>x.s!=null && x.s>this.kumonRate(x.sec), wrong=x=>x.p!=null && x.p!==x.a;
         const keep=x=>sh.filter==='wrong'?wrong(x):sh.filter==='slow'?slow(x):true;
@@ -1518,7 +1530,11 @@ class Component extends DCLogic {
         const fBtn=(id,label)=>({label, onClick:()=>this.setSheetFilter(id),
           style:`font-family:'Jua';font-size:clamp(14px,3.8vw,17px);border-radius:14px;padding:6px 14px;cursor:pointer;border:3px solid #2f6bb0;${sh.filter===id?'background:#2f6bb0;color:#fff;':'background:#fff;color:#123a66;'}`});
         return {
-          shSummary:`${fmtDate(rec.date)} · 푼 문제 ${done.length}/${items.length} · 정답 ${rec.correct} · 평균 ${done.length?(rec.used/done.length).toFixed(1):'-'}초`,
+          // 예전 기록은 시작 시각이 없어 끝난 시각 - 걸린 시간으로 계산
+          shStart:`시작 시간 ${fmtDate(rec.start||rec.date-rec.used*1000)}`,
+          shTime:(()=>{ const m=this.testModeList().find(x=>x.id===rec.mode), limit=rec.limit||(m&&m.limit);
+            return `걸린 시간 ${this.fmtSecs(rec.used)}`+(limit?` · 남은 시간 ${this.fmtSecs(Math.max(0,limit-rec.used))}`:''); })(),
+          shCount:`${items.length}문제 · 정답 ${rec.correct} · 오답 ${done.length-rec.correct} · 못 푼 문제 ${items.length-done.length} · 평균 ${done.length?(rec.used/done.length).toFixed(1):'-'}초`,
           shFilters:[fBtn('all','전체'), fBtn('wrong',`❌ 틀린 문제 ${nWrong}`), fBtn('slow',`🐢 느린 문제 ${nSlow}`)],
           shRows:rows, shEmpty:rows.length===0,
         }; })(),

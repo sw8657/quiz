@@ -195,6 +195,16 @@ for(let i=0;i<5000;i++){
   g.openSheet();
   let v = g.renderVals();
   assert.strictEqual(v.shRows.filter(r=>r.isRow).length, 40);
+  // 머리줄: 시작 시간 / 걸린·남은 시간 / 문제 수·정답·오답·못 푼 문제·평균
+  assert.ok(/^시작 시간 \d+월 \d+일 \d\d:\d\d$/.test(v.shStart), v.shStart);
+  assert.ok(rec.start>0 && rec.start<=rec.date, '시작 시각 저장');
+  assert.strictEqual(v.shTime, `걸린 시간 ${g.fmtSecs(rec.used)} · 남은 시간 ${g.fmtSecs(480-rec.used)}`);
+  assert.strictEqual(v.shCount, `40문제 · 정답 11 · 오답 1 · 못 푼 문제 28 · 평균 ${(rec.used/12).toFixed(1)}초`);
+  { const keep=g.state.sheet, old={...rec, mode:'set1', start:undefined, limit:undefined, used:1105, date:new Date(2026,9,23,7,34,25).getTime()};
+    g.state.sheet={...keep, rec:old}; const o=g.renderVals();
+    assert.strictEqual(o.shStart, '시작 시간 10월 23일 07:16', '예전 기록은 끝난 시각 - 걸린 시간');
+    assert.strictEqual(o.shTime, '걸린 시간 18분 25초 · 남은 시간 11분 35초', '예전 기록은 모드의 제한시간으로');
+    g.state.sheet=keep; }
   assert.strictEqual(v.shRows.filter(r=>r.isHead).length, 4, '유형 머리줄 4개');
   g.setSheetFilter('wrong'); v = g.renderVals();
   assert.ok(v.shRows.filter(r=>r.isRow).length===1 && v.shRows.find(r=>r.isRow).showAns, '틀린 문제 필터');
@@ -346,6 +356,12 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
     g3.pickTest(g3.state.test.qs[0].options.find(o=>o!==g3.state.test.qs[0].answer), 0); g3.componentDidUpdate();
     assert.strictEqual(to, null, '답을 고칠 때는 스크롤 안 함');
     g3.jumpTest(30); g3.componentDidUpdate(); assert.strictEqual(to, 30*250-6, '답안지 번호 → 그 문제로 스크롤');
+    // 브라우저(requestAnimationFrame 있음)에서는 0.15초 안에 끝나는 빠른 스크롤로 그 문제에 도착
+    { const frames=[]; window.requestAnimationFrame=f=>frames.push(f); const realNow=Date.now; let now=realNow();
+      Date.now=()=>now; box.scrollTop=0; to=null; g3.jumpTest(10); g3.componentDidUpdate();
+      for(let k=0;k<20 && frames.length;k++){ now+=16; frames.shift()(); }
+      Date.now=realNow; delete window.requestAnimationFrame;
+      assert.strictEqual(box.scrollTop, 10*250-6, '빠른 스크롤 도착 위치'); assert.ok(frames.length===0, '0.15초 안에 끝남'); }
     delete globalThis.getComputedStyle; }
   // 줄을 누르면 그 문제로
   rows[25].p.onClick(); assert.strictEqual(T().idx, 25);
