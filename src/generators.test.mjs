@@ -346,6 +346,12 @@ for(const file of ['fairy-land-math.dc.html','hangul-fairy-land.dc.html']){
     g3.pickTest(g3.state.test.qs[0].options.find(o=>o!==g3.state.test.qs[0].answer), 0); g3.componentDidUpdate();
     assert.strictEqual(to, null, '답을 고칠 때는 스크롤 안 함');
     g3.jumpTest(30); g3.componentDidUpdate(); assert.strictEqual(to, 30*250-6, '답안지 번호 → 그 문제로 스크롤');
+    // 브라우저(requestAnimationFrame 있음)에서는 0.15초 안에 끝나는 빠른 스크롤로 그 문제에 도착
+    { const frames=[]; window.requestAnimationFrame=f=>frames.push(f); const realNow=Date.now; let now=realNow();
+      Date.now=()=>now; box.scrollTop=0; to=null; g3.jumpTest(10); g3.componentDidUpdate();
+      for(let k=0;k<20 && frames.length;k++){ now+=16; frames.shift()(); }
+      Date.now=realNow; delete window.requestAnimationFrame;
+      assert.strictEqual(box.scrollTop, 10*250-6, '빠른 스크롤 도착 위치'); assert.ok(frames.length===0, '0.15초 안에 끝남'); }
     delete globalThis.getComputedStyle; }
   // 줄을 누르면 그 문제로
   rows[25].p.onClick(); assert.strictEqual(T().idx, 25);

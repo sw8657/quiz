@@ -1100,12 +1100,20 @@ class Component extends DCLogic {
   }
   componentDidUpdate(){ if(this._pendingScroll!=null){ const i=this._pendingScroll; this._pendingScroll=null; this.scrollToQ(i); } }
   scrollBox(el){ let box=el&&el.parentElement; while(box && !(box.scrollHeight>box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box=box.parentElement; return box; }
-  // 문제 목록에서 문제 i가 위쪽에 오게 부드럽게 스크롤
+  // 문제 목록에서 문제 i가 위쪽에 오게 빠르게 스크롤(브라우저 smooth는 멀리 갈수록 느려서 0.15초짜리로 직접)
   scrollToQ(i){
     try{ const el=this._qEls&&this._qEls[i]; if(!el) return; const box=this.scrollBox(el);
-      if(!box){ el.scrollIntoView({block:'start',behavior:'smooth'}); return; }
-      box.scrollTo({top:Math.max(0, box.scrollTop+(el.getBoundingClientRect().top-box.getBoundingClientRect().top)-6), behavior:'smooth'});
+      if(!box){ el.scrollIntoView({block:'start'}); return; }
+      this.fastScroll(box, Math.max(0, box.scrollTop+(el.getBoundingClientRect().top-box.getBoundingClientRect().top)-6));
     }catch(e){}
+  }
+  fastScroll(box, top){
+    const raf=window.requestAnimationFrame, from=box.scrollTop, run=this._scrollRun=(this._scrollRun||0)+1;
+    if(!raf || Math.abs(top-from)<4){ box.scrollTo({top}); return; }
+    const t0=Date.now(), dur=150;
+    const step=()=>{ if(run!==this._scrollRun) return; const k=Math.min(1,(Date.now()-t0)/dur), e=1-Math.pow(1-k,3);
+      box.scrollTop=from+(top-from)*e; if(k<1) raf(step); };
+    raf(step);
   }
   submitTest(){ if(!window.confirm('지금 제출할까요?\n남은 문제는 안 푼 걸로 처리돼요.')) return; this.finishTest(); }
   finishTest(done){
